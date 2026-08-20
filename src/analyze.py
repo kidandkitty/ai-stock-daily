@@ -6,7 +6,8 @@ AI 美股盤前分析 完整版
 """
 
 import os, json, datetime, time, random, requests, re
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import smtplib
@@ -34,8 +35,7 @@ EMAIL_TO          = os.environ["EMAIL_TO"]
 QUIVER_API_KEY    = os.environ.get("QUIVER_API_KEY", "")
 
 # 初始化 Gemini
-genai.configure(api_key=GEMINI_API_KEY)
-gemini_model = genai.GenerativeModel("gemini-1.5-flash")
+gemini_client = genai.Client(api_key=GEMINI_API_KEY)
 
 
 # ══════════════════════════════════════════════════════════
@@ -358,7 +358,10 @@ def ai_analyze(watchlist_data, scan_results, fda_events, political_data) -> dict
   "summary": "整體摘要100字"
 }}"""
 
-    response = gemini_model.generate_content(prompt)
+    response = gemini_client.models.generate_content(
+        model="gemini-2.0-flash",
+        contents=prompt
+    )
     raw = response.text.strip()
     # 移除可能的 markdown 代碼塊
     raw = re.sub(r'```json\s*', '', raw)
