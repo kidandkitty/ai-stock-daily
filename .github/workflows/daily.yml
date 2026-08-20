@@ -22,7 +22,7 @@ jobs:
           cache: 'pip'
 
       - name: Install dependencies
-        run: pip install google-generativeai yfinance requests python-dotenv pandas
+        run: pip install google-genai yfinance requests python-dotenv pandas
 
       - name: Run analysis
         env:
