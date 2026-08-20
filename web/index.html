@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI 美股日報</title>
+<style>
+  :root {
+    --bg: #0a0f1e;
+    --surface: #0f172a;
+    --border: #1e293b;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --accent: #3b82f6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Helvetica Neue', Arial, sans-serif; min-height: 100vh; }
+
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 24px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 760px;
+    margin: 0 auto;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .logo-text { font-size: 15px; font-weight: 700; letter-spacing: 0.5px; }
+  .logo-sub { font-size: 11px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+
+  .latest-btn {
+    background: var(--accent);
+    color: #fff;
+    padding: 8px 18px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    transition: opacity 0.2s;
+  }
+  .latest-btn:hover { opacity: 0.85; }
+
+  main { max-width: 760px; margin: 0 auto; padding: 32px 20px; }
+
+  .hero {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 32px;
+    margin-bottom: 36px;
+    text-align: center;
+  }
+  .hero .eyebrow { font-size: 11px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 12px; }
+  .hero h1 { font-size: 32px; font-weight: 800; margin-bottom: 10px; }
+  .hero p { color: var(--muted); font-size: 14px; line-height: 1.6; }
+
+  .section-label { font-size: 11px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 16px; }
+
+  #report-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .report-card {
+    display: flex;
+    align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    text-decoration: none;
+    color: var(--text);
+    transition: border-color 0.2s, transform 0.1s;
+    gap: 16px;
+  }
+  .report-card:hover { border-color: var(--accent); transform: translateX(3px); }
+  .report-card .date { font-size: 12px; color: var(--muted); min-width: 90px; }
+  .report-card .headline { font-size: 14px; flex: 1; }
+  .report-card .mood-tag { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 4px; white-space: nowrap; }
+  .mood-bull { background: #22c55e22; color: #22c55e; }
+  .mood-bear { background: #ef444422; color: #ef4444; }
+  .mood-side { background: #f59e0b22; color: #f59e0b; }
+  .report-card .arrow { color: var(--muted); font-size: 16px; }
+
+  .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .empty p { margin-top: 8px; font-size: 13px; }
+
+  footer {
+    text-align: center;
+    padding: 32px 20px;
+    color: var(--muted);
+    font-size: 12px;
+    border-top: 1px solid var(--border);
+    max-width: 760px;
+    margin: 0 auto;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    <div>
+      <div class="logo-text">AI 美股日報</div>
+      <div class="logo-sub">Pre-market Intelligence</div>
+    </div>
+  </div>
+  <a href="latest.html" class="latest-btn">今日報告 →</a>
+</header>
+
+<main>
+  <div class="hero">
+    <div class="eyebrow">Powered by Claude AI</div>
+    <h1>每日盤前分析</h1>
+    <p>每個交易日美東時間 08:30 自動發布<br>AI 分析市場異動、個股動向、操作方向</p>
+  </div>
+
+  <div class="section-label">歷史報告</div>
+  <div id="report-list">
+    <div class="empty">
+      <div style="font-size:32px">📋</div>
+      <p>報告載入中...</p>
+    </div>
+  </div>
+</main>
+
+<footer>
+  AI 自動生成 · 僅供參考，不構成投資建議 · 數據來源 Yahoo Finance
+</footer>
+
+<script>
+  const moodClass = { "多頭": "mood-bull", "空頭": "mood-bear", "震盪": "mood-side" };
+
+  fetch("index.json")
+    .then(r => r.json())
+    .then(data => {
+      const list = document.getElementById("report-list");
+      if (!data.length) {
+        list.innerHTML = `<div class="empty"><div style="font-size:32px">📭</div><p>尚無報告，明日盤前見！</p></div>`;
+        return;
+      }
+      list.innerHTML = data.map(item => `
+        <a href="reports/${item.date}.html" class="report-card">
+          <span class="date">${item.date}</span>
+          <span class="headline">${item.headline || '—'}</span>
+          <span class="mood-tag ${moodClass[item.mood] || 'mood-side'}">${item.mood || '—'}</span>
+          <span class="arrow">›</span>
+        </a>
+      `).join("");
+    })
+    .catch(() => {
+      document.getElementById("report-list").innerHTML =
+        `<div class="empty"><div style="font-size:32px">⚠️</div><p>無法載入報告列表</p></div>`;
+    });
+</script>
+</body>
+</html>

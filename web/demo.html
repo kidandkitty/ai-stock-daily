@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI 美股日報 · 完整版</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0f1e;color:#e2e8f0;font-family:'Helvetica Neue',Arial,sans-serif;font-size:14px}
+.up{color:#22c55e}.dn{color:#ef4444}.warn{color:#f59e0b}.neu{color:#64748b}.acc{color:#60a5fa}.pro{color:#c4b5fd}
+.app{display:flex;flex-direction:column;min-height:100vh}
+.page{display:none;flex:1;padding:16px;max-width:680px;margin:0 auto;width:100%;padding-bottom:80px}
+.page.show{display:block}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#0a0f1e;border-top:1px solid #1e293b;display:flex;z-index:100}
+.nav-btn{flex:1;padding:10px 4px 8px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;border:none;background:transparent;color:#475569;font-size:10px;letter-spacing:0.5px;transition:color 0.15s}
+.nav-btn.active{color:#60a5fa}
+.nav-icon{font-size:20px;line-height:1}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid #1e293b;margin-bottom:14px}
+.t1{font-size:15px;font-weight:700;color:#f1f5f9}
+.t2{font-size:10px;color:#475569;letter-spacing:2px;text-transform:uppercase;margin-top:2px}
+.dtag{font-size:12px;color:#475569}
+.sec{font-size:10px;letter-spacing:2px;color:#475569;text-transform:uppercase;margin-bottom:10px}
+.ibox{background:#0f172a;border-radius:8px;padding:12px 14px;border:1px solid #1e293b}
+.ilabel{font-size:10px;color:#475569;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px}
+.ival{font-size:13px;color:#94a3b8;line-height:1.6}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.card{background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:14px 16px;margin-bottom:10px}
+/* 首頁 */
+.mood-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.chip{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px}
+.chip-bull{background:#22c55e22;color:#22c55e}
+.chip-bear{background:#ef444422;color:#ef4444}
+.chip-side{background:#f59e0b22;color:#f59e0b}
+.prog{flex:1;height:4px;background:#1e293b;border-radius:2px;overflow:hidden}
+.progf{height:4px;border-radius:2px}
+.ml{font-size:12px;color:#94a3b8}
+.hl{border-left:2px solid #22c55e;padding:10px 14px;margin-bottom:16px;background:#0f172a;font-size:14px;font-weight:600;color:#f1f5f9;line-height:1.5}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+.stat{background:#0f172a;border-radius:10px;padding:12px;text-align:center;cursor:pointer;border:1px solid transparent;transition:border-color 0.15s;position:relative;user-select:none}
+.stat.active{border-color:#3b82f6}
+.stat .sv{font-size:20px;font-weight:700;margin-bottom:2px}
+.stat .sl{font-size:10px;color:#475569;letter-spacing:1px;text-transform:uppercase}
+.stat .arr{position:absolute;bottom:4px;right:6px;font-size:8px;color:#334155}
+.stat.active .arr{color:#3b82f6}
+.dpanel{display:none;background:#0f172a;border:1px solid #3b82f6;border-radius:12px;padding:16px;margin-bottom:14px}
+.dpanel.show{display:block}
+.dp-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.dp-title{font-size:11px;letter-spacing:2px;color:#60a5fa;text-transform:uppercase}
+.dp-x{cursor:pointer;color:#475569;font-size:18px;line-height:1}
+.ar{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid #1e293b;cursor:pointer}
+.ar:last-child{border-bottom:none}
+.ar-rk{font-size:11px;color:#475569;width:22px}
+.ar-tk{font-weight:700;color:#f1f5f9;width:52px}
+.ar-b{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px}
+.bc{background:#22c55e22;color:#22c55e}.bp{background:#ef444422;color:#ef4444}
+.ar-fl{flex:1;font-size:11px;color:#64748b;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.ar-pc{font-size:13px;font-weight:700;min-width:52px;text-align:right}
+.ar-sc{font-size:11px;min-width:34px;text-align:right}
+.vix-g{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.vz{border-radius:8px;padding:10px;text-align:center}
+.fm{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #1e293b}
+.fm:last-child{border-bottom:none}
+.fd{width:7px;height:7px;border-radius:50%;margin-top:4px;flex-shrink:0}
+.fm-t{font-size:13px;color:#e2e8f0;margin-bottom:2px}
+.fm-s{font-size:11px;color:#475569}
+.scan-g{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.sg{background:#0a0f1e;border-radius:8px;padding:10px;text-align:center}
+.sgv{font-size:17px;font-weight:700;margin-bottom:2px}
+.sgl{font-size:10px;color:#475569;text-transform:uppercase;letter-spacing:1px}
+/* 精選期權 */
+.pick-card{background:#0f172a;border-radius:12px;padding:14px 16px;margin-bottom:10px;border:1px solid #1e293b}
+.pc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.pc-left{display:flex;align-items:center;gap:10px}
+.pc-rank{font-size:11px;color:#475569;width:24px}
+.pc-tk{font-size:18px;font-weight:700;color:#f1f5f9}
+.pc-dir-call{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:#22c55e22;color:#22c55e}
+.pc-dir-put{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:#ef444422;color:#ef4444}
+.pc-dir-strad{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:#f59e0b22;color:#f59e0b}
+.pc-score{font-size:16px;font-weight:700}
+.pc-sl{font-size:10px;color:#475569}
+.pc-flags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
+.pflag{font-size:11px;padding:2px 7px;border-radius:4px;background:#f59e0b22;color:#f59e0b}
+.pc-reason{font-size:13px;color:#94a3b8;margin-bottom:8px;line-height:1.5}
+.pc-meta{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:8px}
+.pm{background:#0a0f1e;border-radius:6px;padding:6px 8px}
+.pml{font-size:10px;color:#475569;margin-bottom:1px}
+.pmv{font-size:12px;font-weight:600}
+.pc-bottom{display:flex;align-items:center;justify-content:space-between;font-size:11px;flex-wrap:wrap;gap:6px}
+.pc-strat{background:#3b82f622;color:#60a5fa;padding:2px 8px;border-radius:4px}
+.pc-risk{color:#ef4444}
+/* 掃描 */
+.seg{display:flex;border:1px solid #1e293b;border-radius:6px;overflow:hidden;margin-bottom:14px}
+.sb{flex:1;padding:8px 0;font-size:11px;font-weight:600;cursor:pointer;background:transparent;border:none;color:#64748b;border-right:1px solid #1e293b;transition:all 0.15s}
+.sb:last-child{border-right:none}
+.sb.active{background:#1e293b;color:#e2e8f0}
+.spanel{display:none}.spanel.show{display:block}
+.ocard{background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:14px 16px;margin-bottom:10px}
+.ocard-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.rnk{font-size:10px;color:#475569;margin-bottom:2px}
+.otk{font-size:16px;font-weight:700;color:#f1f5f9}
+.obadge{font-size:10px;padding:2px 7px;border-radius:4px;background:#1e293b;color:#64748b;margin-left:6px}
+.oco{font-size:12px;color:#475569;margin-top:2px}
+.sc-col{text-align:right}
+.scn{font-size:20px;font-weight:700}
+.scl{font-size:10px;color:#475569}
+.scbar{width:70px;height:4px;background:#1e293b;border-radius:2px;overflow:hidden;margin:3px 0 0 auto}
+.scfill{height:4px;border-radius:2px}
+.mets{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:10px}
+.met{background:#0a0f1e;border-radius:6px;padding:6px 8px}
+.ml2{font-size:10px;color:#475569;margin-bottom:1px}
+.mv{font-size:13px;font-weight:600}
+.dcall{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:#22c55e22;color:#22c55e}
+.dput{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:#ef444422;color:#ef4444}
+.oi-txt{font-size:12px;color:#64748b}
+.drow{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.flags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
+.flag{font-size:11px;padding:2px 7px;border-radius:4px;background:#f59e0b22;color:#f59e0b}
+.exrow{font-size:11px;color:#475569}
+.exd{display:inline-block;background:#1e293b;border-radius:4px;padding:1px 6px;margin:0 3px}
+/* 行事曆 */
+.cal-week{display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px}
+.cal-day{flex-shrink:0;width:52px;background:#0f172a;border-radius:10px;padding:8px 4px;text-align:center;border:1px solid #1e293b;cursor:pointer;transition:border-color 0.15s}
+.cal-day.today{border-color:#3b82f6}
+.cal-day.has-event{position:relative}
+.cal-day.has-event::after{content:'';position:absolute;bottom:5px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:#f59e0b}
+.cal-day.has-fda::after{background:#ef4444}
+.cal-day.has-earn::after{background:#22c55e}
+.cd-name{font-size:10px;color:#475569;margin-bottom:4px}
+.cd-num{font-size:16px;font-weight:700;color:#f1f5f9}
+.ev-list{display:flex;flex-direction:column;gap:8px}
+.ev-card{background:#0f172a;border-radius:10px;padding:12px 14px;border:1px solid #1e293b;display:flex;gap:12px;align-items:flex-start}
+.ev-dot{width:8px;height:8px;border-radius:50%;margin-top:4px;flex-shrink:0}
+.ev-body{flex:1}
+.ev-title{font-size:13px;font-weight:600;color:#f1f5f9;margin-bottom:2px}
+.ev-sub{font-size:12px;color:#64748b;line-height:1.5}
+.ev-tag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;display:inline-block;margin-top:5px}
+.tag-fda{background:#ef444422;color:#ef4444}
+.tag-earn{background:#22c55e22;color:#22c55e}
+.tag-data{background:#a78bfa22;color:#a78bfa}
+.ev-impact{font-size:11px;color:#475569;margin-top:4px}
+.cal-filter{display:flex;gap:6px;margin-bottom:12px}
+.cf{font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;border:1px solid #1e293b;background:transparent;color:#64748b;transition:all 0.15s}
+.cf.active{background:#1e293b;color:#e2e8f0}
+/* 名詞解釋 */
+.search-wrap{position:relative;margin-bottom:16px}
+.search-wrap input{width:100%;background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:11px 16px 11px 40px;color:#e2e8f0;font-size:14px;outline:none;transition:border-color 0.15s}
+.search-wrap input:focus{border-color:#3b82f6}
+.search-wrap input::placeholder{color:#475569}
+.si{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#475569}
+.cat-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.cat{font-size:11px;font-weight:600;padding:5px 10px;border-radius:20px;cursor:pointer;border:1px solid #1e293b;background:transparent;color:#64748b;transition:all 0.15s}
+.cat.active{background:#3b82f622;border-color:#3b82f6;color:#60a5fa}
+.term-card{background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:0;margin-bottom:8px;overflow:hidden}
+.term-head{display:flex;align-items:center;justify-content:space-between;padding:13px 15px;cursor:pointer}
+.th-left{display:flex;align-items:center;gap:10px}
+.t-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.t-name{font-size:13px;font-weight:600;color:#f1f5f9;margin-bottom:1px}
+.t-short{font-size:11px;color:#64748b}
+.t-arr{color:#334155;font-size:11px;transition:transform 0.2s}
+.t-arr.open{transform:rotate(180deg)}
+.term-body{display:none;padding:0 15px 14px;border-top:1px solid #1e293b}
+.term-body.show{display:block}
+.tb-main{font-size:13px;color:#94a3b8;line-height:1.8;margin-bottom:10px;padding-top:10px}
+.ex-box{background:#0a0f1e;border-radius:8px;padding:10px 12px;margin-bottom:8px}
+.ex-lbl{font-size:10px;color:#475569;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px}
+.ex-txt{font-size:12px;color:#cbd5e1;line-height:1.7}
+.an-box{background:#3b82f611;border:1px solid #3b82f633;border-radius:8px;padding:10px 12px;margin-bottom:8px}
+.an-lbl{font-size:10px;color:#60a5fa;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+.an-txt{font-size:12px;color:#93c5fd;line-height:1.7}
+.rule-box2{background:#22c55e11;border:1px solid #22c55e33;border-radius:8px;padding:10px 12px;margin-bottom:8px}
+.rule-lbl{font-size:10px;color:#22c55e;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+.rule-txt{font-size:12px;color:#86efac;line-height:1.7}
+.warn-box2{background:#ef444411;border:1px solid #ef444433;border-radius:8px;padding:10px 12px;margin-bottom:8px}
+.warn-lbl{font-size:10px;color:#ef4444;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+.warn-txt{font-size:12px;color:#fca5a5;line-height:1.7}
+.no-result{text-align:center;padding:40px 20px;color:#475569}
+/* 政治雷達 */
+.pol-row{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #1e293b}
+.pol-row:last-child{border-bottom:none}
+.pol-tag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;white-space:nowrap;margin-top:2px}
+.hot-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #1e293b}
+.hot-row:last-child{border-bottom:none}
+.hbar{flex:1;height:5px;background:#1e293b;border-radius:3px;overflow:hidden}
+.hfill{height:5px;border-radius:3px}
+@media(max-width:480px){.stats{grid-template-columns:repeat(2,1fr)}.mets{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}.pc-meta{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ══ 首頁 ══ -->
+<div class="page show" id="pg-home">
+<div class="topbar">
+  <div><div class="t1">AI 美股日報</div><div class="t2">2026-08-20 · 08:30 ET</div></div>
+  <span style="font-size:11px;background:#22c55e22;color:#22c55e;padding:3px 8px;border-radius:20px;font-weight:700">● 即時</span>
+</div>
+<div class="mood-row">
+  <span class="chip chip-bull">多頭</span>
+  <div class="prog"><div class="progf" style="width:74%;background:#22c55e"></div></div>
+  <span class="ml">情緒 74/100</span>
+</div>
+<div class="hl">💡 NVDA財報點燃半導體，掃描17支期權異動，政治利多能源板塊，MRNA FDA明日審批</div>
+<div class="stats">
+  <div class="stat" id="st-scan" onclick="tgl('scan')"><div class="sv">503</div><div class="sl">掃描</div><div class="arr">▼</div></div>
+  <div class="stat" id="st-alert" onclick="tgl('alert')"><div class="sv up">17</div><div class="sl">異動股</div><div class="arr">▼</div></div>
+  <div class="stat" id="st-events" onclick="tgl('events')"><div class="sv warn">6</div><div class="sl">本週事件</div><div class="arr">▼</div></div>
+  <div class="stat" id="st-vix" onclick="tgl('vix')"><div class="sv warn">18.4</div><div class="sl">VIX</div><div class="arr">▼</div></div>
+</div>
+<div class="dpanel" id="dp-scan">
+  <div class="dp-head"><span class="dp-title">掃描範圍</span><span class="dp-x" onclick="cls('scan')">×</span></div>
+  <div class="scan-g"><div class="sg"><div class="sgv">172</div><div class="sgl">大型股</div></div><div class="sg"><div class="sgv">218</div><div class="sgl">中型股</div></div><div class="sg"><div class="sgv">113</div><div class="sgl">小型股</div></div></div>
+  <div style="font-size:12px;color:#475569;line-height:1.7">每支檢查：盤前漲跌 · 成交量 · IV · P/C Ratio · 未平倉量</div>
+</div>
+<div class="dpanel" id="dp-alert">
+  <div class="dp-head"><span class="dp-title">今日17支異動股</span><span class="dp-x" onclick="cls('alert')">×</span></div>
+  <div class="ar"><span class="ar-rk">#1</span><span class="ar-tk">MRNA</span><span class="ar-b bc">CALL</span><span class="ar-fl">盤前+18.4% · FDA明日 · IV 198%</span><span class="ar-pc up">+18.4%</span><span class="ar-sc up">118分</span></div>
+  <div class="ar"><span class="ar-rk">#2</span><span class="ar-tk">SMCI</span><span class="ar-b bc">CALL</span><span class="ar-fl">盤前+11.3% · IV Rank 91%</span><span class="ar-pc up">+11.3%</span><span class="ar-sc up">95分</span></div>
+  <div class="ar"><span class="ar-rk">#3</span><span class="ar-tk">IONQ</span><span class="ar-b bc">CALL</span><span class="ar-fl">盤前+11.2% · IV飆升45%</span><span class="ar-pc up">+11.2%</span><span class="ar-sc up">88分</span></div>
+  <div class="ar"><span class="ar-rk">#4</span><span class="ar-tk">WBA</span><span class="ar-b bp">PUT</span><span class="ar-fl">盤前-7.2% · P/C=2.14</span><span class="ar-pc dn">-7.2%</span><span class="ar-sc up">72分</span></div>
+  <div class="ar"><span class="ar-rk">#5</span><span class="ar-tk">PLTR</span><span class="ar-b bc">CALL</span><span class="ar-fl">成交量3.5x · IV飆升33% · 政治買入</span><span class="ar-pc up">+3.1%</span><span class="ar-sc up">65分</span></div>
+  <div class="ar"><span class="ar-rk">#6</span><span class="ar-tk">LNG</span><span class="ar-b bc">CALL</span><span class="ar-fl">特朗普能源利多 · 議員買入</span><span class="ar-pc up">+2.8%</span><span class="ar-sc up">62分</span></div>
+  <div class="ar"><span class="ar-rk">#7</span><span class="ar-tk">NVDA</span><span class="ar-b bc">CALL</span><span class="ar-fl">財報超預期 · Pelosi持有</span><span class="ar-pc up">+6.2%</span><span class="ar-sc up">60分</span></div>
+  <div class="ar"><span class="ar-rk">#8</span><span class="ar-tk">ARM</span><span class="ar-b bc">CALL</span><span class="ar-fl">半導體族群共振+5.8%</span><span class="ar-pc up">+5.8%</span><span class="ar-sc up">58分</span></div>
+  <div class="ar"><span class="ar-rk">#9</span><span class="ar-tk">VRTX</span><span class="ar-b bc">CALL</span><span class="ar-fl">FDA委員會明日 · IV升溫</span><span class="ar-pc up">+2.1%</span><span class="ar-sc up">52分</span></div>
+  <div class="ar"><span class="ar-rk">#10</span><span class="ar-tk">INTC</span><span class="ar-b bp">PUT</span><span class="ar-fl">市佔持續流失 · 議員賣出</span><span class="ar-pc dn">-4.7%</span><span class="ar-sc dn">44分</span></div>
+  <div style="padding:8px 0;font-size:11px;color:#475569;text-align:center">另有 7 支低信號異動股</div>
+</div>
+<div class="dpanel" id="dp-events">
+  <div class="dp-head"><span class="dp-title">本週6個重要事件</span><span class="dp-x" onclick="cls('events')">×</span></div>
+  <div class="fm"><div class="fd" style="background:#ef4444"></div><div><div class="fm-t">MRNA — FDA PDUFA 審批日</div><div class="fm-s">08/21 週四 · 明日 · 股價±50%風險</div></div></div>
+  <div class="fm"><div class="fd" style="background:#22c55e"></div><div><div class="fm-t">NVDA — 財報電話會議</div><div class="fm-s">08/20 今日 17:00 · 已盤前反應</div></div></div>
+  <div class="fm"><div class="fd" style="background:#f59e0b"></div><div><div class="fm-t">VRTX — FDA諮詢委員會</div><div class="fm-s">08/22 週五 · 影響生技板塊</div></div></div>
+  <div class="fm"><div class="fd" style="background:#22c55e"></div><div><div class="fm-t">INTC — 財報公布</div><div class="fm-s">08/22 週五盤後</div></div></div>
+  <div class="fm"><div class="fd" style="background:#a78bfa"></div><div><div class="fm-t">ALNY — 3期臨床數據</div><div class="fm-s">08/24 週一</div></div></div>
+  <div class="fm"><div class="fd" style="background:#64748b"></div><div><div class="fm-t">PCE 通膨數據</div><div class="fm-s">08/29 週五 · 影響Fed政策預期</div></div></div>
+</div>
+<div class="dpanel" id="dp-vix">
+  <div class="dp-head"><span class="dp-title">VIX 恐慌指數</span><span class="dp-x" onclick="cls('vix')">×</span></div>
+  <div class="vix-g">
+    <div class="vz" style="background:#22c55e18;border:1px solid #22c55e44"><div style="font-size:15px;font-weight:700;color:#22c55e;margin-bottom:3px">&lt;15</div><div style="font-size:11px;color:#22c55e">平靜<br>期權便宜</div></div>
+    <div class="vz" style="background:#f59e0b18;border:1px solid #f59e0b55"><div style="font-size:15px;font-weight:700;color:#f59e0b;margin-bottom:3px">15-25</div><div style="font-size:11px;color:#f59e0b">正常<br>今日18.4✓</div></div>
+    <div class="vz" style="background:#ef444418;border:1px solid #ef444444"><div style="font-size:15px;font-weight:700;color:#ef4444;margin-bottom:3px">&gt;25</div><div style="font-size:11px;color:#ef4444">恐慌<br>期權很貴</div></div>
+  </div>
+  <div style="font-size:12px;color:#64748b;line-height:1.7">VIX=18.4 是大盤整體溫度。個股如 MRNA IV=198% 是因為 FDA 事件，和大盤 VIX 無關。</div>
+</div>
+<div class="sec" style="margin-top:4px">今日大盤</div>
+<div class="grid2" style="margin-bottom:16px">
+  <div class="ibox"><div class="ilabel">板塊強弱</div><div class="ival">半導體 > AI軟體 > 能源 > 通訊 > 金融</div></div>
+  <div class="ibox"><div class="ilabel">風險提示</div><div class="ival">Fed官員15:00發言 · MRNA FDA明日結果</div></div>
+</div>
+</div>
+
+<!-- ══ 期權精選 ══ -->
+<div class="page" id="pg-picks">
+<div class="topbar">
+  <div><div class="t1">期權精選</div><div class="t2">AI 評分 · 今日5個機會</div></div>
+  <div class="dtag">08/20</div>
+</div>
+<div class="pick-card" style="border-color:#3b82f6">
+  <div class="pc-top"><div class="pc-left"><span class="pc-rank">#1</span><span class="pc-tk">MRNA</span><span class="pc-dir-call">CALL</span></div><div style="text-align:right"><div class="pc-score up">118分</div><div class="pc-sl">綜合評分</div></div></div>
+  <div class="pc-flags"><span class="pflag">FDA審批明日</span><span class="pflag">IV 198%</span><span class="pflag">P/C=0.18極偏多</span><span class="pflag">成交量28x</span></div>
+  <div class="pc-reason">FDA PDUFA 明日結果，市場極度押注通過。IV已極高，建議用Call價差而非裸買Call控制成本，避免IV Crush。</div>
+  <div class="pc-meta"><div class="pm"><div class="pml">建議Strike</div><div class="pmv up">$145 C</div></div><div class="pm"><div class="pml">到期日</div><div class="pmv">08/29</div></div><div class="pm"><div class="pml">IV</div><div class="pmv warn">198%</div></div><div class="pm"><div class="pml">P/C</div><div class="pmv up">0.18</div></div></div>
+  <div class="pc-bottom"><span class="pc-strat">策略：Bull Call Spread</span><span class="pc-risk">⚠ FDA拒絕可跌50%+</span></div>
+</div>
+<div class="pick-card">
+  <div class="pc-top"><div class="pc-left"><span class="pc-rank">#2</span><span class="pc-tk">SMCI</span><span class="pc-dir-call">CALL</span></div><div style="text-align:right"><div class="pc-score up">95分</div><div class="pc-sl">綜合評分</div></div></div>
+  <div class="pc-flags"><span class="pflag">財報超預期</span><span class="pflag">IV Rank 91%</span><span class="pflag">成交量8x</span></div>
+  <div class="pc-reason">財報EPS超預期帶動盤前跳空，AI伺服器需求強勁。IV已高但未到頂，短線Call直接買。</div>
+  <div class="pc-meta"><div class="pm"><div class="pml">建議Strike</div><div class="pmv up">$95 C</div></div><div class="pm"><div class="pml">到期日</div><div class="pmv">08/29</div></div><div class="pm"><div class="pml">IV</div><div class="pmv warn">82%</div></div><div class="pm"><div class="pml">P/C</div><div class="pmv up">0.38</div></div></div>
+  <div class="pc-bottom"><span class="pc-strat">策略：直接買Call</span><span class="pc-risk">⚠ 大盤回落快速止損</span></div>
+</div>
+<div class="pick-card">
+  <div class="pc-top"><div class="pc-left"><span class="pc-rank">#3</span><span class="pc-tk">WBA</span><span class="pc-dir-put">PUT</span></div><div style="text-align:right"><div class="pc-score dn">72分</div><div class="pc-sl">綜合評分</div></div></div>
+  <div class="pc-flags"><span class="pflag">盤前暴跌-7.2%</span><span class="pflag">P/C=2.14偏空</span><span class="pflag">IV飆升61%</span></div>
+  <div class="pc-reason">關店計劃擴大加盈利預警，機構大量買Put保護。股價低位但下行動能仍強。</div>
+  <div class="pc-meta"><div class="pm"><div class="pml">建議Strike</div><div class="pmv dn">$10 P</div></div><div class="pm"><div class="pml">到期日</div><div class="pmv">09/19</div></div><div class="pm"><div class="pml">IV</div><div class="pmv warn">145%</div></div><div class="pm"><div class="pml">P/C</div><div class="pmv dn">2.14</div></div></div>
+  <div class="pc-bottom"><span class="pc-strat">策略：直接買Put</span><span class="pc-risk">⚠ 反彈即止損</span></div>
+</div>
+<div class="pick-card">
+  <div class="pc-top"><div class="pc-left"><span class="pc-rank">#4</span><span class="pc-tk">LNG</span><span class="pc-dir-call">CALL</span></div><div style="text-align:right"><div class="pc-score up">68分</div><div class="pc-sl">綜合評分</div></div></div>
+  <div class="pc-flags"><span class="pflag">特朗普能源利多</span><span class="pflag">議員買入確認</span><span class="pflag">成交量2.4x</span></div>
+  <div class="pc-reason">政治+數據雙重信號。特朗普發文能源利多 + 能源委員會議員本週買入 LNG，信號可信度高。</div>
+  <div class="pc-meta"><div class="pm"><div class="pml">建議Strike</div><div class="pmv up">$190 C</div></div><div class="pm"><div class="pml">到期日</div><div class="pmv">09/19</div></div><div class="pm"><div class="pml">IV</div><div class="pmv warn">44%</div></div><div class="pm"><div class="pml">P/C</div><div class="pmv up">0.52</div></div></div>
+  <div class="pc-bottom"><span class="pc-strat">策略：直接買Call</span><span class="pc-risk">⚠ 政治消息反轉風險</span></div>
+</div>
+<div class="pick-card">
+  <div class="pc-top"><div class="pc-left"><span class="pc-rank">#5</span><span class="pc-tk">PLTR</span><span class="pc-dir-strad">跨式</span></div><div style="text-align:right"><div class="pc-score warn">65分</div><div class="pc-sl">綜合評分</div></div></div>
+  <div class="pc-flags"><span class="pflag">成交量3.5x</span><span class="pflag">IV飆升33%</span><span class="pflag">議員買入</span><span class="pflag">方向不明</span></div>
+  <div class="pc-reason">成交量異常放大且有議員買入，但方向不明。P/C中性偏多，適合用Straddle賺波動。</div>
+  <div class="pc-meta"><div class="pm"><div class="pml">建議Strike</div><div class="pmv warn">$87 兩邊</div></div><div class="pm"><div class="pml">到期日</div><div class="pmv">09/19</div></div><div class="pm"><div class="pml">IV</div><div class="pmv warn">68%</div></div><div class="pm"><div class="pml">P/C</div><div class="pmv up">0.44</div></div></div>
+  <div class="pc-bottom"><span class="pc-strat">策略：Straddle 跨式</span><span class="pc-risk">⚠ 橫盤兩邊都虧</span></div>
+</div>
+</div>
+
+<!-- ══ 行事曆 ══ -->
+<div class="page" id="pg-cal">
+<div class="topbar">
+  <div><div class="t1">本週行事曆</div><div class="t2">財報 + FDA + 經濟數據</div></div>
+  <div class="dtag">08/20週</div>
+</div>
+<div class="cal-week">
+  <div class="cal-day today has-earn"><div class="cd-name">週四</div><div class="cd-num">20</div></div>
+  <div class="cal-day has-fda"><div class="cd-name">週五</div><div class="cd-num">21</div></div>
+  <div class="cal-day has-earn"><div class="cd-name">週六</div><div class="cd-num">22</div></div>
+  <div class="cal-day"><div class="cd-name">週日</div><div class="cd-num">23</div></div>
+  <div class="cal-day has-event"><div class="cd-name">週一</div><div class="cd-num">24</div></div>
+  <div class="cal-day"><div class="cd-name">週二</div><div class="cd-num">25</div></div>
+  <div class="cal-day has-earn"><div class="cd-name">週五</div><div class="cd-num">29</div></div>
+</div>
+<div class="cal-filter">
+  <button class="cf active" onclick="calFilter('all',this)">全部</button>
+  <button class="cf" onclick="calFilter('earn',this)">📊 財報</button>
+  <button class="cf" onclick="calFilter('fda',this)">💊 FDA</button>
+  <button class="cf" onclick="calFilter('macro',this)">📈 總經</button>
+</div>
+<div class="ev-list" id="ev-list">
+  <div class="ev-card" data-type="earn"><div class="ev-dot" style="background:#22c55e"></div><div class="ev-body"><div class="ev-title">NVDA — 財報電話會議</div><div class="ev-sub">08/20 今日 17:00 ET · 盤前已漲 +6.2%</div><span class="ev-tag tag-earn">財報</span><div class="ev-impact">影響：SMCI / ARM / AMAT 跟漲</div></div></div>
+  <div class="ev-card" data-type="fda"><div class="ev-dot" style="background:#ef4444"></div><div class="ev-body"><div class="ev-title">MRNA — FDA PDUFA 審批日 🔴</div><div class="ev-sub">08/21 明日 · 最終結果 · ±50%風險</div><span class="ev-tag tag-fda">FDA審批</span><div class="ev-impact">期權：IV=198%，建議Bull Call Spread</div></div></div>
+  <div class="ev-card" data-type="fda"><div class="ev-dot" style="background:#f59e0b"></div><div class="ev-body"><div class="ev-title">VRTX — FDA諮詢委員會</div><div class="ev-sub">08/22 週五 · 委員會投票</div><span class="ev-tag tag-fda">FDA委員會</span><div class="ev-impact">IV已升溫，批准概率市場估70%+</div></div></div>
+  <div class="ev-card" data-type="earn"><div class="ev-dot" style="background:#22c55e"></div><div class="ev-body"><div class="ev-title">INTC — Q2財報公布</div><div class="ev-sub">08/22 週五盤後 · 市場預期偏悲觀</div><span class="ev-tag tag-earn">財報</span><div class="ev-impact">Put方向為主，IV Rank=88%，議員已賣出</div></div></div>
+  <div class="ev-card" data-type="fda"><div class="ev-dot" style="background:#a78bfa"></div><div class="ev-body"><div class="ev-title">ALNY — RNAi 3期臨床數據</div><div class="ev-sub">08/24 週一 · 影響同類生技股</div><span class="ev-tag tag-data">臨床數據</span><div class="ev-impact">影響：ALNY / NTLA / BEAM 等基因編輯類</div></div></div>
+  <div class="ev-card" data-type="macro"><div class="ev-dot" style="background:#64748b"></div><div class="ev-body"><div class="ev-title">PCE 通膨數據公布</div><div class="ev-sub">08/29 週五 08:30 ET</div><span class="ev-tag" style="background:#64748b22;color:#94a3b8">總經數據</span><div class="ev-impact">決定9月是否降息，影響全市場</div></div></div>
+</div>
+</div>
+
+<!-- ══ 全市場掃描 ══ -->
+<div class="page" id="pg-scan">
+<div class="topbar">
+  <div><div class="t1">全市場掃描</div><div class="t2">標普500 · 503支</div></div>
+  <div class="dtag">08/20</div>
+</div>
+<div class="seg">
+  <button class="sb active" onclick="sws('all',this)">全部17支</button>
+  <button class="sb" onclick="sws('call',this)">CALL 9支</button>
+  <button class="sb" onclick="sws('put',this)">PUT 5支</button>
+  <button class="sb" onclick="sws('fda',this)">FDA相關</button>
+</div>
+<div class="spanel show" id="sp-all">
+  <div class="ocard"><div class="ocard-top"><div><div class="rnk">#1 今日焦點</div><div><span class="otk">MRNA</span><span class="obadge">$13B</span></div><div class="oco">Moderna Inc</div></div><div class="sc-col"><div class="scn up">118</div><div class="scl">/100</div><div class="scbar"><div class="scfill" style="width:100%;background:#22c55e"></div></div></div></div>
+  <div class="mets"><div class="met"><div class="ml2">盤前</div><div class="mv up">+18.4%</div></div><div class="met"><div class="ml2">IV</div><div class="mv warn">198%</div></div><div class="met"><div class="ml2">IV Rank</div><div class="mv warn">94%</div></div><div class="met"><div class="ml2">P/C</div><div class="mv up">0.18</div></div></div>
+  <div class="drow"><span class="dcall">CALL</span><span class="oi-txt">最大OI: $145 · 22,400張</span></div>
+  <div class="flags"><span class="flag">盤前+18.4%</span><span class="flag">成交量28x</span><span class="flag">IV飆升84%</span><span class="flag">FDA明日</span></div>
+  <div class="exrow">到期：<span class="exd">08/22</span><span class="exd">08/29</span><span class="exd">09/19</span></div></div>
+  <div class="ocard"><div class="ocard-top"><div><div class="rnk">#2</div><div><span class="otk">SMCI</span><span class="obadge">$28B</span></div><div class="oco">Super Micro Computer</div></div><div class="sc-col"><div class="scn up">95</div><div class="scl">/100</div><div class="scbar"><div class="scfill" style="width:95%;background:#22c55e"></div></div></div></div>
+  <div class="mets"><div class="met"><div class="ml2">盤前</div><div class="mv up">+11.3%</div></div><div class="met"><div class="ml2">IV</div><div class="mv warn">82%</div></div><div class="met"><div class="ml2">IV Rank</div><div class="mv warn">91%</div></div><div class="met"><div class="ml2">P/C</div><div class="mv up">0.38</div></div></div>
+  <div class="drow"><span class="dcall">CALL</span><span class="oi-txt">最大OI: $95 · 12,400張</span></div>
+  <div class="flags"><span class="flag">盤前+11.3%</span><span class="flag">成交量8x</span><span class="flag">IV Rank 91%</span></div>
+  <div class="exrow">到期：<span class="exd">08/22</span><span class="exd">08/29</span><span class="exd">09/19</span></div></div>
+  <div class="ocard"><div class="ocard-top"><div><div class="rnk">#3</div><div><span class="otk">IONQ</span><span class="obadge">$6B</span></div><div class="oco">IonQ Inc</div></div><div class="sc-col"><div class="scn up">88</div><div class="scl">/100</div><div class="scbar"><div class="scfill" style="width:88%;background:#22c55e"></div></div></div></div>
+  <div class="mets"><div class="met"><div class="ml2">盤前</div><div class="mv up">+11.2%</div></div><div class="met"><div class="ml2">IV</div><div class="mv warn">128%</div></div><div class="met"><div class="ml2">IV Rank</div><div class="mv warn">85%</div></div><div class="met"><div class="ml2">P/C</div><div class="mv up">0.29</div></div></div>
+  <div class="drow"><span class="dcall">CALL</span><span class="oi-txt">最大OI: $35 · 7,800張</span></div>
+  <div class="flags"><span class="flag">盤前+11.2%</span><span class="flag">IV飆升45%</span><span class="flag">大量買Call</span></div>
+  <div class="exrow">到期：<span class="exd">08/22</span><span class="exd">09/19</span></div></div>
+  <div class="ocard"><div class="ocard-top"><div><div class="rnk">#4 空頭</div><div><span class="otk">WBA</span><span class="obadge">$3B</span></div><div class="oco">Walgreens Boots Alliance</div></div><div class="sc-col"><div class="scn dn">72</div><div class="scl">/100</div><div class="scbar"><div class="scfill" style="width:72%;background:#ef4444"></div></div></div></div>
+  <div class="mets"><div class="met"><div class="ml2">盤前</div><div class="mv dn">-7.2%</div></div><div class="met"><div class="ml2">IV</div><div class="mv warn">145%</div></div><div class="met"><div class="ml2">IV Rank</div><div class="mv warn">88%</div></div><div class="met"><div class="ml2">P/C</div><div class="mv dn">2.14</div></div></div>
+  <div class="drow"><span class="dput">PUT</span><span class="oi-txt">最大OI: $10 · 18,200張</span></div>
+  <div class="flags"><span class="flag">盤前-7.2%</span><span class="flag">P/C=2.14偏空</span><span class="flag">IV飆升61%</span></div>
+  <div class="exrow">到期：<span class="exd">08/22</span><span class="exd">09/19</span></div></div>
+  <div class="ocard"><div class="ocard-top"><div><div class="rnk">#5</div><div><span class="otk">LNG</span><span class="obadge">$50B</span></div><div class="oco">Cheniere Energy · 政治+數據雙信號</div></div><div class="sc-col"><div class="scn up">68</div><div class="scl">/100</div><div class="scbar"><div class="scfill" style="width:68%;background:#22c55e"></div></div></div></div>
+  <div class="mets"><div class="met"><div class="ml2">盤前</div><div class="mv up">+2.8%</div></div><div class="met"><div class="ml2">IV</div><div class="mv warn">44%</div></div><div class="met"><div class="ml2">IV Rank</div><div class="mv">65%</div></div><div class="met"><div class="ml2">P/C</div><div class="mv up">0.52</div></div></div>
+  <div class="drow"><span class="dcall">CALL</span><span class="oi-txt">最大OI: $190 · 8,200張</span></div>
+  <div class="flags"><span class="flag">特朗普能源發文</span><span class="flag">議員買入</span><span class="flag">成交量2.4x</span></div>
+  <div class="exrow">到期：<span class="exd">08/29</span><span class="exd">09/19</span><span class="exd">10/17</span></div></div>
+  <div style="text-align:center;padding:12px 0;font-size:12px;color:#475569">另有 12 支異動股</div>
+</div>
+<div class="spanel" id="sp-call"><div style="padding:20px;text-align:center;color:#475569;font-size:13px">CALL 方向 9 支：MRNA · SMCI · IONQ · LNG · PLTR · NVDA · ARM · VRTX · LRCX</div></div>
+<div class="spanel" id="sp-put"><div style="padding:20px;text-align:center;color:#475569;font-size:13px">PUT 方向 5 支：WBA · INTC · SOUN · BA · NFLX</div></div>
+<div class="spanel" id="sp-fda">
+  <div class="ocard"><div class="ocard-top"><div><div class="rnk">#1 FDA相關</div><div><span class="otk">MRNA</span></div><div class="oco">PDUFA明日 · IV=198%</div></div><div class="sc-col"><div class="scn up">118</div><div class="scl">/100</div></div></div><div class="flags"><span class="flag">FDA審批明日</span><span class="flag">IV飆升84%</span><span class="flag">成交量28x</span></div></div>
+  <div class="ocard"><div class="ocard-top"><div><div class="rnk">#2 FDA相關</div><div><span class="otk">VRTX</span></div><div class="oco">委員會明日 · IV升溫</div></div><div class="sc-col"><div class="scn up">52</div><div class="scl">/100</div></div></div><div class="flags"><span class="flag">FDA委員會08/22</span><span class="flag">批准概率70%+</span></div></div>
+</div>
+</div>
+
+<!-- ══ 政治雷達 ══ -->
+<div class="page" id="pg-pol">
+<div class="topbar">
+  <div><div class="t1">政治雷達</div><div class="t2">特朗普 · 國會申報 · 政策</div></div>
+  <div class="dtag">08/20</div>
+</div>
+<div style="display:flex;align-items:center;gap:10px;background:#0f172a;border-radius:10px;padding:14px 16px;margin-bottom:12px;border:1px solid #1e293b">
+  <span style="background:#22c55e22;color:#22c55e;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:700">利多</span>
+  <span style="color:#94a3b8;font-size:13px;flex:1">能源政策確認 + Pelosi 買入 NVDA，科技與能源雙獲政治支撐</span>
+</div>
+<div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap">
+  <span style="background:#3b82f622;color:#3b82f6;padding:2px 10px;border-radius:4px;font-size:12px;font-weight:700">NVDA</span>
+  <span style="background:#3b82f622;color:#3b82f6;padding:2px 10px;border-radius:4px;font-size:12px;font-weight:700">LNG</span>
+  <span style="background:#3b82f622;color:#3b82f6;padding:2px 10px;border-radius:4px;font-size:12px;font-weight:700">XOM</span>
+  <span style="background:#3b82f622;color:#3b82f6;padding:2px 10px;border-radius:4px;font-size:12px;font-weight:700">PLTR</span>
+  <span style="color:#475569;font-size:12px;align-self:center">← AI 識別受影響股票</span>
+</div>
+<div class="sec">特朗普 / 政策消息（Google News 每日自動抓取）</div>
+<div class="card" style="padding:4px 16px">
+  <div class="pol-row"><span class="pol-tag" style="background:#ef444422;color:#ef4444">特朗普</span><div style="flex:1"><div style="font-size:13px;color:#e2e8f0;line-height:1.4">Truth Social：「WE WILL WIN BIG ON ENERGY!」能源板塊 XOM、LNG、CVX 盤前跟漲</div><div style="font-size:11px;color:#475569;margin-top:2px">2026-08-19 · Reuters</div></div></div>
+  <div class="pol-row"><span class="pol-tag" style="background:#ef444422;color:#ef4444">DJT異動</span><div style="flex:1"><div style="font-size:13px;color:#e2e8f0;line-height:1.4">DJT 無消息急升 +8.4%，成交量 5x 均量，疑似媒體合作協議，歷史上類似異動 60% 3日回吐</div><div style="font-size:11px;color:#475569;margin-top:2px">2026-08-18 · MarketWatch</div></div></div>
+  <div class="pol-row"><span class="pol-tag" style="background:#f59e0b22;color:#f59e0b">政策</span><div style="flex:1"><div style="font-size:13px;color:#e2e8f0;line-height:1.4">對中國半導體關稅談判暫緩，NVDA、AMD、QCOM 盤前受惠，關注白宮正式確認</div><div style="font-size:11px;color:#475569;margin-top:2px">2026-08-15 · WSJ</div></div></div>
+  <div class="pol-row"><span class="pol-tag" style="background:#3b82f622;color:#3b82f6">分析</span><div style="flex:1"><div style="font-size:13px;color:#e2e8f0;line-height:1.4">Trump administration signals LNG export expansion — energy sector stocks gain on policy optimism</div><div style="font-size:11px;color:#475569;margin-top:2px">2026-08-19 · Bloomberg</div></div></div>
+</div>
+<div class="sec">國會議員持倉申報（STOCK Act）</div>
+<div class="card" style="padding:4px 16px">
+  <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #1e293b">
+    <span style="background:#22c55e22;color:#22c55e;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;white-space:nowrap">買 Call</span>
+    <span style="font-weight:700;color:#f1f5f9;min-width:52px">NVDA</span>
+    <span style="color:#94a3b8;font-size:12px;flex:1">Nancy Pelosi · 眾議員 · 科技委員會 · 歷史勝率&gt;80%</span>
+    <span style="color:#475569;font-size:11px">08/12</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #1e293b">
+    <span style="background:#22c55e22;color:#22c55e;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;white-space:nowrap">買入</span>
+    <span style="font-weight:700;color:#f1f5f9;min-width:52px">LNG</span>
+    <span style="color:#94a3b8;font-size:12px;flex:1">Dan Crenshaw · 眾議員 · 能源委員會（配合特朗普政策）</span>
+    <span style="color:#475569;font-size:11px">08/10</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #1e293b">
+    <span style="background:#ef444422;color:#ef4444;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;white-space:nowrap">賣出</span>
+    <span style="font-weight:700;color:#f1f5f9;min-width:52px">BA</span>
+    <span style="color:#94a3b8;font-size:12px;flex:1">Tommy Tuberville · 參議員 · 軍事委員會 ⚠ 信號強</span>
+    <span style="color:#475569;font-size:11px">08/08</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #1e293b">
+    <span style="background:#22c55e22;color:#22c55e;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;white-space:nowrap">買入</span>
+    <span style="font-weight:700;color:#f1f5f9;min-width:52px">PLTR</span>
+    <span style="color:#94a3b8;font-size:12px;flex:1">Michael McCaul · 眾議員 · 外交委員會</span>
+    <span style="color:#475569;font-size:11px">08/07</span>
+  </div>
+  <div style="font-size:11px;color:#334155;padding:8px 0">數據來源：Google News RSS（免費版）· 升級 Quiver API $30/月 可獲精確申報金額與即時通知</div>
+</div>
+<div class="sec">政治資金流向 Top 6（過去30天）</div>
+<div class="card">
+  <div class="hot-row"><span style="font-weight:700;color:#f1f5f9;width:52px">NVDA</span><div class="hbar"><div class="hfill" style="width:95%;background:#22c55e"></div></div><span style="color:#22c55e;font-size:12px;min-width:58px;text-align:right">12筆買入</span><span style="color:#22c55e;font-size:12px;font-weight:700;min-width:48px;text-align:right">+18.4%</span></div>
+  <div class="hot-row"><span style="font-weight:700;color:#f1f5f9;width:52px">PLTR</span><div class="hbar"><div class="hfill" style="width:78%;background:#22c55e"></div></div><span style="color:#22c55e;font-size:12px;min-width:58px;text-align:right">9筆買入</span><span style="color:#22c55e;font-size:12px;font-weight:700;min-width:48px;text-align:right">+14.6%</span></div>
+  <div class="hot-row"><span style="font-weight:700;color:#f1f5f9;width:52px">LNG</span><div class="hbar"><div class="hfill" style="width:65%;background:#22c55e"></div></div><span style="color:#22c55e;font-size:12px;min-width:58px;text-align:right">8筆買入</span><span style="color:#22c55e;font-size:12px;font-weight:700;min-width:48px;text-align:right">+9.2%</span></div>
+  <div class="hot-row"><span style="font-weight:700;color:#f1f5f9;width:52px">XOM</span><div class="hbar"><div class="hfill" style="width:52%;background:#22c55e"></div></div><span style="color:#22c55e;font-size:12px;min-width:58px;text-align:right">6筆買入</span><span style="color:#22c55e;font-size:12px;font-weight:700;min-width:48px;text-align:right">+5.1%</span></div>
+  <div class="hot-row"><span style="font-weight:700;color:#f1f5f9;width:52px">DJT</span><div class="hbar"><div class="hfill" style="width:42%;background:#22c55e"></div></div><span style="color:#22c55e;font-size:12px;min-width:58px;text-align:right">5筆買入</span><span style="color:#22c55e;font-size:12px;font-weight:700;min-width:48px;text-align:right">+22.1%</span></div>
+  <div class="hot-row"><span style="font-weight:700;color:#f1f5f9;width:52px">BA</span><div class="hbar"><div class="hfill" style="width:40%;background:#ef4444"></div></div><span style="color:#ef4444;font-size:12px;min-width:58px;text-align:right">5筆賣出</span><span style="color:#ef4444;font-size:12px;font-weight:700;min-width:48px;text-align:right">-3.8%</span></div>
+</div>
+<div class="ibox">
+  <div class="ilabel">AI 解讀</div>
+  <div class="ival">Pelosi 買入 NVDA Call 是本週最強政治信號，歷史勝率極高。Tuberville 賣出 BA 需警惕——軍事委員會成員賣出國防股信號意義強。LNG 同時獲特朗普發文 + 能源委員議員買入雙重確認，信號可信度最高。BA 已被列入期權掃描 PUT 名單。</div>
+</div>
+</div>
+
+<!-- ══ 名詞解釋 ══ -->
+<div class="page" id="pg-glossary">
+<div class="topbar">
+  <div><div class="t1">名詞解釋</div><div class="t2">新手必讀 · 隨時查閱</div></div>
+</div>
+<div class="search-wrap"><span class="si">🔍</span><input type="text" id="gsearch" placeholder="搜尋：IV、Call、FDA..." oninput="gfilter()"></div>
+<div class="cat-tabs">
+  <button class="cat active" onclick="gcat('all',this)">全部</button>
+  <button class="cat" onclick="gcat('basic',this)">基礎</button>
+  <button class="cat" onclick="gcat('options',this)">期權</button>
+  <button class="cat" onclick="gcat('strategy',this)">策略</button>
+  <button class="cat" onclick="gcat('risk',this)">風險</button>
+</div>
+<div id="glist">
+  <div class="term-card" data-cat="basic" data-kw="call 看漲 上漲 買入"><div class="term-head" onclick="gtog(this)"><div class="th-left"><div class="t-icon" style="background:#22c55e22">📈</div><div><div class="t-name">Call（看漲期權）</div><div class="t-short">押股票會漲</div></div></div><div class="t-arr">▼</div></div><div class="term-body"><div class="tb-main">Call 是「以固定價格買入股票的權利」。股票漲了你賺差價，沒漲最多虧掉你付出的期權費。</div><div class="an-box"><div class="an-lbl">生活比喻</div><div class="an-txt">像房屋預購合約——鎖定今天的價格，房價上漲你賺差價，下跌只損失訂金。</div></div><div class="ex-box"><div class="ex-lbl">例子</div><div class="ex-txt">NVDA $128，買 $135 Call 花 $3<br>→ 漲到 $150：賺約 $12<br>→ 跌到 $120：虧 $3（最大損失）</div></div></div></div>
+  <div class="term-card" data-cat="basic" data-kw="put 看跌 下跌 賣出"><div class="term-head" onclick="gtog(this)"><div class="th-left"><div class="t-icon" style="background:#ef444422">📉</div><div><div class="t-name">Put（看跌期權）</div><div class="t-short">押股票會跌</div></div></div><div class="t-arr">▼</div></div><div class="term-body"><div class="tb-main">Put 是「以固定價格賣出股票的權利」。股票跌了你賺差價，沒跌最多虧掉期權費。</div><div class="an-box"><div class="an-lbl">生活比喻</div><div class="an-txt">像保險——買了「跌價保險」，股票跌了保險補差價，沒跌只損失保費。</div></div></div></div>
+  <div class="term-card" data-cat="basic" data-kw="strike 行使價 執行價"><div class="term-head" onclick="gtog(this)"><div class="th-left"><div class="t-icon" style="background:#f59e0b22">🎯</div><div><div class="t-name">Strike（行使價）</div><div class="t-short">期權鎖定的買賣價格</div></div></div><div class="t-arr">▼</div></div><div class="term-body"><div class="tb-main">Strike 就是你在期權合約裡「鎖定的價格」。買 $95 Call 意思是：不管股票漲多少，你都能用 $95 買入。</div><div class="ex-box"><div class="ex-lbl">選Strike的邏輯</div><div class="ex-txt">越接近現價 → 貴但勝率高（ATM）<br>遠高於現價 → 便宜但要大漲才賺（OTM）</div></div></div></div>
+  <div class="term-card" data-cat="basic" data-kw="到期日 expiry 時間"><div class="term-head" onclick="gtog(this)"><div class="th-left"><div class="t-icon" style="background:#3b82f622">📅</div><div><div class="t-name">到期日（Expiry）</div><div class="t-short">期限一到，期權變廢紙</div></div></div><div class="t-arr">▼</div></div><div class="term-body"><div class="tb-main">過了到期日，期權完全作廢，變成零。每天時間流逝，期權價值都在損耗。</div><div class="warn-box2"><div class="warn-lbl">新手常見錯誤</div><div class="warn-txt">不要買太短的到期日！「本週到期」的期權極易歸零。建議選至少 3-4 週後到期。</div></div></div></div>
+  <div class="term-card" data-cat="options" data-kw="iv implied volatility 隱含波動率 貴不貴"><div class="term-head" onclick="gtog(this)"><div class="th-left"><div class="t-icon" style="background:#f59e0b22">🌡️</div><div><div class="t-name">IV（隱含波動率）</div><div class="t-short">期權貴不貴的溫度計</div></div></div><div class="t-arr">▼</div></div><div class="term-body"><div class="tb-main">IV 越高 = 期權越貴。反映市場預期股票未來波動多大，就像颱風前夕保費會提高。</div><div class="ex-box"><div class="ex-lbl">今日例子</div><div class="ex-txt">MRNA IV=198%（FDA審批，極貴）<br>NVDA IV=68%（財報後，中等）<br>SPY IV=18%（大盤指數，便宜）</div></div><div class="rule-box2"><div class="rule-lbl">操作原則</div><div class="rule-txt">IV高時：用Spread策略，別裸買<br>IV低時：好時機買期權，成本低</div></div></div></div>
+  <div class="term-card" data-cat="options" data-kw="iv rank 歷史排名 百分位"><div class="term-head" onclick="gtog(this)"><div class="th-left"><div class="t-icon" style="background:#a78bfa22">📊</div><div><div class="t-name">IV Rank</div><div class="t-short">現在IV在歷史上算貴還是便宜</div></div></div><div class="t-arr">▼</div></div><div class="term-body"><div class="tb-main">把現在的IV和過去一年比，看排在哪個百分位。比IV本身更有參考價值。</div><div class="ex-box"><div class="ex-lbl">判斷標準</div><div class="ex-txt">IV Rank &gt;80% → 歷史高位，很貴<br>IV Rank 40-80% → 正常範圍<br>IV Rank &lt;30% → 歷史低位，便宜</div></div></div></div>
+  <div class="term-card" data-cat="options" data-kw="pc ratio put call 比率 方向"><div class="term-head" onclick="gtog(this)"><div class="th-left"><div class="t-icon" style="background:#3b82f622">⚖️</div><div><div class="t-name">P/C Ratio</div><div class="t-short">市場偏多還是偏空的方向儀</div></div></div><div class="t-arr">▼</div></div><div class="term-body"><div class="tb-main">P/C = Put成交量 ÷ Call成交量。反映市場整體在押漲還是押跌。</div><div class="ex-box"><div class="ex-lbl">解讀</div><div class="ex-txt">P/C &lt; 0.5 → 偏多（大量買Call）<br>P/C ≈ 1.0 → 中性<br>P/C &gt; 1.5 → 偏空（大量買Put）</div></div></div></div>
+  <div class="term-card" data-cat="options" data-kw="pdufa fda 審批 生技 新藥"><div class="term-head" onclick="gtog(this)"><div class="th-left"><div class="t-icon" style="background:#a78bfa22">💊</div><div><div class="t-name">PDUFA 日</div><div class="t-short">生技股最大期權催化劑</div></div></div><div class="t-arr">▼</div></div><div class="term-body"><div class="tb-main">FDA承諾給出新藥審批結果的截止日。通過→可暴漲，拒絕→可暴跌。結果公布前IV極度飆升。</div><div class="warn-box2"><div class="warn-lbl">注意IV Crush</div><div class="warn-txt">結果公布後IV立刻崩塌，即使方向對了，買太貴的期權也可能虧損！建議用Spread策略。</div></div></div></div>
+  <div class="term-card" data-cat="strategy" data-kw="bull call spread 價差 降低成本"><div class="term-head" onclick="gtog(this)"><div class="th-left"><div class="t-icon" style="background:#22c55e22">📐</div><div><div class="t-name">Bull Call Spread</div><div class="t-short">IV高時替代裸買Call</div></div></div><div class="t-arr">▼</div></div><div class="term-body"><div class="tb-main">同時買低Strike的Call + 賣高Strike的Call。賣出的那張幫你補貼成本，大幅降低風險。</div><div class="ex-box"><div class="ex-lbl">MRNA例子</div><div class="ex-txt">裸買$145 Call：花$15<br>買$145C + 賣$160C：只花$7<br>最大獲利：$8（如果漲過$160）<br>最大虧損：$7（你付的成本）</div></div></div></div>
+  <div class="term-card" data-cat="strategy" data-kw="straddle 跨式 波動 方向不明"><div class="term-head" onclick="gtog(this)"><div class="th-left"><div class="t-icon" style="background:#f59e0b22">🤸</div><div><div class="t-name">Straddle（跨式）</div><div class="t-short">不押方向，只賭大幅波動</div></div></div><div class="t-arr">▼</div></div><div class="term-body"><div class="tb-main">同時買Call和Put，相同Strike和到期日。不管漲還是跌，只要波動夠大就能獲利。</div><div class="an-box"><div class="an-lbl">適合情況</div><div class="an-txt">有大事要發生（財報/FDA），知道會波動，但不確定漲還是跌。</div></div><div class="warn-box2"><div class="warn-lbl">注意</div><div class="warn-txt">要付兩份期權費，需要大幅波動才回本。股價橫盤兩邊都虧。</div></div></div></div>
+  <div class="term-card" data-cat="risk" data-kw="iv crush 崩塌 方向對卻虧 事件後"><div class="term-head" onclick="gtog(this)"><div class="th-left"><div class="t-icon" style="background:#ef444422">💥</div><div><div class="t-name">IV Crush（IV崩塌）</div><div class="t-short">方向猜對卻虧錢的原因</div></div></div><div class="t-arr">▼</div></div><div class="term-body"><div class="tb-main">大事件（財報/FDA）公布後，IV瞬間從高點崩塌。即使股票漲了，期權可能因IV大跌而虧損。</div><div class="ex-box"><div class="ex-lbl">典型案例</div><div class="ex-txt">財報前：IV=80%，買Call花$10<br>財報後：股票漲8%，但IV跌到35%<br>結果：Call只值$8，虧了$2！<br>原因：IV崩塌抵消了股價上漲的獲利</div></div></div></div>
+  <div class="term-card" data-cat="risk" data-kw="時間價值 theta 衰減 每天虧"><div class="term-head" onclick="gtog(this)"><div class="th-left"><div class="t-icon" style="background:#ef444422">⏳</div><div><div class="t-name">時間價值衰減（Theta）</div><div class="t-short">期權每天都在自動貶值</div></div></div><div class="t-arr">▼</div></div><div class="term-body"><div class="tb-main">期權每天因「距到期日更近一天」而損失價值。即使股票完全不動，期權也會每天縮水。</div><div class="an-box"><div class="an-lbl">生活比喻</div><div class="an-txt">像壽司——今天買的，明天就便宜了，到期那天就丟掉了。</div></div><div class="rule-box2"><div class="rule-lbl">新手原則</div><div class="rule-txt">選至少 3-4 週後到期 · 有利潤要懂得了結 · 不要長期持有</div></div></div></div>
+  <div class="term-card" data-cat="risk" data-kw="stock act 國會 政治 申報 延遲"><div class="term-head" onclick="gtog(this)"><div class="th-left"><div class="t-icon" style="background:#3b82f622">🏛</div><div><div class="t-name">STOCK Act 申報</div><div class="t-short">國會議員交易的公開申報制度</div></div></div><div class="t-arr">▼</div></div><div class="term-body"><div class="tb-main">美國法律要求國會議員在股票交易後 45 天內公開申報。這些申報成為市場的重要參考信號。</div><div class="warn-box2"><div class="warn-lbl">注意延遲</div><div class="warn-txt">最長 45 天延遲！你看到的申報可能是 1-6 週前的交易，不是今天發生的。</div></div><div class="rule-box2"><div class="rule-lbl">最值得跟蹤的人</div><div class="rule-txt">Nancy Pelosi（科技）· 委員會主席（相關行業）· 能源委員會（能源股）</div></div></div></div>
+</div>
+<div id="gno" class="no-result" style="display:none"><div style="font-size:32px;margin-bottom:8px">🔍</div><div style="color:#64748b">找不到，試試其他關鍵字</div></div>
+</div>
+
+<!-- 底部導航 -->
+<div class="bottom-nav">
+  <button class="nav-btn active" onclick="navTo('home',this)"><span class="nav-icon">🏠</span>首頁</button>
+  <button class="nav-btn" onclick="navTo('picks',this)"><span class="nav-icon">⭐</span>精選</button>
+  <button class="nav-btn" onclick="navTo('cal',this)"><span class="nav-icon">📅</span>行事曆</button>
+  <button class="nav-btn" onclick="navTo('scan',this)"><span class="nav-icon">🔍</span>掃描</button>
+  <button class="nav-btn" onclick="navTo('pol',this)"><span class="nav-icon">🏛</span>政治</button>
+  <button class="nav-btn" onclick="navTo('glossary',this)"><span class="nav-icon">📖</span>名詞</button>
+</div>
+</div>
+
+<script>
+function navTo(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('show'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('pg-'+id).classList.add('show');
+  btn.classList.add('active');
+  window.scrollTo(0,0);
+}
+var cur=null;
+function tgl(id){
+  var dp=document.getElementById('dp-'+id),st=document.getElementById('st-'+id);
+  if(cur&&cur!==id){document.getElementById('dp-'+cur).classList.remove('show');document.getElementById('st-'+cur).classList.remove('active');document.querySelector('#st-'+cur+' .arr').textContent='▼';}
+  var open=dp.classList.contains('show');
+  if(open){dp.classList.remove('show');st.classList.remove('active');document.querySelector('#st-'+id+' .arr').textContent='▼';cur=null;}
+  else{dp.classList.add('show');st.classList.add('active');document.querySelector('#st-'+id+' .arr').textContent='▲';cur=id;setTimeout(()=>dp.scrollIntoView({behavior:'smooth',block:'nearest'}),50);}
+}
+function cls(id){document.getElementById('dp-'+id).classList.remove('show');document.getElementById('st-'+id).classList.remove('active');document.querySelector('#st-'+id+' .arr').textContent='▼';cur=null;}
+function sws(id,btn){document.querySelectorAll('.spanel').forEach(p=>p.classList.remove('show'));document.querySelectorAll('.sb').forEach(b=>b.classList.remove('active'));document.getElementById('sp-'+id).classList.add('show');btn.classList.add('active');}
+function calFilter(type,btn){document.querySelectorAll('.cf').forEach(b=>b.classList.remove('active'));btn.classList.add('active');document.querySelectorAll('.ev-card').forEach(c=>{c.style.display=(type==='all'||c.dataset.type===type)?'':'none';});}
+var gcur='all';
+function gcat(cat,btn){gcur=cat;document.querySelectorAll('.cat').forEach(b=>b.classList.remove('active'));btn.classList.add('active');gfilter();}
+function gfilter(){var q=document.getElementById('gsearch').value.toLowerCase();var cards=document.querySelectorAll('.term-card');var vis=0;cards.forEach(function(c){var cm=gcur==='all'||c.dataset.cat===gcur;var qm=q===''||(c.dataset.kw||'').includes(q)||c.querySelector('.t-name').textContent.toLowerCase().includes(q);if(cm&&qm){c.style.display='';vis++;}else{c.style.display='none';}});document.getElementById('gno').style.display=vis===0?'block':'none';}
+function gtog(head){var body=head.nextElementSibling,arr=head.querySelector('.t-arr'),open=body.classList.contains('show');document.querySelectorAll('.term-body.show').forEach(b=>{b.classList.remove('show');b.previousElementSibling.querySelector('.t-arr').classList.remove('open');b.previousElementSibling.querySelector('.t-arr').textContent='▼';});if(!open){body.classList.add('show');arr.classList.add('open');arr.textContent='▲';}}
+</script>
+</body>
+</html>
