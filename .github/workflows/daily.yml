@@ -1,0 +1,41 @@
+name: AI 美股日報
+
+on:
+  schedule:
+    - cron: '30 12 * * 1-5'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install google-generativeai yfinance requests python-dotenv pandas
+
+      - name: Run analysis
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          EMAIL_FROM:        ${{ secrets.EMAIL_FROM }}
+          EMAIL_PASSWORD:    ${{ secrets.EMAIL_PASSWORD }}
+          EMAIL_TO:          ${{ secrets.EMAIL_TO }}
+        run: python src/analyze.py
+
+      - name: Commit & push reports
+        run: |
+          git config user.name  "AI Stock Bot"
+          git config user.email "bot@github-actions"
+          git add web/
+          git diff --staged --quiet || git commit -m "📈 日報 $(date +'%Y-%m-%d')"
+          git push
