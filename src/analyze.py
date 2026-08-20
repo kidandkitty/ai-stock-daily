@@ -2,11 +2,11 @@
 """
 AI 美股盤前分析 完整版
 模組：自選股 + 期權掃描 + FDA行事曆 + 政治風向雷達
-依賴: pip install anthropic yfinance requests python-dotenv
+依賴: pip install google-generativeai yfinance requests python-dotenv
 """
 
 import os, json, datetime, time, random, requests, re
-import anthropic
+import google.generativeai as genai
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import smtplib
@@ -27,12 +27,15 @@ SCAN_MIN_IV_SPIKE    = 0.25
 SCAN_TOP_N           = 10
 POLITICAL_NEWS_LIMIT = 8    # 最多抓幾條政治新聞
 
-ANTHROPIC_API_KEY = os.environ["ANTHROPIC_API_KEY"]
+GEMINI_API_KEY    = os.environ["ANTHROPIC_API_KEY"]  # 用同一個 Secret 名稱
 EMAIL_FROM        = os.environ["EMAIL_FROM"]
 EMAIL_PASSWORD    = os.environ["EMAIL_PASSWORD"]
 EMAIL_TO          = os.environ["EMAIL_TO"]
-# 可選：Quiver API（有則用精確申報，無則用免費新聞版）
 QUIVER_API_KEY    = os.environ.get("QUIVER_API_KEY", "")
+
+# 初始化 Gemini
+genai.configure(api_key=GEMINI_API_KEY)
+gemini_model = genai.GenerativeModel("gemini-1.5-flash")
 
 
 # ══════════════════════════════════════════════════════════
@@ -313,8 +316,7 @@ def fetch_political_intelligence() -> dict:
 # 7. AI 分析（整合所有模組）
 # ══════════════════════════════════════════════════════════
 def ai_analyze(watchlist_data, scan_results, fda_events, political_data) -> dict:
-    client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
-    today  = datetime.date.today().strftime("%Y年%m月%d日")
+    today = datetime.date.today().strftime("%Y年%m月%d日")
 
     payload = {
         "date":            today,
@@ -356,12 +358,12 @@ def ai_analyze(watchlist_data, scan_results, fda_events, political_data) -> dict
   "summary": "整體摘要100字"
 }}"""
 
-    msg = client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=1500,
-        messages=[{"role": "user", "content": prompt}]
-    )
-    raw = msg.content[0].text.strip()
+    response = gemini_model.generate_content(prompt)
+    raw = response.text.strip()
+    # 移除可能的 markdown 代碼塊
+    raw = re.sub(r'```json\s*', '', raw)
+    raw = re.sub(r'```\s*', '', raw)
+    raw = raw.strip()
     try:
         return json.loads(raw)
     except Exception:
