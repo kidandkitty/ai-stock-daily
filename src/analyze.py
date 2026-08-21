@@ -188,24 +188,26 @@ def fetch_watchlist_data() -> list:
 # 5. FDA 行事曆
 # ══════════════════════════════════════════════════════════
 def fetch_fda_calendar() -> list:
-    events = []
-    try:
+   events = []
+   try:
        url = "https://www.biopharmcatalyst.com/rss/fda-calendar.rss"
        r = requests.get(url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
-        if r.status_code == 200:
-            root = ET.fromstring(r.content)
-            for item in root.iter("item"):
-                events.append({
-                    "title": item.findtext("title", "")[:80],
-                    "date":  item.findtext("pubDate", "")[:16],
-                    "link":  item.findtext("link", ""),
-                })
-            events = events[:5]
-    except Exception as e:
-        print(f"[WARN] FDA: {e}")
-    if not events:
-        events = [{"title": "FDA行事曆暫時無法取得", "date": "", "link": "https://www.fda.gov"}]
-    return events
+       if r.status_code == 200:
+           root = ET.fromstring(r.content)
+           for item in root.iter("item"):
+               events.append({
+                   "title": item.findtext("title", "")[:80],
+                   "date":  item.findtext("pubDate", "")[:16],
+                   "link":  item.findtext("link", ""),
+               })
+           events = events[:5]
+   except Exception as e:
+       print(f"[WARN] FDA: {e}")
+   if not events:
+       events = [{"title": "FDA行事曆暫時無法取得", "date": "", "link": "https://www.fda.gov"}]
+   return events
+has context menu
+
 
 
 # ══════════════════════════════════════════════════════════
