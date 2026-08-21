@@ -190,17 +190,18 @@ def fetch_watchlist_data() -> list:
 def fetch_fda_calendar() -> list:
     events = []
     try:
-        url = "https://www.biopharmcatalyst.com/rss/fda-calendar.rss"
+        query = "FDA drug approval PDUFA 2026"
+        encoded = requests.utils.quote(query)
+        url = f"https://news.google.com/rss/search?q={encoded}&hl=en-US&gl=US&ceid=US:en"
         r = requests.get(url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
         if r.status_code == 200:
             root = ET.fromstring(r.content)
-            for item in root.iter("item"):
+            for item in list(root.iter("item"))[:5]:
                 events.append({
                     "title": item.findtext("title", "")[:80],
                     "date":  item.findtext("pubDate", "")[:16],
                     "link":  item.findtext("link", ""),
                 })
-            events = events[:5]
     except Exception as e:
         print(f"[WARN] FDA: {e}")
     if not events:
