@@ -191,7 +191,7 @@ def fetch_fda_calendar() -> list:
     events = []
     try:
        url = "https://www.biopharmcatalyst.com/rss/fda-calendar.rss"
-        r = requests.get(url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
+       r = requests.get(url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
         if r.status_code == 200:
             root = ET.fromstring(r.content)
             for item in root.iter("item"):
