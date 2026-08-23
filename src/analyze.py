@@ -692,14 +692,12 @@ def send_push_notification(analysis: dict):
         pol = analysis.get("political_sentiment", "-")
         ticker = top.get("ticker", "-")
         direction = top.get("direction", "-")
-
         message = f"{mood} {score}/100 | {ticker} {direction} | {headline}"
-
         requests.post(
             "https://ntfy.sh/kidandkitty-stock-daily",
             data=message.encode("utf-8"),
             headers={
-                "Title": f"AI美股日報 {analysis.get('date', '')} | 政治:{pol}",
+                "Title": f"AI{analysis.get('date', '')} | {pol}",
                 "Priority": "high",
                 "Tags": "stock_chart",
             },
@@ -708,7 +706,6 @@ def send_push_notification(analysis: dict):
         print("[OK] 推送通知已發送")
     except Exception as e:
         print(f"[WARN] 推送通知失敗: {e}")
-    msg = MIMEMultipart("alternative")
     top = analysis.get("top_option_pick", {})
     pol = analysis.get("political_sentiment", "")
     msg["Subject"] = f"📈 AI美股日報 {analysis['date']} · {analysis.get('headline','')} · {top.get('ticker','')} {top.get('direction','')} · 政治:{pol}"
