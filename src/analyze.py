@@ -697,7 +697,7 @@ def send_push_notification(analysis: dict):
             "https://ntfy.sh/kidandkitty-stock-daily",
             data=message.encode("utf-8"),
             headers={
-                                "Title": "AI Stock Daily",analysis.get('date', '')} | {pol}",
+                                                "Title": "AI Stock Daily",
                 "Priority": "high",
                 "Tags": "stock_chart",
             },
