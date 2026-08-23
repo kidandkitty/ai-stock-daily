@@ -667,7 +667,34 @@ def save_report(html: str, analysis: dict):
 # ══════════════════════════════════════════════════════════
 # 10. 發送 Email
 # ══════════════════════════════════════════════════════════
-def send_email(html: str, analysis: dict):
+def send_push_notification(analysis: dict):
+    """發送 ntfy 推送通知到手機"""
+    try:
+        top = analysis.get("top_option_pick", {})
+        mood = analysis.get("market_mood", "—")
+        score = analysis.get("mood_score", 0)
+        headline = analysis.get("headline", "—")
+        pol = analysis.get("political_sentiment", "—")
+        ticker = top.get("ticker", "—")
+        direction = top.get("direction", "—")
+
+        message = f"""{mood} {score}/100 · 政治:{pol}
+精選：{ticker} {direction}
+{headline}"""
+
+        requests.post(
+            "https://ntfy.sh/kidandkitty-stock-daily",
+            data=message.encode("utf-8"),
+            headers={
+                "Title": f"📈 AI美股日報 {analysis.get('date', '')}",
+                "Priority": "high",
+                "Tags": "chart_with_upwards_trend",
+            },
+            timeout=10,
+        )
+        print("[OK] 推送通知已發送")
+    except Exception as e:
+        print(f"[WARN] 推送通知失敗: {e}")
     msg = MIMEMultipart("alternative")
     top = analysis.get("top_option_pick", {})
     pol = analysis.get("political_sentiment", "")
@@ -714,6 +741,7 @@ def main():
     html = build_html(watchlist_data, scan_results, fda_events, political_data, analysis)
     save_report(html, analysis)
     send_email(html, analysis)
+    send_push_notification(analysis)
 
     print("\n=== 完成 ✓ ===")
 
