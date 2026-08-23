@@ -686,24 +686,22 @@ def send_push_notification(analysis: dict):
     """發送 ntfy 推送通知到手機"""
     try:
         top = analysis.get("top_option_pick", {})
-        mood = analysis.get("market_mood", "—")
+        mood = analysis.get("market_mood", "-")
         score = analysis.get("mood_score", 0)
-        headline = analysis.get("headline", "—")
-        pol = analysis.get("political_sentiment", "—")
-        ticker = top.get("ticker", "—")
-        direction = top.get("direction", "—")
+        headline = analysis.get("headline", "-")
+        pol = analysis.get("political_sentiment", "-")
+        ticker = top.get("ticker", "-")
+        direction = top.get("direction", "-")
 
-        message = f"""{mood} {score}/100 · 政治:{pol}
-精選：{ticker} {direction}
-{headline}"""
+        message = f"{mood} {score}/100 | {ticker} {direction} | {headline}"
 
         requests.post(
             "https://ntfy.sh/kidandkitty-stock-daily",
             data=message.encode("utf-8"),
             headers={
-                "Title": f"📈 AI美股日報 {analysis.get('date', '')}",
+                "Title": f"AI美股日報 {analysis.get('date', '')} | 政治:{pol}",
                 "Priority": "high",
-                "Tags": "chart_with_upwards_trend",
+                "Tags": "stock_chart",
             },
             timeout=10,
         )
