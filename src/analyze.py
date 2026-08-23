@@ -697,7 +697,7 @@ def send_push_notification(analysis: dict):
             "https://ntfy.sh/kidandkitty-stock-daily",
             data=message.encode("utf-8"),
             headers={
-                                                "Title": "AI Stock Daily",
+                "Title": "AI Stock Daily",
                 "Priority": "high",
                 "Tags": "stock_chart",
             },
@@ -706,17 +706,6 @@ def send_push_notification(analysis: dict):
         print("[OK] 推送通知已發送")
     except Exception as e:
         print(f"[WARN] 推送通知失敗: {e}")
-    top = analysis.get("top_option_pick", {})
-    pol = analysis.get("political_sentiment", "")
-    msg["Subject"] = f"📈 AI美股日報 {analysis['date']} · {analysis.get('headline','')} · {top.get('ticker','')} {top.get('direction','')} · 政治:{pol}"
-    msg["From"] = EMAIL_FROM
-    msg["To"]   = EMAIL_TO
-    msg.attach(MIMEText(analysis.get("summary",""), "plain", "utf-8"))
-    msg.attach(MIMEText(html, "html", "utf-8"))
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as s:
-        s.login(EMAIL_FROM, EMAIL_PASSWORD)
-        s.sendmail(EMAIL_FROM, EMAIL_TO, msg.as_string())
-    print("[OK] Email 發送完成")
 
 
 # ══════════════════════════════════════════════════════════
