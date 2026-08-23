@@ -667,6 +667,21 @@ def save_report(html: str, analysis: dict):
 # ══════════════════════════════════════════════════════════
 # 10. 發送 Email
 # ══════════════════════════════════════════════════════════
+def send_email(html: str, analysis: dict):
+    msg = MIMEMultipart("alternative")
+    top = analysis.get("top_option_pick", {})
+    pol = analysis.get("political_sentiment", "")
+    msg["Subject"] = f"📈 AI美股日報 {analysis['date']} · {analysis.get('headline','')} · {top.get('ticker','')} {top.get('direction','')} · 政治:{pol}"
+    msg["From"] = EMAIL_FROM
+    msg["To"]   = EMAIL_TO
+    msg.attach(MIMEText(analysis.get("summary",""), "plain", "utf-8"))
+    msg.attach(MIMEText(html, "html", "utf-8"))
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as s:
+        s.login(EMAIL_FROM, EMAIL_PASSWORD)
+        s.sendmail(EMAIL_FROM, EMAIL_TO, msg.as_string())
+    print("[OK] Email 發送完成")
+
+
 def send_push_notification(analysis: dict):
     """發送 ntfy 推送通知到手機"""
     try:
