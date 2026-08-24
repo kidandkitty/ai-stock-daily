@@ -2,7 +2,7 @@ name: AI 美股日報
 
 on:
   schedule:
-    - cron: '30 12 * * 1-5'
+    - cron: '0 11 * * 1-5'
   workflow_dispatch:
 
 permissions:
