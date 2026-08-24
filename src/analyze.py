@@ -428,10 +428,19 @@ def ai_analyze(watchlist_data, scan_results, fda_events, political_data) -> dict
   "summary": "整體摘要100字"
 }}"""
 
-    response = gemini_client.models.generate_content(
-        model="gemini-3.6-flash",
-        contents=prompt
-    )
+    for attempt in range(3):
+        try:
+            response = gemini_client.models.generate_content(
+                model="gemini-3.6-flash",
+                contents=prompt
+            )
+            break
+        except Exception as e:
+            if attempt < 2:
+                print(f"[WARN] Gemini 重試 {attempt+1}/3: {e}")
+                time.sleep(10)
+            else:
+                raise
     raw = response.text.strip()
     # 移除可能的 markdown 代碼塊
     raw = re.sub(r'```json\s*', '', raw)
