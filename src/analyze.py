@@ -174,11 +174,80 @@ def scan_options(tickers: list) -> list:
     return results[:SCAN_TOP_N]
 
 
+def fetch_technical_data(ticker: str) -> dict:
+    """抓取技術指標：RSI、均線、支撐阻力"""
+    try:
+        import yfinance as yf
+        import pandas as pd
+        t = yf.Ticker(ticker)
+        hist = t.history(period="3mo")
+        if len(hist) < 20:
+            return {}
+
+        close = hist["Close"]
+
+        # RSI 14
+        delta = close.diff()
+        gain = delta.where(delta > 0, 0).rolling(14).mean()
+        loss = -delta.where(delta < 0, 0).rolling(14).mean()
+        rs = gain / loss
+        rsi = round(float(100 - (100 / (1 + rs.iloc[-1]))), 1)
+
+        # 均線
+        ma20 = round(float(close.rolling(20).mean().iloc[-1]), 2)
+        ma50 = round(float(close.rolling(50).mean().iloc[-1]), 2)
+        current = round(float(close.iloc[-1]), 2)
+
+        # 支撐阻力（20日高低點）
+        resistance = round(float(close.rolling(20).max().iloc[-1]), 2)
+        support    = round(float(close.rolling(20).min().iloc[-1]), 2)
+
+        # 財報日期
+        try:
+            cal = t.calendar
+            earn_date = str(cal.get("Earnings Date", ["—"])[0])[:10] if cal else "—"
+        except Exception:
+            earn_date = "—"
+
+        # 均線信號
+        if current > ma20 > ma50:
+            ma_signal = "多頭排列"
+        elif current < ma20 < ma50:
+            ma_signal = "空頭排列"
+        else:
+            ma_signal = "整理中"
+
+        # RSI 信號
+        if rsi > 70:
+            rsi_signal = "超買"
+        elif rsi < 30:
+            rsi_signal = "超賣"
+        else:
+            rsi_signal = "正常"
+
+        return {
+            "ticker":     ticker,
+            "rsi":        rsi,
+            "rsi_signal": rsi_signal,
+            "ma20":       ma20,
+            "ma50":       ma50,
+            "ma_signal":  ma_signal,
+            "resistance": resistance,
+            "support":    support,
+            "earn_date":  earn_date,
+        }
+    except Exception as e:
+        print(f"[WARN] 技術指標 {ticker}: {e}")
+        return {}
+
+
 def fetch_watchlist_data() -> list:
     results = []
     for ticker in WATCHLIST:
         data = fetch_stock_data(ticker)
         if data:
+            tech = fetch_technical_data(ticker)
+            data.update({"tech": tech})
             results.append(data)
         time.sleep(0.2)
     return results
