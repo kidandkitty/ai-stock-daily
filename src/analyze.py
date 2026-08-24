@@ -384,6 +384,274 @@ def build_html(watchlist_data, scan_results, fda_events, political_data, analysi
     mood_color = {"多頭": "#22c55e", "空頭": "#ef4444", "震盪": "#f59e0b"}.get(
         analysis.get("market_mood", "震盪"), "#6b7280")
     score = analysis.get("mood_score", 50)
+    pol_sentiment = analysis.get("political_sentiment", "中性")
+    pol_color = {"利多": "#22c55e", "利空": "#ef4444", "中性": "#f59e0b"}.get(pol_sentiment, "#6b7280")
+
+    # ── AI 精選期權 ──
+    top = analysis.get("top_option_pick", {})
+    top_html = ""
+    if top.get("ticker"):
+        tc = "#22c55e" if top.get("direction") == "CALL" else "#ef4444"
+        top_html = f"""
+        <div style="background:#0f172a;border:1px solid #334155;border-radius:12px;padding:18px;margin-bottom:20px">
+          <div style="font-size:10px;color:#64748b;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">⭐ AI 精選期權機會</div>
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+            <div style="font-size:28px;font-weight:800;color:#f1f5f9">{top['ticker']}</div>
+            <div style="background:{tc}22;color:{tc};padding:4px 14px;border-radius:20px;font-size:14px;font-weight:700">{top.get('direction','')}</div>
+          </div>
+          <div style="color:#cbd5e1;font-size:14px;margin-bottom:10px;line-height:1.5">{top.get('reason','')}</div>
+          <div style="display:flex;gap:20px;font-size:13px;flex-wrap:wrap">
+            <span style="color:#64748b">Strike: <span style="color:#e2e8f0;font-weight:600">{top.get('key_strike','—')}</span></span>
+            <span style="color:#64748b">風險: <span style="color:#ef4444">{top.get('risk','—')}</span></span>
+          </div>
+        </div>"""
+
+    # ── 自選股動向 ──
+    movers_html = ""
+    for m in analysis.get("key_movers", []):
+        sc_color = {"強勢":"#22c55e","弱勢":"#ef4444","觀察":"#f59e0b"}.get(m.get("signal",""),"#94a3b8")
+        movers_html += f"""
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #1e293b">
+          <span style="font-weight:700;color:#f1f5f9;width:60px">{m['ticker']}</span>
+          <span style="background:{sc_color}22;color:{sc_color};padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">{m['signal']}</span>
+          <span style="color:#94a3b8;font-size:13px">{m['reason']}</span>
+        </div>"""
+
+    # ── 期權掃描卡片 ──
+    scan_cards = ""
+    for rank, s in enumerate(scan_results[:5], 1):
+        sc = s.get("score", 0)
+        dc = "#22c55e" if s.get("direction") == "CALL" else "#ef4444"
+        flags = " ".join(
+            f'<span style="background:#f59e0b22;color:#f59e0b;padding:2px 7px;border-radius:4px;font-size:11px">{f}</span>'
+            for f in s.get("flags", [])
+        )
+        pre = s.get("pre_change")
+        iv_str = f"{s['iv_current']:.0%}" if s.get("iv_current") else "—"
+        exps = " · ".join(s.get("exp_dates", [])[:3])
+        scan_cards += f"""
+        <div style="background:#0f172a;border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid #1e293b">
+          <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+            <div>
+              <div style="font-size:10px;color:#475569">#{rank}</div>
+              <div style="font-size:18px;font-weight:700;color:#f1f5f9">{s['ticker']}</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:22px;font-weight:700;color:{dc}">{sc}</div>
+              <div style="font-size:10px;color:#475569">/ 100</div>
+              <div style="background:{dc}22;color:{dc};padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;margin-top:4px">{s.get('direction','—')}</div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px">
+            <div style="background:#0a0f1e;border-radius:6px;padding:7px 8px">
+              <div style="font-size:10px;color:#475569">盤前</div>
+              <div style="color:{'#22c55e' if (pre or 0)>=0 else '#ef4444'};font-size:13px;font-weight:600">{f"{pre:+.1f}%" if pre is not None else "—"}</div>
+            </div>
+            <div style="background:#0a0f1e;border-radius:6px;padding:7px 8px">
+              <div style="font-size:10px;color:#475569">IV</div>
+              <div style="color:#f59e0b;font-size:13px;font-weight:600">{iv_str}</div>
+            </div>
+            <div style="background:#0a0f1e;border-radius:6px;padding:7px 8px">
+              <div style="font-size:10px;color:#475569">P/C</div>
+              <div style="color:#e2e8f0;font-size:13px;font-weight:600">{s.get('put_call','—')}</div>
+            </div>
+          </div>
+          <div style="margin-bottom:6px">{flags}</div>
+          <div style="font-size:11px;color:#475569">到期：{exps}</div>
+        </div>"""
+
+    # ── 政治新聞 ──
+    news_html = ""
+    for n in political_data.get("news", [])[:5]:
+        cat_color = {
+            "特朗普/股票": "#ef4444",
+            "國會申報": "#22c55e",
+            "政策板塊": "#f59e0b",
+            "Pelosi持倉": "#a78bfa",
+        }.get(n.get("category", ""), "#64748b")
+        news_html += f"""
+        <div style="display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #1e293b">
+          <span style="background:{cat_color}22;color:{cat_color};padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;white-space:nowrap;margin-top:1px">{n.get('category','')}</span>
+          <div>
+            <div style="font-size:13px;color:#e2e8f0;line-height:1.4">{n.get('title','')}</div>
+            <div style="font-size:11px;color:#475569;margin-top:2px">{n.get('date','')}</div>
+          </div>
+        </div>"""
+
+    # ── 國會申報 ──
+    congress_html = ""
+    trades = political_data.get("congress_trades", [])
+    if trades:
+        for t in trades[:4]:
+            tx = t.get("transaction", "")
+            tc = "#22c55e" if "Purchase" in tx or "Buy" in tx else "#ef4444"
+            congress_html += f"""
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #1e293b">
+              <span style="background:{tc}22;color:{tc};font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px">{tx}</span>
+              <span style="font-weight:700;color:#f1f5f9;min-width:52px">{t.get('ticker','')}</span>
+              <span style="color:#94a3b8;font-size:12px;flex:1">{t.get('politician','')}</span>
+            </div>"""
+    else:
+        congress_html = f'<div style="color:#64748b;font-size:13px;padding:8px 0">{analysis.get("congress_highlight","—")}</div>'
+
+    # ── 自選股表格 ──
+    watch_rows = ""
+    for s in watchlist_data:
+        chg = s["change_pct"]
+        cc = "#22c55e" if chg >= 0 else "#ef4444"
+        cs = f"+{chg}%" if chg >= 0 else f"{chg}%"
+        pre_str = "—"
+        if s.get("pre_change") is not None:
+            pc = s["pre_change"]
+            pre_str = f'<span style="color:{"#22c55e" if pc>=0 else "#ef4444"}">{pc:+.1f}%</span>'
+        iv_str = f"{s['iv_current']:.0%}" if s.get("iv_current") else "—"
+        watch_rows += f"""<tr>
+          <td style="font-weight:700;color:#f1f5f9;padding:8px 0;border-bottom:1px solid #1e293b">{s['ticker']}</td>
+          <td style="color:#94a3b8;padding:8px 0;border-bottom:1px solid #1e293b">${s['last_close']}</td>
+          <td style="color:{cc};padding:8px 0;border-bottom:1px solid #1e293b">{cs}</td>
+          <td style="padding:8px 0;border-bottom:1px solid #1e293b">{pre_str}</td>
+          <td style="color:#f59e0b;padding:8px 0;border-bottom:1px solid #1e293b">{iv_str}</td>
+        </tr>"""
+
+    # ── FDA ──
+    fda_html = ""
+    for ev in fda_events:
+        fda_html += f"""
+        <div style="display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #1e293b">
+          <div style="width:6px;height:6px;border-radius:50%;background:#a78bfa;margin-top:5px;flex-shrink:0"></div>
+          <div>
+            <div style="font-size:13px;color:#e2e8f0">{ev.get('title','')}</div>
+            <div style="font-size:11px;color:#475569;margin-top:2px">{ev.get('date','')}</div>
+          </div>
+        </div>"""
+
+    data_src = political_data.get("data_source", "Google News RSS")
+    hot_tickers = analysis.get("political_hot_tickers", [])
+    hot_html = " ".join(
+        f'<span style="background:#3b82f622;color:#3b82f6;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:700">{t}</span>'
+        for t in hot_tickers
+    )
+
+    return f"""<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI 美股日報 · {analysis['date']}</title>
+<style>
+*{{box-sizing:border-box;margin:0;padding:0}}
+body{{background:#0a0f1e;color:#e2e8f0;font-family:'Helvetica Neue',Arial,sans-serif;padding:16px}}
+.wrap{{max-width:680px;margin:0 auto}}
+.sec{{font-size:10px;letter-spacing:2px;color:#475569;text-transform:uppercase;margin:22px 0 12px}}
+table{{width:100%;border-collapse:collapse;font-size:13px}}
+th{{text-align:left;color:#475569;font-size:10px;letter-spacing:1px;text-transform:uppercase;padding-bottom:8px;font-weight:400}}
+@media(max-width:480px){{.grid2{{grid-template-columns:1fr!important}}}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- 頂部標題 -->
+  <div style="text-align:center;padding:24px 0 18px;border-bottom:1px solid #1e293b;margin-bottom:18px">
+    <div style="font-size:10px;letter-spacing:3px;color:#475569;text-transform:uppercase;margin-bottom:6px">AI 美股日報</div>
+    <div style="font-size:22px;font-weight:800;color:#f8fafc;margin-bottom:4px">盤前分析 · 期權掃描 · 政治雷達</div>
+    <div style="font-size:13px;color:#64748b">{analysis['date']}</div>
+  </div>
+
+  <!-- 市場情緒 -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+    <span style="background:{mood_color}22;color:{mood_color};padding:3px 12px;border-radius:20px;font-size:13px;font-weight:700">{analysis.get('market_mood','—')}</span>
+    <span style="color:#64748b;font-size:13px">市場情緒 {score}/100</span>
+  </div>
+  <div style="background:#1e293b;border-radius:4px;height:5px;margin-bottom:16px;overflow:hidden">
+    <div style="background:{mood_color};height:5px;border-radius:4px;width:{score}%"></div>
+  </div>
+
+  <!-- 今日標題 -->
+  <div style="background:#0f172a;border-left:3px solid {mood_color};padding:12px 16px;margin-bottom:18px;font-size:15px;font-weight:600;color:#f1f5f9;line-height:1.5;border-radius:0 8px 8px 0">
+    💡 {analysis.get('headline','—')}
+  </div>
+
+  <!-- AI 精選期權 -->
+  {top_html}
+
+  <!-- 政治風向雷達 -->
+  <div class="sec">🏛 政治風向雷達</div>
+  <div style="background:#0f172a;border-radius:12px;padding:16px;border:1px solid #1e293b;margin-bottom:4px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <span style="background:{pol_color}22;color:{pol_color};padding:3px 12px;border-radius:20px;font-size:12px;font-weight:700">{pol_sentiment}</span>
+      <span style="color:#94a3b8;font-size:13px;flex:1">{analysis.get('political_summary','—')}</span>
+    </div>
+    <div style="margin-bottom:12px">
+      <span style="font-size:10px;color:#475569;letter-spacing:1px;text-transform:uppercase;margin-right:8px">受影響股票</span>
+      {hot_html}
+    </div>
+    <div style="font-size:10px;color:#475569;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">最新消息</div>
+    {news_html or '<div style="color:#475569;font-size:12px;padding:8px 0">暫無相關新聞</div>'}
+  </div>
+
+  <!-- 國會議員申報 -->
+  <div class="sec">📋 國會議員持倉</div>
+  <div style="background:#0f172a;border-radius:12px;padding:16px;border:1px solid #1e293b;margin-bottom:4px">
+    {congress_html}
+    <div style="font-size:11px;color:#334155;margin-top:8px">來源：{data_src} · STOCK Act 申報延遲最長45天</div>
+  </div>
+
+  <!-- 期權掃描 -->
+  <div class="sec">🔍 期權異動掃描 Top 5</div>
+  {scan_cards or '<div style="color:#475569;padding:16px 0;text-align:center">今日無顯著期權異動</div>'}
+
+  <!-- FDA -->
+  <div class="sec">💊 FDA / 生技事件</div>
+  <div style="background:#0f172a;border-radius:12px;padding:14px 16px;border:1px solid #1e293b">
+    {fda_html}
+  </div>
+
+  <!-- 自選股動向 -->
+  <div class="sec">📊 自選股動向</div>
+  <div style="background:#0f172a;border-radius:12px;padding:4px 16px;border:1px solid #1e293b;margin-bottom:4px">
+    {movers_html}
+  </div>
+
+  <!-- 自選股數據表 -->
+  <div class="sec">自選股數據</div>
+  <div style="background:#0f172a;border-radius:12px;padding:14px 16px;border:1px solid #1e293b">
+    <table>
+      <thead><tr>
+        <th>代碼</th><th>收盤</th><th>昨日%</th><th>盤前%</th><th>IV</th>
+      </tr></thead>
+      <tbody>{watch_rows}</tbody>
+    </table>
+  </div>
+
+  <!-- 板塊+風險 -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px" class="grid2">
+    <div style="background:#0f172a;border-radius:10px;padding:14px;border:1px solid #1e293b">
+      <div style="font-size:10px;color:#475569;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">板塊輪動</div>
+      <div style="font-size:13px;color:#cbd5e1;line-height:1.5">{analysis.get('sector_rotation','—')}</div>
+    </div>
+    <div style="background:#0f172a;border-radius:10px;padding:14px;border:1px solid #1e293b">
+      <div style="font-size:10px;color:#475569;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">風險警示</div>
+      <div style="font-size:13px;color:#cbd5e1;line-height:1.5">{analysis.get('risk_warning','—')}</div>
+    </div>
+  </div>
+
+  <!-- 整體摘要 -->
+  <div style="background:#0f172a;border-radius:10px;padding:16px;border:1px solid #1e293b;margin-top:10px">
+    <div style="font-size:10px;color:#475569;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">整體摘要</div>
+    <div style="font-size:14px;color:#94a3b8;line-height:1.7">{analysis.get('summary','—')}</div>
+  </div>
+
+  <!-- 頁腳 -->
+  <div style="text-align:center;padding:22px 0;color:#334155;font-size:11px;border-top:1px solid #1e293b;margin-top:24px;line-height:1.8">
+    由 Gemini AI 自動生成 · 掃描標普500全市場<br>
+    僅供參考，不構成投資建議<br>
+    數據：Yahoo Finance · FDA · Google News · {data_src}
+  </div>
+
+</div>
+</body>
+</html>"""
 
     # ── 自選股表格 ──
     watch_rows = ""
