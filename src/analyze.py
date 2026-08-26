@@ -387,10 +387,26 @@ def fetch_political_intelligence() -> dict:
 # ══════════════════════════════════════════════════════════
 def ai_analyze(watchlist_data, scan_results, fda_events, political_data) -> dict:
     today = datetime.date.today().strftime("%Y年%m月%d日")
+    
+    # 提取技術指標給 AI 參考
+    tech_summary = []
+    for s in watchlist_data:
+        tech = s.get("tech", {})
+        if tech:
+            tech_summary.append({
+                "ticker":     tech.get("ticker"),
+                "rsi":        tech.get("rsi"),
+                "rsi_signal": tech.get("rsi_signal"),
+                "ma_signal":  tech.get("ma_signal"),
+                "support":    tech.get("support"),
+                "resistance": tech.get("resistance"),
+                "earn_date":  tech.get("earn_date"),
+            })
 
     payload = {
         "date":            today,
         "watchlist":       watchlist_data[:10],
+        "technical":       tech_summary,
         "top_options":     scan_results[:5],
         "fda_events":      fda_events[:3],
         "political_news":  political_data.get("news", [])[:6],
@@ -398,7 +414,7 @@ def ai_analyze(watchlist_data, scan_results, fda_events, political_data) -> dict
         "trump_signals":   political_data.get("trump_signals", [])[:3],
     }
 
-    prompt = f"""你是專業美股分析師，專注期權交易機會與政治風向。以下是 {today} 的盤前全套數據：
+    prompt = f"""你是專業美股期權交易分析師。以下是 {today} 的盤前完整數據，包含技術指標、期權異動、政治風向：
 
 {json.dumps(payload, ensure_ascii=False, indent=2)}
 
@@ -408,17 +424,42 @@ def ai_analyze(watchlist_data, scan_results, fda_events, political_data) -> dict
   "market_mood": "多頭/空頭/震盪",
   "mood_score": 0到100的整數,
   "headline": "今日最重要一句話20字以內",
+  "trade_plans": [
+    {{
+      "rank": 1,
+      "ticker": "股票代碼",
+      "direction": "CALL或PUT",
+      "strategy": "直接買Call/直接買Put/Bull Call Spread/Bear Put Spread/Straddle",
+      "strike": "建議行使價（具體數字）",
+      "expiry": "建議到期日（YYYY-MM-DD）",
+      "expiry_reason": "選這個到期日的原因15字",
+      "entry_timing": "今日開市/盤中回調/明日確認",
+      "signal_strength": "1到5的整數",
+      "signals": ["信號1", "信號2", "信號3"],
+      "max_loss": "最大虧損描述（就是期權費）",
+      "target": "目標獲利描述",
+      "stop_loss": "止損條件15字",
+      "risk": "主要風險15字",
+      "political_factor": "政治因素影響（若有）10字，無則填無"
+    }}
+  ],
+  "portfolio_suggestion": {{
+    "theme": "今日組合主題20字",
+    "combination": "建議組合描述40字（如科技多頭配製藥空頭）",
+    "risk_level": "保守/平衡/積極",
+    "notes": "組合操作注意事項40字"
+  }},
   "top_option_pick": {{
-    "ticker": "最值得關注的期權標的代碼",
+    "ticker": "今日最強單一期權機會代碼",
     "direction": "CALL或PUT",
     "reason": "原因30字以內",
-    "key_strike": "建議關注的Strike",
+    "key_strike": "建議Strike",
     "risk": "主要風險20字以內"
   }},
   "political_summary": "政治風向對今日股市的關鍵影響50字以內",
   "political_hot_tickers": ["受政治消息影響最大的3支股票代碼"],
   "political_sentiment": "利多/利空/中性",
-  "congress_highlight": "最值得關注的國會議員持倉動作30字（若無申報數據則分析新聞）",
+  "congress_highlight": "最值得關注的國會議員持倉動作30字",
   "fda_watch": "本週FDA事件影響30字，若無則填無重大事件",
   "sector_rotation": "板塊輪動觀察40字",
   "key_movers": [
@@ -426,7 +467,14 @@ def ai_analyze(watchlist_data, scan_results, fda_events, political_data) -> dict
   ],
   "risk_warning": "今日最大風險30字",
   "summary": "整體摘要100字"
-}}"""
+}}
+
+重要提示：
+- trade_plans 提供3-5個機會，按信號強度排序
+- strike 要根據當前股價給出具體合理的數字
+- expiry 要考慮財報日/FDA日/週期權到期日
+- 財報前建議用Spread策略控制IV Crush風險
+- signal_strength 1=弱 5=極強"""
 
     for attempt in range(3):
         try:
@@ -484,7 +532,80 @@ def build_html(watchlist_data, scan_results, fda_events, political_data, analysi
           </div>
         </div>"""
 
-    # ── 自選股動向 ──
+    # ── 今日操作清單 ──
+    trade_plans = analysis.get("trade_plans", [])
+    trade_html = ""
+    for plan in trade_plans:
+        dc = "#22c55e" if plan.get("direction") == "CALL" else "#ef4444"
+        stars = "★" * plan.get("signal_strength", 3) + "☆" * (5 - plan.get("signal_strength", 3))
+        signals_html = "".join(
+            f'<span style="background:#f59e0b22;color:#f59e0b;padding:2px 7px;border-radius:4px;font-size:11px;margin-right:4px">{sig}</span>'
+            for sig in plan.get("signals", [])
+        )
+        pol_factor = plan.get("political_factor", "無")
+        trade_html += f"""
+        <div style="background:#0f172a;border-radius:10px;padding:16px;margin-bottom:10px;border:1px solid #1e293b">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+            <div>
+              <div style="font-size:10px;color:#475569;margin-bottom:3px">#{plan.get('rank','')} · {plan.get('entry_timing','')}</div>
+              <div style="display:flex;align-items:center;gap:10px">
+                <div style="font-size:20px;font-weight:800;color:#f1f5f9">{plan.get('ticker','')}</div>
+                <span style="background:{dc}22;color:{dc};padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700">{plan.get('direction','')}</span>
+                <span style="font-size:13px;color:#f59e0b">{stars}</span>
+              </div>
+            </div>
+            <div style="text-align:right;font-size:11px;color:#64748b">
+              <div style="color:#e2e8f0;font-weight:600;font-size:13px">{plan.get('strategy','')}</div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px">
+            <div style="background:#0a0f1e;border-radius:6px;padding:8px">
+              <div style="font-size:10px;color:#475569;margin-bottom:2px">建議Strike</div>
+              <div style="font-size:14px;font-weight:700;color:{dc}">{plan.get('strike','—')}</div>
+            </div>
+            <div style="background:#0a0f1e;border-radius:6px;padding:8px">
+              <div style="font-size:10px;color:#475569;margin-bottom:2px">到期日</div>
+              <div style="font-size:13px;font-weight:600;color:#e2e8f0">{plan.get('expiry','—')}</div>
+            </div>
+            <div style="background:#0a0f1e;border-radius:6px;padding:8px">
+              <div style="font-size:10px;color:#475569;margin-bottom:2px">選期理由</div>
+              <div style="font-size:11px;color:#94a3b8">{plan.get('expiry_reason','—')}</div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+            <div style="background:#0a0f1e;border-radius:6px;padding:8px">
+              <div style="font-size:10px;color:#475569;margin-bottom:2px">目標獲利</div>
+              <div style="font-size:12px;color:#22c55e">{plan.get('target','—')}</div>
+            </div>
+            <div style="background:#0a0f1e;border-radius:6px;padding:8px">
+              <div style="font-size:10px;color:#475569;margin-bottom:2px">止損條件</div>
+              <div style="font-size:12px;color:#ef4444">{plan.get('stop_loss','—')}</div>
+            </div>
+          </div>
+          <div style="margin-bottom:8px">{signals_html}</div>
+          <div style="display:flex;justify-content:space-between;font-size:11px">
+            <span style="color:#64748b">最大虧損：<span style="color:#e2e8f0">{plan.get('max_loss','—')}</span></span>
+            <span style="color:#64748b">政治因素：<span style="color:#3b82f6">{pol_factor}</span></span>
+          </div>
+        </div>"""
+
+    # ── 投資組合建議 ──
+    portfolio = analysis.get("portfolio_suggestion", {})
+    portfolio_html = ""
+    if portfolio:
+        risk_color = {"保守": "#22c55e", "平衡": "#f59e0b", "積極": "#ef4444"}.get(
+            portfolio.get("risk_level", "平衡"), "#f59e0b")
+        portfolio_html = f"""
+        <div style="background:#0f172a;border-radius:10px;padding:16px;border:1px solid #334155;margin-bottom:4px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+            <span style="background:{risk_color}22;color:{risk_color};padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700">{portfolio.get('risk_level','平衡')}</span>
+            <span style="font-size:14px;font-weight:600;color:#f1f5f9">{portfolio.get('theme','—')}</span>
+          </div>
+          <div style="font-size:13px;color:#94a3b8;margin-bottom:8px;line-height:1.6">{portfolio.get('combination','—')}</div>
+          <div style="font-size:12px;color:#64748b;border-top:1px solid #1e293b;padding-top:8px">
+            ⚠️ {portfolio.get('notes','—')}
+          </div>
+        </div>"""
     movers_html = ""
     for m in analysis.get("key_movers", []):
         sc_color = {"強勢":"#22c55e","弱勢":"#ef4444","觀察":"#f59e0b"}.get(m.get("signal",""),"#94a3b8")
@@ -652,6 +773,14 @@ th{{text-align:left;color:#475569;font-size:10px;letter-spacing:1px;text-transfo
 
   <!-- AI 精選期權 -->
   {top_html}
+
+  <!-- 今日操作清單 -->
+  <div class="sec">📋 今日操作清單</div>
+  {trade_html or '<div style="color:#475569;padding:16px 0;text-align:center">今日無明確操作建議</div>'}
+
+  <!-- 投資組合建議 -->
+  <div class="sec">💼 今日組合建議</div>
+  {portfolio_html or '<div style="color:#475569;padding:16px 0;text-align:center">—</div>'}
 
   <!-- 政治風向雷達 -->
   <div class="sec">🏛 政治風向雷達</div>
