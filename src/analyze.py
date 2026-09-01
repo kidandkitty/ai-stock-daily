@@ -123,34 +123,126 @@ def fetch_stock_data(ticker: str) -> dict | None:
 # ══════════════════════════════════════════════════════════
 # 3. 期權評分
 # ══════════════════════════════════════════════════════════
+def fetch_fear_greed() -> dict:
+    """抓取 CNN Fear & Greed Index"""
+    try:
+        r = requests.get(
+            "https://production.dataviz.cnn.io/index/fearandgreed/graphdata",
+            timeout=8,
+            headers={"User-Agent": "Mozilla/5.0"}
+        )
+        if r.status_code == 200:
+            data = r.json()
+            score = data.get("fear_and_greed", {}).get("score", 50)
+            rating = data.get("fear_and_greed", {}).get("rating", "Neutral")
+            label_map = {
+                "Extreme Fear": "極度恐慌",
+                "Fear": "恐慌",
+                "Neutral": "中性",
+                "Greed": "貪婪",
+                "Extreme Greed": "極度貪婪",
+            }
+            return {
+                "score": round(float(score), 1),
+                "label": label_map.get(rating, rating),
+                "raw":   rating,
+            }
+    except Exception as e:
+        print(f"[WARN] Fear & Greed: {e}")
+    return {"score": 50, "label": "中性", "raw": "Neutral"}
+
+
+def fetch_vix() -> dict:
+    """抓取 VIX 恐慌指數"""
+    try:
+        import yfinance as yf
+        vix = yf.Ticker("^VIX")
+        hist = vix.history(period="5d")
+        if len(hist) >= 2:
+            current = round(float(hist["Close"].iloc[-1]), 2)
+            prev    = round(float(hist["Close"].iloc[-2]), 2)
+            change  = round(current - prev, 2)
+            if current < 15:
+                level = "極低（期權便宜）"
+            elif current < 20:
+                level = "正常"
+            elif current < 30:
+                level = "偏高（市場緊張）"
+            else:
+                level = "極高（恐慌，期權昂貴）"
+            return {"current": current, "change": change, "level": level}
+    except Exception as e:
+        print(f"[WARN] VIX: {e}")
+    return {"current": 20, "change": 0, "level": "正常"}
+
+
 def score_option(s: dict) -> tuple:
+    """多信號確認期權評分，需3個以上信號同向才算有效"""
     score, flags = 0, []
+    call_signals, put_signals = 0, 0
+
+    # 盤前異動
     pre = s.get("pre_change") or 0
     if abs(pre) >= 5:
-        score += 30; flags.append(f"盤前異動 {pre:+.1f}%")
+        score += 30
+        flags.append(f"盤前異動 {pre:+.1f}%")
+        if pre > 0: call_signals += 2
+        else: put_signals += 2
     elif abs(pre) >= SCAN_MIN_PRE_MOVE:
-        score += 15; flags.append(f"盤前異動 {pre:+.1f}%")
+        score += 15
+        flags.append(f"盤前異動 {pre:+.1f}%")
+        if pre > 0: call_signals += 1
+        else: put_signals += 1
 
+    # 成交量異動
     avg_vol = s.get("avg_volume") or 1
     pre_vol = s.get("pre_volume") or 0
     vol_ratio = (pre_vol / avg_vol) * (390 / 90) if avg_vol > 0 else 0
     if vol_ratio >= SCAN_MIN_VOL_RATIO:
-        score += 20; flags.append(f"成交量 {vol_ratio:.1f}x 均量")
+        score += 20
+        flags.append(f"成交量 {vol_ratio:.1f}x 均量")
 
+    # IV 飆升
     iv_cur, iv_prev = s.get("iv_current"), s.get("iv_prev")
     if iv_cur and iv_prev and iv_prev > 0:
         spike = (iv_cur - iv_prev) / iv_prev
         if spike >= SCAN_MIN_IV_SPIKE:
-            score += 25; flags.append(f"IV 飆升 {spike:.0%}")
+            score += 25
+            flags.append(f"IV 飆升 {spike:.0%}")
 
+    # P/C Ratio — 需配合其他信號才算有效
     pc = s.get("put_call")
     if pc is not None:
         if pc < 0.35:
-            score += 15; flags.append(f"P/C={pc:.2f} 大量買Call")
+            score += 15
+            flags.append(f"P/C={pc:.2f} 大量買Call")
+            call_signals += 1
+        elif pc < 0.6:
+            call_signals += 1
         elif pc > 1.5:
-            score += 15; flags.append(f"P/C={pc:.2f} 大量買Put")
+            score += 15
+            flags.append(f"P/C={pc:.2f} 大量買Put")
+            put_signals += 1
+        elif pc > 1.0:
+            put_signals += 1
 
-    direction = "PUT" if (pc and pc > 1.0) or pre < -3 else "CALL"
+    # 方向判斷：需要多信號同向確認
+    if call_signals >= 2 and call_signals > put_signals:
+        direction = "CALL"
+    elif put_signals >= 2 and put_signals > call_signals:
+        direction = "PUT"
+    elif pre > 0:
+        direction = "CALL"
+    elif pre < 0:
+        direction = "PUT"
+    else:
+        direction = "CALL"  # 無明確方向預設CALL
+
+    # 信號一致性加分
+    if call_signals >= 3 or put_signals >= 3:
+        score += 15
+        flags.append(f"{'多頭' if call_signals >= 3 else '空頭'}信號三重確認")
+
     return score, flags, direction
 
 
@@ -385,7 +477,7 @@ def fetch_political_intelligence() -> dict:
 # ══════════════════════════════════════════════════════════
 # 7. AI 分析（整合所有模組）
 # ══════════════════════════════════════════════════════════
-def ai_analyze(watchlist_data, scan_results, fda_events, political_data) -> dict:
+def ai_analyze(watchlist_data, scan_results, fda_events, political_data, fear_greed, vix_data) -> dict:
     today = datetime.date.today().strftime("%Y年%m月%d日")
     
     # 提取技術指標給 AI 參考
@@ -405,6 +497,8 @@ def ai_analyze(watchlist_data, scan_results, fda_events, political_data) -> dict
 
     payload = {
         "date":            today,
+        "fear_greed":      fear_greed,
+        "vix":             vix_data,
         "watchlist":       watchlist_data[:10],
         "technical":       tech_summary,
         "top_options":     scan_results[:5],
@@ -506,7 +600,7 @@ def ai_analyze(watchlist_data, scan_results, fda_events, political_data) -> dict
 # ══════════════════════════════════════════════════════════
 # 8. 生成 HTML 報告
 # ══════════════════════════════════════════════════════════
-def build_html(watchlist_data, scan_results, fda_events, political_data, analysis) -> str:
+def build_html(watchlist_data, scan_results, fda_events, political_data, analysis, fear_greed, vix_data) -> str:
     mood_color = {"多頭": "#22c55e", "空頭": "#ef4444", "震盪": "#f59e0b"}.get(
         analysis.get("market_mood", "震盪"), "#6b7280")
     score = analysis.get("mood_score", 50)
@@ -1057,6 +1151,25 @@ td{{padding:7px 0;border-bottom:1px solid #0f172a}}
   </div>
   <div class="progress"><div class="progress-fill"></div></div>
 
+  <!-- Fear & Greed + VIX -->
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px">
+    <div style="background:#0f172a;border-radius:8px;padding:12px;text-align:center;border:1px solid #1e293b">
+      <div style="font-size:10px;color:#475569;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Fear & Greed</div>
+      <div style="font-size:20px;font-weight:700;color:{'#22c55e' if fear_greed['score']>50 else '#ef4444'}">{fear_greed['score']}</div>
+      <div style="font-size:11px;color:#64748b">{fear_greed['label']}</div>
+    </div>
+    <div style="background:#0f172a;border-radius:8px;padding:12px;text-align:center;border:1px solid #1e293b">
+      <div style="font-size:10px;color:#475569;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">VIX</div>
+      <div style="font-size:20px;font-weight:700;color:{'#ef4444' if vix_data['current']>25 else '#f59e0b' if vix_data['current']>15 else '#22c55e'}">{vix_data['current']}</div>
+      <div style="font-size:11px;color:#64748b">{vix_data['level']}</div>
+    </div>
+    <div style="background:#0f172a;border-radius:8px;padding:12px;text-align:center;border:1px solid #1e293b">
+      <div style="font-size:10px;color:#475569;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">信號確認</div>
+      <div style="font-size:20px;font-weight:700;color:#f59e0b">3+</div>
+      <div style="font-size:11px;color:#64748b">多信號門檻</div>
+    </div>
+  </div>
+
   <div class="headline">💡 {analysis.get('headline','—')}</div>
 
   {top_html}
@@ -1189,30 +1302,35 @@ def send_push_notification(analysis: dict):
 def main():
     print("=== AI 美股日報 完整版 開始執行 ===")
 
-    print("\n[1/6] 取得標普500成分股清單...")
+    print("\n[1/7] 取得標普500成分股清單...")
     sp500 = get_sp500_tickers()
 
-    print("\n[2/6] 抓取自選股數據...")
+    print("\n[2/7] 抓取自選股數據...")
     watchlist_data = fetch_watchlist_data()
 
-    print("\n[3/6] 全市場期權異動掃描...")
+    print("\n[3/7] 全市場期權異動掃描...")
     scan_results = scan_options(sp500)
     print(f"  發現 {len(scan_results)} 支高評分異動股")
 
-    print("\n[4/6] 抓取 FDA 行事曆...")
+    print("\n[4/7] 抓取 FDA 行事曆...")
     fda_events = fetch_fda_calendar()
 
-    print("\n[5/6] 政治風向雷達...")
+    print("\n[5/7] 政治風向雷達...")
     political_data = fetch_political_intelligence()
     print(f"  新聞 {len(political_data['news'])} 條 · 國會申報 {len(political_data['congress_trades'])} 筆")
 
-    print("\n[6/6] Claude AI 整合分析...")
-    analysis = ai_analyze(watchlist_data, scan_results, fda_events, political_data)
+    print("\n[6/7] 市場情緒指標...")
+    fear_greed = fetch_fear_greed()
+    vix_data   = fetch_vix()
+    print(f"  Fear & Greed: {fear_greed['score']} ({fear_greed['label']}) · VIX: {vix_data['current']} {vix_data['level']}")
+
+    print("\n[7/7] Gemini AI 整合分析...")
+    analysis = ai_analyze(watchlist_data, scan_results, fda_events, political_data, fear_greed, vix_data)
     print(f"  標題：{analysis.get('headline')}")
     print(f"  政治情緒：{analysis.get('political_sentiment')} · {analysis.get('political_summary','')[:40]}")
 
     print("\n[生成報告與發送]")
-    html = build_html(watchlist_data, scan_results, fda_events, political_data, analysis)
+    html = build_html(watchlist_data, scan_results, fda_events, political_data, analysis, fear_greed, vix_data)
     save_report(html, analysis)
     send_email(html, analysis)
     send_push_notification(analysis)
