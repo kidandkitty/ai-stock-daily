@@ -387,6 +387,53 @@ def fetch_watchlist_data() -> list:
 # ══════════════════════════════════════════════════════════
 # 5. FDA 行事曆
 # ══════════════════════════════════════════════════════════
+def fetch_friday_weekly_analysis() -> dict:
+    """星期五專用：抓取下週關鍵事件，分析期權策略"""
+    today = datetime.date.today()
+    is_friday = today.weekday() == 4  # 4 = 星期五
+    if not is_friday:
+        return {"is_friday": False}
+
+    print("[星期五分析] 抓取下週關鍵事件...")
+    next_week_events = []
+
+    # 抓取下週財報、Fed會議、CPI等重要數據
+    queries = [
+        ("next week earnings reports options S&P500", "財報"),
+        ("next week CPI inflation report Federal Reserve 2026", "CPI/Fed"),
+        ("next week FDA PDUFA drug approval 2026", "FDA"),
+        ("next week options expiration market events 2026", "期權"),
+    ]
+    for query, label in queries:
+        try:
+            encoded = requests.utils.quote(query)
+            url = f"https://news.google.com/rss/search?q={encoded}&hl=en-US&gl=US&ceid=US:en"
+            r = requests.get(url, timeout=8, headers={"User-Agent": "Mozilla/5.0"})
+            if r.status_code != 200:
+                continue
+            from xml.etree import ElementTree as ET
+            root = ET.fromstring(r.content)
+            for item in list(root.iter("item"))[:2]:
+                title = item.findtext("title", "").strip()
+                if title:
+                    next_week_events.append({
+                        "category": label,
+                        "title": title[:100],
+                        "date": item.findtext("pubDate", "")[:16],
+                    })
+            import time as _time
+            _time.sleep(0.3)
+        except Exception as e:
+            print(f"[WARN] 星期五分析RSS({label}): {e}")
+
+    return {
+        "is_friday": True,
+        "next_week_events": next_week_events[:8],
+        "next_monday": str(today + datetime.timedelta(days=3)),
+        "next_friday": str(today + datetime.timedelta(days=8)),
+    }
+
+
 def fetch_fda_calendar() -> list:
     events = []
     try:
@@ -516,7 +563,7 @@ def fetch_political_intelligence() -> dict:
 # ══════════════════════════════════════════════════════════
 # 7. AI 分析（整合所有模組）
 # ══════════════════════════════════════════════════════════
-def ai_analyze(watchlist_data, scan_results, fda_events, political_data, fear_greed, vix_data) -> dict:
+def ai_analyze(watchlist_data, scan_results, fda_events, political_data, fear_greed, vix_data, friday_data=None) -> dict:
     today = datetime.date.today().strftime("%Y年%m月%d日")
     
     # 提取技術指標給 AI 參考
@@ -544,8 +591,11 @@ def ai_analyze(watchlist_data, scan_results, fda_events, political_data, fear_gr
                 "atm_call_est":    tech.get("atm_call_est"),
             })
 
+    is_friday = friday_data and friday_data.get("is_friday", False)
+
     payload = {
         "date":            today,
+        "is_friday":       is_friday,
         "fear_greed":      fear_greed,
         "vix":             vix_data,
         "watchlist":       watchlist_data[:10],
@@ -557,9 +607,43 @@ def ai_analyze(watchlist_data, scan_results, fda_events, political_data, fear_gr
         "trump_signals":   political_data.get("trump_signals", [])[:3],
     }
 
+    if is_friday:
+        payload["next_week_events"] = friday_data.get("next_week_events", [])
+        payload["next_monday"] = friday_data.get("next_monday", "")
+        payload["next_friday"] = friday_data.get("next_friday", "")
+
+    friday_prompt_section = ""
+    if is_friday:
+        friday_prompt_section = """
+
+【星期五特別分析】今天是星期五，請額外提供以下分析（加入到 JSON 中）：
+"friday_analysis": {{
+  "today_action": "今天應放出期權還是繼續持有？給出明確建議（放出/持有/部分放出）",
+  "today_reason": "今天行動的原因，包括週末時間值損耗、市場情緒等50字",
+  "weekend_risk": "持倉過週末的主要風險30字",
+  "next_week_outlook": "下週市場整體展望50字",
+  "next_week_key_events": ["下週最重要事件1", "下週最重要事件2", "下週最重要事件3"],
+  "should_buy_today": "今天是否適合買入下週期權？是/否/謹慎",
+  "buy_reason": "買入或不買的原因40字",
+  "next_week_picks": [
+    {{
+      "ticker": "股票代碼",
+      "direction": "CALL或PUT",
+      "strategy": "策略",
+      "strike": "建議Strike",
+      "expiry": "建議到期日",
+      "catalyst": "下週催化劑20字",
+      "entry_note": "入場建議20字",
+      "signal_strength": 1到5整數
+    }}
+  ],
+  "avoid_reason": "本週五不宜持倉過週末的股票及原因30字（若有）"
+}}"""
+
     prompt = f"""你是專業美股期權交易分析師。以下是 {today} 的盤前完整數據，包含技術指標、沽空數據、期權異動、政治風向、市場情緒：
 
 {json.dumps(payload, ensure_ascii=False, indent=2)}
+{friday_prompt_section}
 
 請用繁體中文回傳純 JSON（不要 markdown 或任何其他文字）：
 {{
@@ -673,7 +757,7 @@ def ai_analyze(watchlist_data, scan_results, fda_events, political_data, fear_gr
 # ══════════════════════════════════════════════════════════
 # 8. 生成 HTML 報告
 # ══════════════════════════════════════════════════════════
-def build_html(watchlist_data, scan_results, fda_events, political_data, analysis, fear_greed, vix_data) -> str:
+def build_html(watchlist_data, scan_results, fda_events, political_data, analysis, fear_greed, vix_data, friday_data=None) -> str:
     mood_color = {"多頭": "#22c55e", "空頭": "#ef4444", "震盪": "#f59e0b"}.get(
         analysis.get("market_mood", "震盪"), "#6b7280")
     score = analysis.get("mood_score", 50)
@@ -947,12 +1031,92 @@ def build_html(watchlist_data, scan_results, fda_events, political_data, analysi
         for t in hot_tickers
     )
 
+    # ── 星期五特別分析 ──
+    friday_html = ""
+    fa = analysis.get("friday_analysis", {})
+    if fa and friday_data and friday_data.get("is_friday"):
+        # 今天行動建議
+        action = fa.get("today_action", "—")
+        action_color = "#22c55e" if "放出" in action else "#f59e0b" if "部分" in action else "#3b82f6"
+
+        # 下週精選期權
+        next_picks_html = ""
+        for p in fa.get("next_week_picks", []):
+            dc = "#22c55e" if p.get("direction") == "CALL" else "#ef4444"
+            sig = int(p.get("signal_strength", 3))
+            stars = "★" * sig + "☆" * (5 - sig)
+            next_picks_html += f"""
+            <div style="background:#0a0f1e;border-radius:8px;padding:12px;margin-bottom:8px">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                <span style="font-size:16px;font-weight:700;color:#f1f5f9">{p.get('ticker','')}</span>
+                <span style="background:{dc}22;color:{dc};padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700">{p.get('direction','')}</span>
+                <span style="color:#f59e0b;font-size:12px">{stars}</span>
+              </div>
+              <div style="display:flex;gap:12px;font-size:12px;margin-bottom:4px;flex-wrap:wrap">
+                <span style="color:#64748b">Strike：<span style="color:{dc};font-weight:600">{p.get('strike','—')}</span></span>
+                <span style="color:#64748b">到期：<span style="color:#e2e8f0">{p.get('expiry','—')}</span></span>
+                <span style="color:#64748b">策略：<span style="color:#e2e8f0">{p.get('strategy','—')}</span></span>
+              </div>
+              <div style="font-size:12px;color:#94a3b8;margin-bottom:2px">📅 催化劑：{p.get('catalyst','—')}</div>
+              <div style="font-size:11px;color:#64748b">⏰ {p.get('entry_note','—')}</div>
+            </div>"""
+
+        # 下週事件
+        events_html = "".join(
+            f'<div style="font-size:12px;color:#94a3b8;padding:3px 0">• {ev}</div>'
+            for ev in fa.get("next_week_key_events", [])
+        )
+
+        buy_today = fa.get("should_buy_today", "謹慎")
+        buy_color = "#22c55e" if buy_today == "是" else "#ef4444" if buy_today == "否" else "#f59e0b"
+
+        friday_html = f"""
+        <div style="background:#0f172a;border:1px solid #f59e0b55;border-radius:12px;padding:18px;margin-bottom:16px">
+          <div style="font-size:10px;color:#f59e0b;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">📅 星期五特別分析 · 本週回顧 + 下週部署</div>
+
+          <!-- 今天行動 -->
+          <div style="background:#0a0f1e;border-radius:8px;padding:14px;margin-bottom:12px;border-left:3px solid {action_color}">
+            <div style="font-size:10px;color:#475569;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">今天應該怎樣做？</div>
+            <div style="font-size:18px;font-weight:700;color:{action_color};margin-bottom:6px">{action}</div>
+            <div style="font-size:13px;color:#94a3b8;line-height:1.5;margin-bottom:8px">{fa.get('today_reason','—')}</div>
+            <div style="font-size:12px;color:#64748b">⚠️ 週末風險：{fa.get('weekend_risk','—')}</div>
+          </div>
+
+          <!-- 今天買入下週期權？ -->
+          <div style="background:#0a0f1e;border-radius:8px;padding:12px;margin-bottom:12px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+              <span style="font-size:13px;color:#64748b">今天適合買入下週期權？</span>
+              <span style="background:{buy_color}22;color:{buy_color};padding:3px 12px;border-radius:20px;font-size:13px;font-weight:700">{buy_today}</span>
+            </div>
+            <div style="font-size:12px;color:#94a3b8">{fa.get('buy_reason','—')}</div>
+          </div>
+
+          <!-- 下週展望 -->
+          <div style="margin-bottom:12px">
+            <div style="font-size:10px;color:#475569;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">下週市場展望</div>
+            <div style="font-size:13px;color:#94a3b8;line-height:1.5;margin-bottom:8px">{fa.get('next_week_outlook','—')}</div>
+            <div style="font-size:10px;color:#475569;margin-bottom:4px">重要事件：</div>
+            {events_html}
+          </div>
+
+          <!-- 下週期權精選 -->
+          <div style="margin-bottom:10px">
+            <div style="font-size:10px;color:#475569;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">下週期權部署推薦</div>
+            {next_picks_html or '<div style="color:#475569;font-size:12px">暫無明確推薦，建議觀望</div>'}
+          </div>
+
+          <!-- 避免持倉 -->
+          <div style="border-top:1px solid #1e293b;padding-top:10px">
+            <div style="font-size:11px;color:#ef4444">🚫 不宜過週末持倉：{fa.get('avoid_reason','—')}</div>
+          </div>
+        </div>"""
+
     return f"""<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AI 美股日報 · {analysis['date']}</title>
+<title>AI {analysis['date']}</title>
 <style>
 *{{box-sizing:border-box;margin:0;padding:0}}
 body{{background:#0a0f1e;color:#e2e8f0;font-family:'Helvetica Neue',Arial,sans-serif;padding:16px}}
@@ -986,6 +1150,9 @@ th{{text-align:left;color:#475569;font-size:10px;letter-spacing:1px;text-transfo
   <div style="background:#0f172a;border-left:3px solid {mood_color};padding:12px 16px;margin-bottom:18px;font-size:15px;font-weight:600;color:#f1f5f9;line-height:1.5;border-radius:0 8px 8px 0">
     💡 {analysis.get('headline','—')}
   </div>
+
+  <!-- 星期五特別分析 -->
+  {friday_html}
 
   <!-- AI 精選期權 -->
   {top_html}
@@ -1236,7 +1403,7 @@ th{{text-align:left;color:#475569;font-size:10px;letter-spacing:1px;text-transfo
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AI 美股日報 · {analysis['date']}</title>
+<title>AI {analysis['date']}</title>
 <style>
 *{{box-sizing:border-box;margin:0;padding:0}}
 body{{background:#0a0f1e;color:#e2e8f0;font-family:'Helvetica Neue',Arial,sans-serif;padding:20px}}
@@ -1427,35 +1594,45 @@ def send_push_notification(analysis: dict):
 def main():
     print("=== AI 美股日報 完整版 開始執行 ===")
 
-    print("\n[1/7] 取得標普500成分股清單...")
+    print("\n[1/8] 取得標普500成分股清單...")
     sp500 = get_sp500_tickers()
 
-    print("\n[2/7] 抓取自選股數據...")
+    print("\n[2/8] 抓取自選股數據...")
     watchlist_data = fetch_watchlist_data()
 
-    print("\n[3/7] 全市場期權異動掃描...")
+    print("\n[3/8] 全市場期權異動掃描...")
     scan_results = scan_options(sp500)
     print(f"  發現 {len(scan_results)} 支高評分異動股")
 
-    print("\n[4/7] 抓取 FDA 行事曆...")
+    print("\n[4/8] 抓取 FDA 行事曆...")
     fda_events = fetch_fda_calendar()
 
-    print("\n[5/7] 政治風向雷達...")
+    print("\n[5/8] 政治風向雷達...")
     political_data = fetch_political_intelligence()
     print(f"  新聞 {len(political_data['news'])} 條 · 國會申報 {len(political_data['congress_trades'])} 筆")
 
-    print("\n[6/7] 市場情緒指標...")
+    print("\n[6/8] 市場情緒指標...")
     fear_greed = fetch_fear_greed()
     vix_data   = fetch_vix()
     print(f"  Fear & Greed: {fear_greed['score']} ({fear_greed['label']}) · VIX: {vix_data['current']} {vix_data['level']}")
 
-    print("\n[7/7] Gemini AI 整合分析...")
-    analysis = ai_analyze(watchlist_data, scan_results, fda_events, political_data, fear_greed, vix_data)
+    print("\n[7/8] 星期五特別分析...")
+    friday_data = fetch_friday_weekly_analysis()
+    if friday_data.get("is_friday"):
+        print(f"  今天是星期五！抓取下週事件 {len(friday_data.get('next_week_events', []))} 條")
+    else:
+        print("  今天不是星期五，跳過週報分析")
+
+    print("\n[8/8] Gemini AI 整合分析...")
+    analysis = ai_analyze(watchlist_data, scan_results, fda_events, political_data, fear_greed, vix_data, friday_data)
     print(f"  標題：{analysis.get('headline')}")
     print(f"  政治情緒：{analysis.get('political_sentiment')} · {analysis.get('political_summary','')[:40]}")
+    if friday_data.get("is_friday") and analysis.get("friday_analysis"):
+        fa = analysis["friday_analysis"]
+        print(f"  星期五建議：{fa.get('today_action','—')} · 買入下週：{fa.get('should_buy_today','—')}")
 
     print("\n[生成報告與發送]")
-    html = build_html(watchlist_data, scan_results, fda_events, political_data, analysis, fear_greed, vix_data)
+    html = build_html(watchlist_data, scan_results, fda_events, political_data, analysis, fear_greed, vix_data, friday_data)
     save_report(html, analysis)
     send_email(html, analysis)
     send_push_notification(analysis)
