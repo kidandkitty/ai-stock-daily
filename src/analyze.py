@@ -267,10 +267,9 @@ def scan_options(tickers: list) -> list:
 
 
 def fetch_technical_data(ticker: str) -> dict:
-    """抓取技術指標：RSI、均線、支撐阻力"""
+    """抓取技術指標：RSI、均線、支撐阻力、沽空數據"""
     try:
         import yfinance as yf
-        import pandas as pd
         t = yf.Ticker(ticker)
         hist = t.history(period="3mo")
         if len(hist) < 20:
@@ -294,12 +293,28 @@ def fetch_technical_data(ticker: str) -> dict:
         resistance = round(float(close.rolling(20).max().iloc[-1]), 2)
         support    = round(float(close.rolling(20).min().iloc[-1]), 2)
 
+        # ATR（平均真實波幅）- 用於計算期權費估算
+        high = hist["High"]
+        low  = hist["Low"]
+        tr   = (high - low).rolling(14).mean()
+        atr  = round(float(tr.iloc[-1]), 2)
+
         # 財報日期
         try:
             cal = t.calendar
             earn_date = str(cal.get("Earnings Date", ["—"])[0])[:10] if cal else "—"
         except Exception:
             earn_date = "—"
+
+        # 沽空數據
+        short_pct = None
+        short_ratio = None
+        try:
+            info = t.info
+            short_pct   = round(float(info.get("shortPercentOfFloat", 0) or 0) * 100, 2)
+            short_ratio = round(float(info.get("shortRatio", 0) or 0), 1)
+        except Exception:
+            pass
 
         # 均線信號
         if current > ma20 > ma50:
@@ -317,16 +332,40 @@ def fetch_technical_data(ticker: str) -> dict:
         else:
             rsi_signal = "正常"
 
+        # 軋空風險評估
+        squeeze_risk = "高" if (short_pct or 0) > 15 else "中" if (short_pct or 0) > 8 else "低"
+
+        # 入場區間計算（基於支撐阻力和ATR）
+        call_entry_low  = round(support + atr * 0.3, 2)
+        call_entry_high = round(support + atr * 0.8, 2)
+        put_entry_low   = round(resistance - atr * 0.8, 2)
+        put_entry_high  = round(resistance - atr * 0.3, 2)
+
+        # 預期期權費估算（ATM，粗略估算）
+        atm_call_est = round(atr * 1.2, 2)
+        atm_put_est  = round(atr * 1.2, 2)
+
         return {
-            "ticker":     ticker,
-            "rsi":        rsi,
-            "rsi_signal": rsi_signal,
-            "ma20":       ma20,
-            "ma50":       ma50,
-            "ma_signal":  ma_signal,
-            "resistance": resistance,
-            "support":    support,
-            "earn_date":  earn_date,
+            "ticker":         ticker,
+            "current":        current,
+            "rsi":            rsi,
+            "rsi_signal":     rsi_signal,
+            "ma20":           ma20,
+            "ma50":           ma50,
+            "ma_signal":      ma_signal,
+            "resistance":     resistance,
+            "support":        support,
+            "atr":            atr,
+            "earn_date":      earn_date,
+            "short_pct":      short_pct,
+            "short_ratio":    short_ratio,
+            "squeeze_risk":   squeeze_risk,
+            "call_entry_low":  call_entry_low,
+            "call_entry_high": call_entry_high,
+            "put_entry_low":   put_entry_low,
+            "put_entry_high":  put_entry_high,
+            "atm_call_est":   atm_call_est,
+            "atm_put_est":    atm_put_est,
         }
     except Exception as e:
         print(f"[WARN] 技術指標 {ticker}: {e}")
@@ -486,13 +525,23 @@ def ai_analyze(watchlist_data, scan_results, fda_events, political_data, fear_gr
         tech = s.get("tech", {})
         if tech:
             tech_summary.append({
-                "ticker":     tech.get("ticker"),
-                "rsi":        tech.get("rsi"),
-                "rsi_signal": tech.get("rsi_signal"),
-                "ma_signal":  tech.get("ma_signal"),
-                "support":    tech.get("support"),
-                "resistance": tech.get("resistance"),
-                "earn_date":  tech.get("earn_date"),
+                "ticker":          tech.get("ticker"),
+                "current":         tech.get("current"),
+                "rsi":             tech.get("rsi"),
+                "rsi_signal":      tech.get("rsi_signal"),
+                "ma_signal":       tech.get("ma_signal"),
+                "support":         tech.get("support"),
+                "resistance":      tech.get("resistance"),
+                "atr":             tech.get("atr"),
+                "earn_date":       tech.get("earn_date"),
+                "short_pct":       tech.get("short_pct"),
+                "short_ratio":     tech.get("short_ratio"),
+                "squeeze_risk":    tech.get("squeeze_risk"),
+                "call_entry_low":  tech.get("call_entry_low"),
+                "call_entry_high": tech.get("call_entry_high"),
+                "put_entry_low":   tech.get("put_entry_low"),
+                "put_entry_high":  tech.get("put_entry_high"),
+                "atm_call_est":    tech.get("atm_call_est"),
             })
 
     payload = {
@@ -508,7 +557,7 @@ def ai_analyze(watchlist_data, scan_results, fda_events, political_data, fear_gr
         "trump_signals":   political_data.get("trump_signals", [])[:3],
     }
 
-    prompt = f"""你是專業美股期權交易分析師。以下是 {today} 的盤前完整數據，包含技術指標、期權異動、政治風向：
+    prompt = f"""你是專業美股期權交易分析師。以下是 {today} 的盤前完整數據，包含技術指標、沽空數據、期權異動、政治風向、市場情緒：
 
 {json.dumps(payload, ensure_ascii=False, indent=2)}
 
@@ -524,32 +573,41 @@ def ai_analyze(watchlist_data, scan_results, fda_events, political_data, fear_gr
       "ticker": "股票代碼",
       "direction": "CALL或PUT",
       "strategy": "直接買Call/直接買Put/Bull Call Spread/Bear Put Spread/Straddle",
-      "strike": "建議行使價（具體數字）",
+      "strike": "建議行使價（具體數字，如210.0）",
       "expiry": "建議到期日（YYYY-MM-DD）",
       "expiry_reason": "選這個到期日的原因15字",
-      "entry_timing": "今日開市/盤中回調/明日確認",
-      "signal_strength": "1到5的整數",
+      "entry_zone": "建議入場價格區間（如$205-210）",
+      "entry_timing": "開市後15分確認/盤中回調支撐/明日開市確認",
+      "delta_range": "建議Delta範圍（如0.3-0.45）",
+      "est_premium": "預估期權費範圍（如$3-6）",
+      "signal_strength": 1到5的整數,
       "signals": ["信號1", "信號2", "信號3"],
-      "max_loss": "最大虧損描述（就是期權費）",
-      "target": "目標獲利描述",
-      "stop_loss": "止損條件15字",
+      "max_loss": "最大虧損（就是期權費，如$300-600）",
+      "target_gain": "目標獲利（如+50-100%即$150-300）",
+      "stop_loss_price": "止損股價（如跌破$200立即出場）",
+      "stop_loss_option": "期權止損（如虧損超過50%即出場）",
+      "squeeze_risk": "軋空風險高/中/低",
       "risk": "主要風險15字",
-      "political_factor": "政治因素影響（若有）10字，無則填無"
+      "political_factor": "政治因素10字，無則填無",
+      "best_day_to_enter": "最佳入場時段描述"
     }}
   ],
   "portfolio_suggestion": {{
     "theme": "今日組合主題20字",
-    "combination": "建議組合描述40字（如科技多頭配製藥空頭）",
+    "combination": "建議組合描述40字",
     "risk_level": "保守/平衡/積極",
+    "total_budget": "建議總預算佔比（如不超過總資金10%）",
     "notes": "組合操作注意事項40字"
   }},
   "top_option_pick": {{
     "ticker": "今日最強單一期權機會代碼",
     "direction": "CALL或PUT",
     "reason": "原因30字以內",
-    "key_strike": "建議Strike",
+    "key_strike": "建議Strike具體數字",
+    "entry_zone": "入場區間",
     "risk": "主要風險20字以內"
   }},
+  "squeeze_watchlist": ["高軋空風險的股票代碼列表，最多3個"],
   "political_summary": "政治風向對今日股市的關鍵影響50字以內",
   "political_hot_tickers": ["受政治消息影響最大的3支股票代碼"],
   "political_sentiment": "利多/利空/中性",
@@ -563,26 +621,41 @@ def ai_analyze(watchlist_data, scan_results, fda_events, political_data, fear_gr
   "summary": "整體摘要100字"
 }}
 
-重要提示：
+重要分析原則：
 - trade_plans 提供3-5個機會，按信號強度排序
-- strike 要根據當前股價給出具體合理的數字
-- expiry 要考慮財報日/FDA日/週期權到期日
-- 財報前建議用Spread策略控制IV Crush風險
-- signal_strength 1=弱 5=極強"""
+- strike 必須根據當前股價給出具體合理數字
+- entry_zone 根據技術支撐阻力位計算
+- delta_range 建議0.3-0.5（平衡成本與勝率）
+- expiry 考慮財報日/FDA日，財報前選財報後3-7天到期
+- 財報前一律建議Spread策略控制IV Crush風險
+- short_pct>15%且上漲時考慮軋空機會（加分給CALL）
+- Fear&Greed<25時市場極度恐慌，CALL機會更好
+- VIX>25時期權偏貴，建議Spread策略
+- signal_strength 需3個以上信號同向才給4-5分
+- best_day_to_enter 說明具體最佳入場時間段"""
 
-    for attempt in range(3):
-        try:
-            response = gemini_client.models.generate_content(
-                model="gemini-3.6-flash",
-                contents=prompt
-            )
+    models_to_try = ["gemini-2.5-flash", "gemini-3.6-flash"]
+    response = None
+    for model_name in models_to_try:
+        for attempt in range(3):
+            try:
+                response = gemini_client.models.generate_content(
+                    model=model_name,
+                    contents=prompt
+                )
+                print(f"  [OK] 使用模型：{model_name}")
+                break
+            except Exception as e:
+                if attempt < 2:
+                    wait = 20 * (attempt + 1)
+                    print(f"[WARN] {model_name} 重試 {attempt+1}/3，等待{wait}秒: {e}")
+                    time.sleep(wait)
+                else:
+                    print(f"[WARN] {model_name} 失敗，嘗試下一個模型")
+        if response:
             break
-        except Exception as e:
-            if attempt < 2:
-                print(f"[WARN] Gemini 重試 {attempt+1}/3: {e}")
-                time.sleep(10)
-            else:
-                raise
+    if not response:
+        raise Exception("所有模型都無法連線，請稍後重試")
     raw = response.text.strip()
     # 移除可能的 markdown 代碼塊
     raw = re.sub(r'```json\s*', '', raw)
@@ -631,55 +704,86 @@ def build_html(watchlist_data, scan_results, fda_events, political_data, analysi
     trade_html = ""
     for plan in trade_plans:
         dc = "#22c55e" if plan.get("direction") == "CALL" else "#ef4444"
-        stars = "★" * plan.get("signal_strength", 3) + "☆" * (5 - plan.get("signal_strength", 3))
+        sig_strength = int(plan.get("signal_strength", 3))
+        stars = "★" * sig_strength + "☆" * (5 - sig_strength)
         signals_html = "".join(
             f'<span style="background:#f59e0b22;color:#f59e0b;padding:2px 7px;border-radius:4px;font-size:11px;margin-right:4px">{sig}</span>'
             for sig in plan.get("signals", [])
         )
+        squeeze = plan.get("squeeze_risk", "低")
+        sq_color = "#ef4444" if squeeze == "高" else "#f59e0b" if squeeze == "中" else "#64748b"
         pol_factor = plan.get("political_factor", "無")
         trade_html += f"""
         <div style="background:#0f172a;border-radius:10px;padding:16px;margin-bottom:10px;border:1px solid #1e293b">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
             <div>
               <div style="font-size:10px;color:#475569;margin-bottom:3px">#{plan.get('rank','')} · {plan.get('entry_timing','')}</div>
-              <div style="display:flex;align-items:center;gap:10px">
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
                 <div style="font-size:20px;font-weight:800;color:#f1f5f9">{plan.get('ticker','')}</div>
                 <span style="background:{dc}22;color:{dc};padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700">{plan.get('direction','')}</span>
                 <span style="font-size:13px;color:#f59e0b">{stars}</span>
+                <span style="background:{sq_color}22;color:{sq_color};font-size:10px;padding:2px 7px;border-radius:4px">軋空{squeeze}</span>
               </div>
             </div>
-            <div style="text-align:right;font-size:11px;color:#64748b">
-              <div style="color:#e2e8f0;font-weight:600;font-size:13px">{plan.get('strategy','')}</div>
+            <div style="text-align:right">
+              <div style="color:#e2e8f0;font-weight:600;font-size:12px">{plan.get('strategy','')}</div>
+              <div style="font-size:11px;color:#64748b;margin-top:2px">預估費用 {plan.get('est_premium','—')}</div>
             </div>
           </div>
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px">
+
+          <!-- 核心數據 -->
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px">
             <div style="background:#0a0f1e;border-radius:6px;padding:8px">
-              <div style="font-size:10px;color:#475569;margin-bottom:2px">建議Strike</div>
-              <div style="font-size:14px;font-weight:700;color:{dc}">{plan.get('strike','—')}</div>
+              <div style="font-size:10px;color:#475569;margin-bottom:2px">Strike</div>
+              <div style="font-size:15px;font-weight:700;color:{dc}">{plan.get('strike','—')}</div>
             </div>
             <div style="background:#0a0f1e;border-radius:6px;padding:8px">
               <div style="font-size:10px;color:#475569;margin-bottom:2px">到期日</div>
-              <div style="font-size:13px;font-weight:600;color:#e2e8f0">{plan.get('expiry','—')}</div>
+              <div style="font-size:12px;font-weight:600;color:#e2e8f0">{plan.get('expiry','—')}</div>
+            </div>
+            <div style="background:#0a0f1e;border-radius:6px;padding:8px">
+              <div style="font-size:10px;color:#475569;margin-bottom:2px">Delta</div>
+              <div style="font-size:13px;font-weight:600;color:#a78bfa">{plan.get('delta_range','—')}</div>
             </div>
             <div style="background:#0a0f1e;border-radius:6px;padding:8px">
               <div style="font-size:10px;color:#475569;margin-bottom:2px">選期理由</div>
-              <div style="font-size:11px;color:#94a3b8">{plan.get('expiry_reason','—')}</div>
+              <div style="font-size:10px;color:#94a3b8">{plan.get('expiry_reason','—')}</div>
             </div>
           </div>
+
+          <!-- 入場資訊 -->
+          <div style="background:#0a0f1e;border-radius:6px;padding:10px;margin-bottom:10px;border-left:2px solid {dc}">
+            <div style="font-size:10px;color:#475569;margin-bottom:4px;letter-spacing:1px;text-transform:uppercase">入場資訊</div>
+            <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px">
+              <span style="color:#64748b">入場區間：<span style="color:#e2e8f0;font-weight:600">{plan.get('entry_zone','—')}</span></span>
+              <span style="color:#64748b">最佳時段：<span style="color:#e2e8f0">{plan.get('best_day_to_enter','—')}</span></span>
+            </div>
+          </div>
+
+          <!-- 止損目標 -->
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
             <div style="background:#0a0f1e;border-radius:6px;padding:8px">
               <div style="font-size:10px;color:#475569;margin-bottom:2px">目標獲利</div>
-              <div style="font-size:12px;color:#22c55e">{plan.get('target','—')}</div>
+              <div style="font-size:12px;color:#22c55e;font-weight:600">{plan.get('target_gain','—')}</div>
             </div>
             <div style="background:#0a0f1e;border-radius:6px;padding:8px">
-              <div style="font-size:10px;color:#475569;margin-bottom:2px">止損條件</div>
-              <div style="font-size:12px;color:#ef4444">{plan.get('stop_loss','—')}</div>
+              <div style="font-size:10px;color:#475569;margin-bottom:2px">止損（股價）</div>
+              <div style="font-size:12px;color:#ef4444;font-weight:600">{plan.get('stop_loss_price','—')}</div>
+            </div>
+            <div style="background:#0a0f1e;border-radius:6px;padding:8px">
+              <div style="font-size:10px;color:#475569;margin-bottom:2px">最大虧損</div>
+              <div style="font-size:12px;color:#94a3b8">{plan.get('max_loss','—')}</div>
+            </div>
+            <div style="background:#0a0f1e;border-radius:6px;padding:8px">
+              <div style="font-size:10px;color:#475569;margin-bottom:2px">期權止損</div>
+              <div style="font-size:12px;color:#ef4444">{plan.get('stop_loss_option','—')}</div>
             </div>
           </div>
+
           <div style="margin-bottom:8px">{signals_html}</div>
-          <div style="display:flex;justify-content:space-between;font-size:11px">
-            <span style="color:#64748b">最大虧損：<span style="color:#e2e8f0">{plan.get('max_loss','—')}</span></span>
-            <span style="color:#64748b">政治因素：<span style="color:#3b82f6">{pol_factor}</span></span>
+          <div style="display:flex;justify-content:space-between;font-size:11px;flex-wrap:wrap;gap:4px">
+            <span style="color:#64748b">風險：<span style="color:#f59e0b">{plan.get('risk','—')}</span></span>
+            <span style="color:#64748b">政治：<span style="color:#3b82f6">{pol_factor}</span></span>
           </div>
         </div>"""
 
@@ -691,14 +795,32 @@ def build_html(watchlist_data, scan_results, fda_events, political_data, analysi
             portfolio.get("risk_level", "平衡"), "#f59e0b")
         portfolio_html = f"""
         <div style="background:#0f172a;border-radius:10px;padding:16px;border:1px solid #334155;margin-bottom:4px">
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
             <span style="background:{risk_color}22;color:{risk_color};padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700">{portfolio.get('risk_level','平衡')}</span>
             <span style="font-size:14px;font-weight:600;color:#f1f5f9">{portfolio.get('theme','—')}</span>
           </div>
           <div style="font-size:13px;color:#94a3b8;margin-bottom:8px;line-height:1.6">{portfolio.get('combination','—')}</div>
+          <div style="display:flex;gap:16px;font-size:12px;margin-bottom:8px;flex-wrap:wrap">
+            <span style="color:#64748b">建議預算：<span style="color:#f59e0b;font-weight:600">{portfolio.get('total_budget','—')}</span></span>
+          </div>
           <div style="font-size:12px;color:#64748b;border-top:1px solid #1e293b;padding-top:8px">
             ⚠️ {portfolio.get('notes','—')}
           </div>
+        </div>"""
+
+    # ── 軋空觀察名單 ──
+    squeeze_list = analysis.get("squeeze_watchlist", [])
+    squeeze_html = ""
+    if squeeze_list:
+        squeeze_tags = " ".join(
+            f'<span style="background:#ef444422;color:#ef4444;padding:3px 10px;border-radius:4px;font-size:13px;font-weight:700">{t}</span>'
+            for t in squeeze_list
+        )
+        squeeze_html = f"""
+        <div style="background:#0f172a;border-radius:10px;padding:14px 16px;border:1px solid #ef444433;margin-bottom:4px">
+          <div style="font-size:10px;color:#ef4444;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">⚡ 高沽空比例 · 軋空風險股票</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">{squeeze_tags}</div>
+          <div style="font-size:11px;color:#64748b">Short % of Float 高，若盤前急漲可考慮 CALL 追入，軋空行情爆發力強</div>
         </div>"""
     movers_html = ""
     for m in analysis.get("key_movers", []):
@@ -875,6 +997,9 @@ th{{text-align:left;color:#475569;font-size:10px;letter-spacing:1px;text-transfo
   <!-- 投資組合建議 -->
   <div class="sec">💼 今日組合建議</div>
   {portfolio_html or '<div style="color:#475569;padding:16px 0;text-align:center">—</div>'}
+
+  <!-- 軋空觀察名單 -->
+  {squeeze_html}
 
   <!-- 政治風向雷達 -->
   <div class="sec">🏛 政治風向雷達</div>
