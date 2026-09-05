@@ -177,22 +177,22 @@ def fetch_vix() -> dict:
 
 
 def score_option(s: dict) -> tuple:
-    """多信號確認期權評分，需3個以上信號同向才算有效"""
+    """多信號確認期權評分，修正方向判斷邏輯"""
     score, flags = 0, []
     call_signals, put_signals = 0, 0
 
-    # 盤前異動
+    # 盤前異動（最重要信號）
     pre = s.get("pre_change") or 0
     if abs(pre) >= 5:
         score += 30
         flags.append(f"盤前異動 {pre:+.1f}%")
-        if pre > 0: call_signals += 2
-        else: put_signals += 2
+        if pre > 0: call_signals += 3
+        else: put_signals += 3
     elif abs(pre) >= SCAN_MIN_PRE_MOVE:
         score += 15
         flags.append(f"盤前異動 {pre:+.1f}%")
-        if pre > 0: call_signals += 1
-        else: put_signals += 1
+        if pre > 0: call_signals += 2
+        else: put_signals += 2
 
     # 成交量異動
     avg_vol = s.get("avg_volume") or 1
@@ -202,46 +202,69 @@ def score_option(s: dict) -> tuple:
         score += 20
         flags.append(f"成交量 {vol_ratio:.1f}x 均量")
 
-    # IV 飆升
+    # IV 飆升（只加分，不決定方向）
     iv_cur, iv_prev = s.get("iv_current"), s.get("iv_prev")
+    iv_spike = 0
     if iv_cur and iv_prev and iv_prev > 0:
-        spike = (iv_cur - iv_prev) / iv_prev
-        if spike >= SCAN_MIN_IV_SPIKE:
+        iv_spike = (iv_cur - iv_prev) / iv_prev
+        if iv_spike >= SCAN_MIN_IV_SPIKE:
             score += 25
-            flags.append(f"IV 飆升 {spike:.0%}")
+            flags.append(f"IV 飆升 {iv_spike:.0%}")
 
-    # P/C Ratio — 需配合其他信號才算有效
+    # P/C Ratio — 決定方向的關鍵信號
     pc = s.get("put_call")
     if pc is not None:
         if pc < 0.35:
-            score += 15
+            score += 20
             flags.append(f"P/C={pc:.2f} 大量買Call")
-            call_signals += 1
+            call_signals += 2
         elif pc < 0.6:
             call_signals += 1
         elif pc > 1.5:
-            score += 15
+            score += 20
             flags.append(f"P/C={pc:.2f} 大量買Put")
-            put_signals += 1
+            put_signals += 2
         elif pc > 1.0:
             put_signals += 1
 
-    # 方向判斷：需要多信號同向確認
-    if call_signals >= 2 and call_signals > put_signals:
-        direction = "CALL"
-    elif put_signals >= 2 and put_signals > call_signals:
-        direction = "PUT"
+    # 方向判斷：P/C 優先，其次盤前異動，最後預設
+    # 避免「信號說買Put但顯示CALL」的矛盾
+    if pc is not None and pc > 1.2:
+        # P/C 明確偏空
+        if pre <= 0:
+            direction = "PUT"
+        elif pre > 3:
+            # 盤前大漲但P/C偏空 = 可能是對沖，方向不明
+            direction = "CALL" if call_signals > put_signals else "PUT"
+        else:
+            direction = "PUT"
+    elif pc is not None and pc < 0.6:
+        # P/C 明確偏多
+        if pre >= 0:
+            direction = "CALL"
+        elif pre < -3:
+            # 盤前大跌但P/C偏多 = 可能是抄底，方向不明
+            direction = "PUT" if put_signals > call_signals else "CALL"
+        else:
+            direction = "CALL"
     elif pre > 0:
         direction = "CALL"
     elif pre < 0:
         direction = "PUT"
     else:
-        direction = "CALL"  # 無明確方向預設CALL
+        # 無盤前數據，純靠P/C決定
+        direction = "PUT" if put_signals > call_signals else "CALL"
 
-    # 信號一致性加分
+    # 方向一致性加分
     if call_signals >= 3 or put_signals >= 3:
         score += 15
-        flags.append(f"{'多頭' if call_signals >= 3 else '空頭'}信號三重確認")
+        flags.append(f"{'多頭' if call_signals >= put_signals else '空頭'}信號三重確認")
+
+    # 過濾：方向矛盾則降低評分
+    if direction == "CALL" and put_signals > call_signals + 1:
+        score = max(score - 15, 0)
+    elif direction == "PUT" and call_signals > put_signals + 1:
+        score = max(score - 15, 0)
 
     return score, flags, direction
 
@@ -252,16 +275,38 @@ def score_option(s: dict) -> tuple:
 def scan_options(tickers: list) -> list:
     print(f"[掃描] {len(tickers)} 支股票...")
     results = []
+    today_str = datetime.date.today().isoformat()
+
     for i, ticker in enumerate(tickers):
         if i % 50 == 0:
             print(f"  進度: {i}/{len(tickers)}")
         data = fetch_stock_data(ticker)
         if not data:
             continue
+
+        # 過濾今天或已過期的期權
+        exp_dates = data.get("exp_dates", [])
+        valid_dates = [d for d in exp_dates if d > today_str]
+        if not valid_dates:
+            continue
+        data["exp_dates"] = valid_dates
+
         sc, flags, direction = score_option(data)
-        if sc >= 20 and flags:
+
+        # 提高最低門檻到 30 分，且必須有至少一個信號
+        if sc >= 30 and flags:
+            # 加入方向一致性說明
+            pc = data.get("put_call")
+            pre = data.get("pre_change") or 0
+            consistency = "高" if (
+                (direction == "CALL" and (pre > 0 or (pc and pc < 0.6))) or
+                (direction == "PUT" and (pre < 0 or (pc and pc > 1.0)))
+            ) else "中"
+            data["direction_consistency"] = consistency
             results.append({**data, "score": sc, "flags": flags, "direction": direction})
+
         time.sleep(0.15 + random.uniform(0, 0.1))
+
     results.sort(key=lambda x: x["score"], reverse=True)
     return results[:SCAN_TOP_N]
 
@@ -920,43 +965,82 @@ def build_html(watchlist_data, scan_results, fda_events, political_data, analysi
     scan_cards = ""
     for rank, s in enumerate(scan_results[:5], 1):
         sc = s.get("score", 0)
-        dc = "#22c55e" if s.get("direction") == "CALL" else "#ef4444"
-        flags = " ".join(
-            f'<span style="background:#f59e0b22;color:#f59e0b;padding:2px 7px;border-radius:4px;font-size:11px">{f}</span>'
-            for f in s.get("flags", [])
-        )
+        direction = s.get("direction", "CALL")
+        dc = "#22c55e" if direction == "CALL" else "#ef4444"
+        consistency = s.get("direction_consistency", "中")
+        cons_color = "#22c55e" if consistency == "高" else "#f59e0b"
+
         pre = s.get("pre_change")
         iv_str = f"{s['iv_current']:.0%}" if s.get("iv_current") else "—"
-        exps = " · ".join(s.get("exp_dates", [])[:3])
+        pc = s.get("put_call")
+        pc_str = f"{pc:.2f}" if pc is not None else "—"
+        exps = " · ".join(s.get("exp_dates", [])[:2])  # 只顯示最近2個到期日
+
+        # 簡化信號顯示
+        flags_html = "".join(
+            f'<span style="background:#f59e0b22;color:#f59e0b;padding:2px 7px;border-radius:4px;font-size:11px;margin-right:4px;margin-bottom:4px;display:inline-block">{f}</span>'
+            for f in s.get("flags", [])
+        )
+
+        # 用口語化解釋P/C
+        if pc is not None:
+            if pc < 0.4:
+                pc_explain = "市場大量買Call，偏多"
+                pc_explain_color = "#22c55e"
+            elif pc < 0.8:
+                pc_explain = "Call略多於Put，偏多"
+                pc_explain_color = "#22c55e"
+            elif pc < 1.2:
+                pc_explain = "Put/Call均衡，方向不明"
+                pc_explain_color = "#64748b"
+            elif pc < 1.8:
+                pc_explain = "市場大量買Put，偏空"
+                pc_explain_color = "#ef4444"
+            else:
+                pc_explain = "Put遠多於Call，強烈偏空"
+                pc_explain_color = "#ef4444"
+        else:
+            pc_explain = "—"
+            pc_explain_color = "#64748b"
+
         scan_cards += f"""
-        <div style="background:#0f172a;border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid #1e293b">
-          <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+        <div style="background:#0f172a;border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid {'#334155' if sc >= 60 else '#1e293b'}">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
             <div>
-              <div style="font-size:10px;color:#475569">#{rank}</div>
-              <div style="font-size:18px;font-weight:700;color:#f1f5f9">{s['ticker']}</div>
+              <div style="font-size:10px;color:#475569;margin-bottom:2px">#{rank}</div>
+              <div style="font-size:20px;font-weight:800;color:#f1f5f9">{s['ticker']}</div>
             </div>
             <div style="text-align:right">
-              <div style="font-size:22px;font-weight:700;color:{dc}">{sc}</div>
-              <div style="font-size:10px;color:#475569">/ 100</div>
-              <div style="background:{dc}22;color:{dc};padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;margin-top:4px">{s.get('direction','—')}</div>
+              <span style="background:{dc}22;color:{dc};padding:4px 14px;border-radius:20px;font-size:14px;font-weight:700">{direction}</span>
+              <div style="font-size:11px;color:{cons_color};margin-top:4px">方向一致性：{consistency}</div>
             </div>
           </div>
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px">
-            <div style="background:#0a0f1e;border-radius:6px;padding:7px 8px">
-              <div style="font-size:10px;color:#475569">盤前</div>
-              <div style="color:{'#22c55e' if (pre or 0)>=0 else '#ef4444'};font-size:13px;font-weight:600">{f"{pre:+.1f}%" if pre is not None else "—"}</div>
+
+          <!-- 核心數據一行顯示 -->
+          <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+            <div style="background:#0a0f1e;border-radius:6px;padding:6px 10px;flex:1;min-width:70px">
+              <div style="font-size:10px;color:#475569;margin-bottom:1px">盤前</div>
+              <div style="color:{'#22c55e' if (pre or 0)>=0 else '#ef4444'};font-size:14px;font-weight:700">{f"{pre:+.1f}%" if pre is not None else "—"}</div>
             </div>
-            <div style="background:#0a0f1e;border-radius:6px;padding:7px 8px">
-              <div style="font-size:10px;color:#475569">IV</div>
-              <div style="color:#f59e0b;font-size:13px;font-weight:600">{iv_str}</div>
+            <div style="background:#0a0f1e;border-radius:6px;padding:6px 10px;flex:1;min-width:70px">
+              <div style="font-size:10px;color:#475569;margin-bottom:1px">IV（波動率）</div>
+              <div style="color:#f59e0b;font-size:14px;font-weight:700">{iv_str}</div>
             </div>
-            <div style="background:#0a0f1e;border-radius:6px;padding:7px 8px">
-              <div style="font-size:10px;color:#475569">P/C</div>
-              <div style="color:#e2e8f0;font-size:13px;font-weight:600">{s.get('put_call','—')}</div>
+            <div style="background:#0a0f1e;border-radius:6px;padding:6px 10px;flex:1;min-width:70px">
+              <div style="font-size:10px;color:#475569;margin-bottom:1px">評分</div>
+              <div style="color:{dc};font-size:14px;font-weight:700">{sc}</div>
             </div>
           </div>
-          <div style="margin-bottom:6px">{flags}</div>
-          <div style="font-size:11px;color:#475569">到期：{exps}</div>
+
+          <!-- P/C口語化解釋 -->
+          <div style="background:#0a0f1e;border-radius:6px;padding:8px 10px;margin-bottom:8px">
+            <div style="font-size:10px;color:#475569;margin-bottom:3px">期權市場情緒（P/C={pc_str}）</div>
+            <div style="font-size:13px;color:{pc_explain_color};font-weight:600">{pc_explain}</div>
+          </div>
+
+          <!-- 信號標籤 -->
+          <div style="margin-bottom:6px">{flags_html}</div>
+          <div style="font-size:11px;color:#475569">📅 到期日：{exps or '—'}</div>
         </div>"""
 
     # ── 政治新聞 ──
