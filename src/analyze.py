@@ -959,7 +959,13 @@ def ai_analyze(
 - 結合 market_news 和 event_calendar 分析催化劑
 - fda_analysis 每個事件必須給出明確的操作方向（Call/Put/觀望）和Strike
 - FDA 審批前一天入場，到期日選審批日後一週
-- 若無法識別具體股票代碼，ticker填—並說明原因"""
+- 若無法識別具體股票代碼，ticker填—並說明原因
+- 若新聞標題含approved/granted/cleared/already approved等字眼，代表事件已發生
+  → if_approved填「已批准，事件已計價，不建議入場」
+  → if_rejected填「—」
+  → call_strike和put_strike全部填「—」
+  → entry_timing填「事件已發生，觀望」
+- 只有upcoming/expected/PDUFA date/anticipated等未來式字眼才生成操作建議"""
 
     models_to_try = ["gemini-2.5-flash", "gemini-3.6-flash"]
     response = None
