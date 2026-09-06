@@ -1,13 +1,10 @@
 name: AI 美股日報
-
 on:
   schedule:
-    - cron: '0 11 * * 1-5'
-  workflow_dispatch:
-
+    - cron: '0 11 * * *'   # 每天台灣時間 19:00 執行（包括週六、週日）
+  workflow_dispatch:         # 支援手動觸發
 permissions:
   contents: write
-
 jobs:
   analyze:
     runs-on: ubuntu-latest
