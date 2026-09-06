@@ -549,27 +549,78 @@ def fetch_friday_weekly_analysis() -> dict:
 # 10. FDA 行事曆
 # ══════════════════════════════════════════════════════════
 def fetch_fda_calendar() -> list:
+    """
+    抓取 FDA 審批事件。
+    - 使用多個搜尋關鍵詞增加命中率
+    - 放寬至90天（PDUFA日期提前很久就有報道）
+    - 日期解析失敗時預設保留（避免誤殺）
+    """
     events = []
-    try:
-        query   = "FDA drug approval PDUFA 2026"
-        encoded = requests.utils.quote(query)
-        url     = f"https://news.google.com/rss/search?q={encoded}&hl=en-US&gl=US&ceid=US:en"
-        r       = requests.get(url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
-        if r.status_code == 200:
+    queries = [
+        "FDA drug approval PDUFA 2026",
+        "FDA approval decision biotech 2026",
+        "FDA PDUFA date clinical trial 2026",
+        "FDA NDA BLA approval upcoming 2026",
+    ]
+    for query in queries:
+        try:
+            encoded = requests.utils.quote(query)
+            url = f"https://news.google.com/rss/search?q={encoded}&hl=en-US&gl=US&ceid=US:en"
+            r   = requests.get(url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
+            if r.status_code != 200:
+                continue
             root = ET.fromstring(r.content)
-            for item in list(root.iter("item"))[:5]:
+            for item in list(root.iter("item"))[:3]:
+                title   = item.findtext("title", "").strip()
                 pubdate = item.findtext("pubDate", "")
-                if is_recent_news(pubdate, max_days=30):
+                link    = item.findtext("link", "")
+                # FDA 放寬到90天，日期解析失敗預設保留
+                if title and is_recent_news(pubdate, max_days=90):
                     events.append({
-                        "title": item.findtext("title", "")[:80],
+                        "title": title[:80],
                         "date":  pubdate[:16],
-                        "link":  item.findtext("link", ""),
+                        "link":  link,
                     })
-    except Exception as e:
-        print(f"[WARN] FDA: {e}")
-    if not events:
-        events = [{"title": "FDA行事曆暫時無法取得", "date": "", "link": "https://www.fda.gov"}]
-    return events
+            time.sleep(0.3)
+        except Exception as e:
+            print(f"[WARN] FDA({query[:20]}): {e}")
+
+    # 去重
+    seen, unique = set(), []
+    for e in events:
+        key = e["title"][:40]
+        if key not in seen:
+            seen.add(key)
+            unique.append(e)
+
+    # 備用：完全不過濾，直接抓最新5條
+    if not unique:
+        print("[FDA] 過濾後無結果，嘗試不過濾日期...")
+        try:
+            encoded = requests.utils.quote("FDA drug approval 2026")
+            url = f"https://news.google.com/rss/search?q={encoded}&hl=en-US&gl=US&ceid=US:en"
+            r   = requests.get(url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
+            if r.status_code == 200:
+                root = ET.fromstring(r.content)
+                for item in list(root.iter("item"))[:5]:
+                    title = item.findtext("title", "").strip()
+                    if title:
+                        unique.append({
+                            "title": title[:80],
+                            "date":  item.findtext("pubDate", "")[:16],
+                            "link":  item.findtext("link", ""),
+                        })
+        except Exception as e:
+            print(f"[WARN] FDA備用: {e}")
+
+    if not unique:
+        unique = [{
+            "title": "FDA行事曆暫時無法取得，請查閱 fda.gov",
+            "date":  "",
+            "link":  "https://www.fda.gov/patients/drug-approvals-and-databases/drug-approvals-and-databases",
+        }]
+
+    return unique[:5]
 
 
 # ══════════════════════════════════════════════════════════
