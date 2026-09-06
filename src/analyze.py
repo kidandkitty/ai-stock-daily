@@ -553,8 +553,45 @@ def fetch_fda_calendar() -> list:
     抓取 FDA 審批事件。
     - 使用多個搜尋關鍵詞增加命中率
     - 放寬至90天（PDUFA日期提前很久就有報道）
-    - 日期解析失敗時預設保留（避免誤殺）
+    - 嘗試從標題提取股票代碼
     """
+    # 常見生技/製藥股代碼對照表
+    BIOTECH_TICKERS = {
+        "biogen": "BIIB", "biib": "BIIB",
+        "moderna": "MRNA", "mrna": "MRNA",
+        "pfizer": "PFE", "pfe": "PFE",
+        "bristol": "BMY", "bmy": "BMY",
+        "merck": "MRK", "mrk": "MRK",
+        "abbvie": "ABBV", "abbv": "ABBV",
+        "amgen": "AMGN", "amgn": "AMGN",
+        "gilead": "GILD", "gild": "GILD",
+        "regeneron": "REGN", "regn": "REGN",
+        "vertex": "VRTX", "vrtx": "VRTX",
+        "alnylam": "ALNY", "alny": "ALNY",
+        "blueprint": "BPMC", "bpmc": "BPMC",
+        "sarepta": "SRPT", "srpt": "SRPT",
+        "ionis": "IONS", "ions": "IONS",
+        "jazz": "JAZZ", "jazz pharma": "JAZZ",
+        "neurocrine": "NBIX", "nbix": "NBIX",
+        "biomarin": "BMRN", "bmrn": "BMRN",
+        "ultragenyx": "RARE", "rare": "RARE",
+        "praxis": "PRAX", "prax": "PRAX",
+        "akeso": "AKSO",
+    }
+
+    def extract_ticker(title: str) -> str:
+        """從新聞標題嘗試提取股票代碼"""
+        title_lower = title.lower()
+        for keyword, ticker in BIOTECH_TICKERS.items():
+            if keyword in title_lower:
+                return ticker
+        # 嘗試抓取括號內的代碼，如 "Biogen (BIIB)"
+        import re
+        match = re.search(r'\(([A-Z]{2,5})\)', title)
+        if match:
+            return match.group(1)
+        return ""
+
     events = []
     queries = [
         "FDA drug approval PDUFA 2026",
@@ -574,12 +611,13 @@ def fetch_fda_calendar() -> list:
                 title   = item.findtext("title", "").strip()
                 pubdate = item.findtext("pubDate", "")
                 link    = item.findtext("link", "")
-                # FDA 放寬到90天，日期解析失敗預設保留
                 if title and is_recent_news(pubdate, max_days=90):
+                    ticker = extract_ticker(title)
                     events.append({
-                        "title": title[:80],
-                        "date":  pubdate[:16],
-                        "link":  link,
+                        "title":  title[:80],
+                        "date":   pubdate[:16],
+                        "link":   link,
+                        "ticker": ticker,
                     })
             time.sleep(0.3)
         except Exception as e:
@@ -606,18 +644,20 @@ def fetch_fda_calendar() -> list:
                     title = item.findtext("title", "").strip()
                     if title:
                         unique.append({
-                            "title": title[:80],
-                            "date":  item.findtext("pubDate", "")[:16],
-                            "link":  item.findtext("link", ""),
+                            "title":  title[:80],
+                            "date":   item.findtext("pubDate", "")[:16],
+                            "link":   item.findtext("link", ""),
+                            "ticker": extract_ticker(title),
                         })
         except Exception as e:
             print(f"[WARN] FDA備用: {e}")
 
     if not unique:
         unique = [{
-            "title": "FDA行事曆暫時無法取得，請查閱 fda.gov",
-            "date":  "",
-            "link":  "https://www.fda.gov/patients/drug-approvals-and-databases/drug-approvals-and-databases",
+            "title":  "FDA行事曆暫時無法取得，請查閱 fda.gov",
+            "date":   "",
+            "link":   "https://www.fda.gov/patients/drug-approvals-and-databases/drug-approvals-and-databases",
+            "ticker": "",
         }]
 
     return unique[:5]
@@ -886,7 +926,23 @@ def ai_analyze(
   "political_hot_tickers": ["受影響股票3個"],
   "political_sentiment": "利多/利空/中性",
   "congress_highlight": "最值得關注的議員持倉30字",
-  "fda_watch": "FDA事件影響30字",
+  "fda_analysis": [
+    {{
+      "ticker": "相關股票代碼，如BIIB，若無則填—",
+      "company": "公司名稱",
+      "drug": "藥物或療法名稱15字以內",
+      "event_type": "PDUFA審批/臨床數據/FDA聆訊",
+      "expected_date": "預計日期YYYY-MM-DD，不確定填—",
+      "approval_prob": "通過機率如70%，不確定填—",
+      "if_approved": "通過的話股價反應和操作建議20字",
+      "if_rejected": "拒絕的話股價反應和操作建議20字",
+      "call_strike": "若看漲建議Strike，不適用填—",
+      "put_strike": "若看跌建議Strike，不適用填—",
+      "expiry_suggest": "建議到期日YYYY-MM-DD",
+      "entry_timing": "建議何時入場15字",
+      "risk_note": "主要風險15字"
+    }}
+  ],
   "sector_rotation": "板塊輪動觀察40字",
   "key_movers": [
     {{"ticker": "代碼", "signal": "強勢或弱勢或觀察", "reason": "原因20字"}}
@@ -900,7 +956,10 @@ def ai_analyze(
 - strike 必須根據當前股價給出具體數字
 - 財報前一律建議Spread策略
 - signal_strength 需3個以上信號同向才給4-5分
-- 結合 market_news 和 event_calendar 分析催化劑"""
+- 結合 market_news 和 event_calendar 分析催化劑
+- fda_analysis 每個事件必須給出明確的操作方向（Call/Put/觀望）和Strike
+- FDA 審批前一天入場，到期日選審批日後一週
+- 若無法識別具體股票代碼，ticker填—並說明原因"""
 
     models_to_try = ["gemini-2.5-flash", "gemini-3.6-flash"]
     response = None
@@ -1373,17 +1432,64 @@ def build_html(
     else:
         congress_html = f'<div style="color:#64748b;font-size:13px;padding:8px 0">{analysis.get("congress_highlight","—")}</div>'
 
-    # ── FDA ──
+    # ── FDA 結構化分析 ──
     fda_html = ""
-    for ev in fda_events:
-        fda_html += f"""
-        <div style="display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #1e293b">
-          <div style="width:6px;height:6px;border-radius:50%;background:#a78bfa;margin-top:5px;flex-shrink:0"></div>
-          <div>
-            <div style="font-size:13px;color:#e2e8f0">{ev.get('title','')}</div>
-            <div style="font-size:11px;color:#475569;margin-top:2px">{ev.get('date','')}</div>
-          </div>
-        </div>"""
+    fda_analysis = analysis.get("fda_analysis", [])
+    if fda_analysis:
+        for fa in fda_analysis:
+            ticker = fa.get("ticker", "—")
+            has_ticker = ticker and ticker != "—"
+            ticker_html = f'<span style="font-size:16px;font-weight:800;color:#f1f5f9">{ticker}</span>' if has_ticker else ""
+            prob = fa.get("approval_prob", "—")
+            prob_color = "#22c55e" if prob and prob != "—" and int(prob.replace("%","")) >= 60 else "#f59e0b" if prob and prob != "—" else "#64748b"
+            fda_html += f"""
+            <div style="background:#0f172a;border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid #1e293b">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+                {ticker_html}
+                <div>
+                  <div style="font-size:13px;font-weight:600;color:#e2e8f0">{fa.get('company','')}</div>
+                  <div style="font-size:11px;color:#a78bfa">{fa.get('event_type','')} · {fa.get('drug','')}</div>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">
+                <div style="background:#0a0f1e;border-radius:6px;padding:8px">
+                  <div style="font-size:10px;color:#475569;margin-bottom:2px">預計日期</div>
+                  <div style="font-size:13px;font-weight:600;color:#e2e8f0">{fa.get('expected_date','—')}</div>
+                </div>
+                <div style="background:#0a0f1e;border-radius:6px;padding:8px">
+                  <div style="font-size:10px;color:#475569;margin-bottom:2px">通過機率</div>
+                  <div style="font-size:13px;font-weight:600;color:{prob_color}">{prob}</div>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">
+                <div style="background:#22c55e11;border-radius:6px;padding:8px;border:1px solid #22c55e33">
+                  <div style="font-size:10px;color:#22c55e;margin-bottom:3px">✅ 通過 → CALL</div>
+                  <div style="font-size:12px;color:#94a3b8;line-height:1.4">{fa.get('if_approved','—')}</div>
+                  <div style="font-size:11px;color:#22c55e;margin-top:4px;font-weight:600">Strike: {fa.get('call_strike','—')}</div>
+                </div>
+                <div style="background:#ef444411;border-radius:6px;padding:8px;border:1px solid #ef444433">
+                  <div style="font-size:10px;color:#ef4444;margin-bottom:3px">❌ 拒絕 → PUT</div>
+                  <div style="font-size:12px;color:#94a3b8;line-height:1.4">{fa.get('if_rejected','—')}</div>
+                  <div style="font-size:11px;color:#ef4444;margin-top:4px;font-weight:600">Strike: {fa.get('put_strike','—')}</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:16px;font-size:11px;flex-wrap:wrap">
+                <span style="color:#64748b">到期建議：<span style="color:#a78bfa;font-weight:600">{fa.get('expiry_suggest','—')}</span></span>
+                <span style="color:#64748b">入場時機：<span style="color:#e2e8f0">{fa.get('entry_timing','—')}</span></span>
+                <span style="color:#64748b">風險：<span style="color:#f59e0b">{fa.get('risk_note','—')}</span></span>
+              </div>
+            </div>"""
+    else:
+        # 備用：顯示原始新聞
+        for ev in fda_events:
+            fda_html += f"""
+            <div style="display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #1e293b">
+              <div style="width:6px;height:6px;border-radius:50%;background:#a78bfa;margin-top:5px;flex-shrink:0"></div>
+              <div>
+                <div style="font-size:13px;color:#e2e8f0">{ev.get('title','')}</div>
+                <div style="font-size:11px;color:#475569;margin-top:2px">{ev.get('date','')}</div>
+              </div>
+            </div>"""
 
     data_src = political_data.get("data_source","Google News RSS")
     hot_html = " ".join(f'<span style="background:#3b82f622;color:#3b82f6;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:700">{t}</span>' for t in analysis.get("political_hot_tickers",[]))
