@@ -3,156 +3,511 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AI 美股日報</title>
+<meta name="description" content="AI 美股日報 — 每日自動分析標普500期權異動、政治風向、FDA事件，提供專業操作建議。">
+<meta name="keywords" content="美股,期權,日報,AI分析,SPY,QQQ,NVDA,TSLA,期權策略">
+<meta property="og:title" content="AI 美股日報 — 每日期權分析">
+<meta property="og:description" content="每日自動掃描標普500全市場期權異動，AI生成操作建議">
+<meta property="og:type" content="website">
+<title>AI 美股日報 — 每日期權分析 · 政治風向 · FDA事件</title>
 <style>
-  :root {
-    --bg: #0a0f1e;
-    --surface: #0f172a;
-    --border: #1e293b;
-    --text: #e2e8f0;
-    --muted: #64748b;
-    --accent: #3b82f6;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: 'Helvetica Neue', Arial, sans-serif; min-height: 100vh; }
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0f1e;
+  --bg2:#0f172a;
+  --bg3:#1e293b;
+  --text:#e2e8f0;
+  --text2:#94a3b8;
+  --text3:#475569;
+  --accent:#3b82f6;
+  --green:#22c55e;
+  --red:#ef4444;
+  --yellow:#f59e0b;
+  --purple:#a78bfa;
+  --border:#1e293b;
+  --radius:10px;
+}
+body{background:var(--bg);color:var(--text);font-family:'Helvetica Neue',Arial,sans-serif;min-height:100vh}
+a{color:inherit;text-decoration:none}
 
-  header {
-    border-bottom: 1px solid var(--border);
-    padding: 24px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    max-width: 760px;
-    margin: 0 auto;
-  }
-  .logo { display: flex; align-items: center; gap: 10px; }
-  .logo-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; animation: pulse 2s infinite; }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
-  .logo-text { font-size: 15px; font-weight: 700; letter-spacing: 0.5px; }
-  .logo-sub { font-size: 11px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+/* ── 導航 ── */
+nav{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;position:sticky;top:0;z-index:100}
+.nav-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:56px}
+.nav-logo{display:flex;align-items:center;gap:10px}
+.nav-logo-icon{width:32px;height:32px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.nav-logo-text{font-size:15px;font-weight:700;color:#f1f5f9}
+.nav-logo-sub{font-size:11px;color:var(--text3);margin-top:1px}
+.nav-links{display:flex;gap:4px}
+.nav-link{padding:6px 14px;border-radius:6px;font-size:13px;color:var(--text2);transition:all 0.15s}
+.nav-link:hover{background:var(--bg3);color:var(--text)}
+.nav-link.active{background:var(--accent)22;color:var(--accent)}
+.nav-cta{background:var(--accent);color:#fff;padding:7px 16px;border-radius:6px;font-size:13px;font-weight:600;transition:opacity 0.15s}
+.nav-cta:hover{opacity:0.85}
+.nav-mobile-menu{display:none;flex-direction:column;gap:4px;cursor:pointer;padding:4px}
+.nav-mobile-menu span{width:20px;height:2px;background:var(--text2);border-radius:2px;display:block}
 
-  .latest-btn {
-    background: var(--accent);
-    color: #fff;
-    padding: 8px 18px;
-    border-radius: 6px;
-    text-decoration: none;
-    font-size: 13px;
-    font-weight: 600;
-    transition: opacity 0.2s;
-  }
-  .latest-btn:hover { opacity: 0.85; }
+/* ── 英雄區塊 ── */
+.hero{max-width:1100px;margin:0 auto;padding:48px 24px 32px}
+.hero-top{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.hero-badge{background:var(--green)22;color:var(--green);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600}
+.hero-date{font-size:12px;color:var(--text3)}
+.hero-title{font-size:36px;font-weight:800;color:#f8fafc;line-height:1.2;margin-bottom:12px}
+.hero-title span{color:var(--accent)}
+.hero-subtitle{font-size:16px;color:var(--text2);line-height:1.6;max-width:600px;margin-bottom:32px}
+.hero-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:32px}
+.hero-stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center}
+.hero-stat-label{font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+.hero-stat-value{font-size:24px;font-weight:700}
+.hero-stat-sub{font-size:11px;color:var(--text3);margin-top:3px}
+.hero-cta-row{display:flex;gap:12px;flex-wrap:wrap}
+.btn-primary{background:var(--accent);color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:8px;transition:opacity 0.15s}
+.btn-primary:hover{opacity:0.85}
+.btn-secondary{background:var(--bg2);color:var(--text);padding:12px 24px;border-radius:8px;font-size:14px;font-weight:600;border:1px solid var(--border);display:inline-flex;align-items:center;gap:8px;transition:all 0.15s}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent)}
 
-  main { max-width: 760px; margin: 0 auto; padding: 32px 20px; }
 
-  .hero {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 32px;
-    margin-bottom: 36px;
-    text-align: center;
-  }
-  .hero .eyebrow { font-size: 11px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 12px; }
-  .hero h1 { font-size: 32px; font-weight: 800; margin-bottom: 10px; }
-  .hero p { color: var(--muted); font-size: 14px; line-height: 1.6; }
 
-  .section-label { font-size: 11px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 16px; }
+/* ── 主內容 ── */
+.main{max-width:1100px;margin:0 auto;padding:0 24px 48px}
+.section-label{font-size:10px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;margin-bottom:16px}
 
-  #report-list { display: flex; flex-direction: column; gap: 10px; }
+/* ── 今日精選 ── */
+.today-grid{display:grid;grid-template-columns:1fr 340px;gap:20px;margin-bottom:32px}
+.today-main{display:flex;flex-direction:column;gap:12px}
+.today-sidebar{display:flex;flex-direction:column;gap:12px}
 
-  .report-card {
-    display: flex;
-    align-items: center;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 16px 20px;
-    text-decoration: none;
-    color: var(--text);
-    transition: border-color 0.2s, transform 0.1s;
-    gap: 16px;
-  }
-  .report-card:hover { border-color: var(--accent); transform: translateX(3px); }
-  .report-card .date { font-size: 12px; color: var(--muted); min-width: 90px; }
-  .report-card .headline { font-size: 14px; flex: 1; }
-  .report-card .mood-tag { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 4px; white-space: nowrap; }
-  .mood-bull { background: #22c55e22; color: #22c55e; }
-  .mood-bear { background: #ef444422; color: #ef4444; }
-  .mood-side { background: #f59e0b22; color: #f59e0b; }
-  .report-card .arrow { color: var(--muted); font-size: 16px; }
+/* 市場情緒卡片 */
+.mood-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+.mood-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.mood-badge{padding:4px 12px;border-radius:20px;font-size:13px;font-weight:700}
+.mood-score{font-size:13px;color:var(--text3)}
+.mood-bar-bg{background:var(--bg3);border-radius:4px;height:6px;margin-bottom:16px;overflow:hidden}
+.mood-bar-fill{height:6px;border-radius:4px}
+.mood-headline{font-size:15px;font-weight:600;color:#f1f5f9;line-height:1.5;padding:12px 16px;background:var(--bg3);border-radius:8px;border-left:3px solid var(--accent)}
+.mood-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.mood-metric{background:var(--bg3);border-radius:8px;padding:10px;text-align:center}
+.mood-metric-label{font-size:10px;color:var(--text3);margin-bottom:3px}
+.mood-metric-value{font-size:18px;font-weight:700}
+.mood-metric-sub{font-size:10px;color:var(--text3);margin-top:2px}
 
-  .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
-  .empty p { margin-top: 8px; font-size: 13px; }
+/* 精選期權卡片 */
+.pick-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+.pick-header{font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px}
+.pick-ticker{font-size:28px;font-weight:800;color:#f1f5f9}
+.pick-direction{display:inline-block;padding:4px 12px;border-radius:20px;font-size:13px;font-weight:700;margin-left:10px}
+.pick-reason{font-size:13px;color:var(--text2);line-height:1.5;margin:10px 0}
+.pick-details{display:flex;gap:16px;font-size:12px;flex-wrap:wrap}
+.pick-detail{color:var(--text3)}
+.pick-detail span{color:var(--text);font-weight:600}
 
-  footer {
-    text-align: center;
-    padding: 32px 20px;
-    color: var(--muted);
-    font-size: 12px;
-    border-top: 1px solid var(--border);
-    max-width: 760px;
-    margin: 0 auto;
-  }
+/* 操作清單 */
+.trade-list{display:flex;flex-direction:column;gap:10px}
+.trade-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;transition:border-color 0.15s}
+.trade-card:hover{border-color:var(--accent)55}
+.trade-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.trade-ticker{font-size:18px;font-weight:800;color:#f1f5f9}
+.trade-direction{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;margin-left:8px}
+.trade-stars{color:var(--yellow);font-size:12px}
+.trade-strategy{font-size:11px;color:var(--text3)}
+.trade-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.trade-metric{background:var(--bg3);border-radius:6px;padding:8px}
+.trade-metric-label{font-size:10px;color:var(--text3);margin-bottom:2px}
+.trade-metric-value{font-size:13px;font-weight:600}
+.trade-signals{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}
+.trade-signal{background:var(--yellow)22;color:var(--yellow);padding:2px 7px;border-radius:4px;font-size:10px}
+.view-all{display:flex;align-items:center;justify-content:center;gap:6px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;font-size:13px;color:var(--accent);transition:all 0.15s;cursor:pointer}
+.view-all:hover{background:var(--accent)11;border-color:var(--accent)}
+
+/* 側邊欄 */
+.sidebar-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+.sidebar-card-title{font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px}
+.event-item{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.event-item:last-child{border-bottom:none}
+.event-badge{font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;white-space:nowrap;height:fit-content}
+.event-title{font-size:12px;color:var(--text2);line-height:1.4}
+.event-date{font-size:10px;color:var(--text3);margin-top:2px}
+.political-item{padding:8px 0;border-bottom:1px solid var(--border)}
+.political-item:last-child{border-bottom:none}
+.political-badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;margin-bottom:4px}
+.political-title{font-size:12px;color:var(--text2);line-height:1.4}
+
+/* 歷史記錄 */
+.archive-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-bottom:32px}
+.archive-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;transition:all 0.15s;cursor:pointer}
+.archive-card:hover{border-color:var(--accent)55;transform:translateY(-1px)}
+.archive-date{font-size:11px;color:var(--text3);margin-bottom:8px}
+.archive-headline{font-size:14px;font-weight:600;color:#f1f5f9;line-height:1.4;margin-bottom:10px}
+.archive-meta{display:flex;align-items:center;gap:8px}
+.archive-mood{font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px}
+.archive-arrow{margin-left:auto;color:var(--text3);font-size:12px}
+
+/* 訂閱區塊 */
+.subscribe-section{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:40px;text-align:center;margin-bottom:32px}
+.subscribe-title{font-size:24px;font-weight:800;color:#f1f5f9;margin-bottom:8px}
+.subscribe-sub{font-size:14px;color:var(--text2);margin-bottom:24px;line-height:1.6}
+.subscribe-options{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.subscribe-option{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px 24px;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s}
+.subscribe-option:hover{border-color:var(--accent);color:var(--accent)}
+.subscribe-option-icon{font-size:20px}
+
+/* 功能特色 */
+.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:32px}
+.feature-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+.feature-icon{font-size:24px;margin-bottom:12px}
+.feature-title{font-size:14px;font-weight:700;color:#f1f5f9;margin-bottom:6px}
+.feature-desc{font-size:12px;color:var(--text2);line-height:1.6}
+
+/* 頁腳 */
+footer{background:var(--bg2);border-top:1px solid var(--border);padding:32px 24px}
+.footer-inner{max-width:1100px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
+.footer-logo{font-size:14px;font-weight:700;color:#f1f5f9}
+.footer-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.footer-links{display:flex;gap:16px}
+.footer-link{font-size:12px;color:var(--text3);transition:color 0.15s}
+.footer-link:hover{color:var(--text)}
+.footer-disclaimer{font-size:11px;color:var(--text3);text-align:center;margin-top:16px;line-height:1.6}
+
+/* ── RWD ── */
+@media(max-width:768px){
+  .nav-links,.nav-cta{display:none}
+  .nav-mobile-menu{display:flex}
+  .hero-title{font-size:26px}
+  .hero-stats{grid-template-columns:repeat(2,1fr)}
+  .today-grid{grid-template-columns:1fr}
+  .today-sidebar{order:-1}
+  .features-grid{grid-template-columns:1fr}
+  .trade-grid{grid-template-columns:repeat(2,1fr)}
+  .subscribe-section{padding:24px 16px}
+  .archive-grid{grid-template-columns:1fr}
+}
+@media(max-width:480px){
+  .hero-stats{grid-template-columns:repeat(2,1fr)}
+  .mood-metrics{grid-template-columns:repeat(3,1fr)}
+}
 </style>
 </head>
 <body>
 
-<header>
-  <div class="logo">
-    <div class="logo-dot"></div>
-    <div>
-      <div class="logo-text">AI 美股日報</div>
-      <div class="logo-sub">Pre-market Intelligence</div>
+<!-- ══ 導航 ══ -->
+<nav>
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">
+      <div class="nav-logo-icon">📈</div>
+      <div>
+        <div class="nav-logo-text">AI 美股日報</div>
+        <div class="nav-logo-sub">每日自動更新</div>
+      </div>
+    </a>
+    <div class="nav-links">
+      <a href="/" class="nav-link active">首頁</a>
+      <a href="latest.html" class="nav-link">今日日報</a>
+      <a href="archive.html" class="nav-link">歷史記錄</a>
+    </div>
+    <a href="latest.html" class="nav-cta">查看今日日報 →</a>
+    <div class="nav-mobile-menu" onclick="toggleMenu()">
+      <span></span><span></span><span></span>
     </div>
   </div>
-  <a href="latest.html" class="latest-btn">今日報告 →</a>
-</header>
+</nav>
 
-<main>
-  <div class="hero">
-    <div class="eyebrow">Powered by Claude AI</div>
-    <h1>每日盤前分析</h1>
-    <p>每個交易日美東時間 08:30 自動發布<br>AI 分析市場異動、個股動向、操作方向</p>
+<!-- ══ 英雄區塊 ══ -->
+<div class="hero">
+  <div class="hero-top">
+    <span class="hero-badge" id="hero-mood-badge">● 載入中</span>
+    <span class="hero-date" id="hero-date">—</span>
   </div>
-
-  <div class="section-label">歷史報告</div>
-  <div id="report-list">
-    <div class="empty">
-      <div style="font-size:32px">📋</div>
-      <p>報告載入中...</p>
+  <h1 class="hero-title">AI 驅動的<br><span>美股期權分析</span>日報</h1>
+  <p class="hero-subtitle">每天自動掃描標普500全市場期權異動，結合政治風向、FDA事件、技術指標，生成專業操作建議。完全免費，每日更新。</p>
+  <div class="hero-stats">
+    <div class="hero-stat">
+      <div class="hero-stat-label">掃描股票</div>
+      <div class="hero-stat-value" style="color:var(--accent)">500+</div>
+      <div class="hero-stat-sub">標普500全市場</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-label">每日更新</div>
+      <div class="hero-stat-value" style="color:var(--green)">7天</div>
+      <div class="hero-stat-sub">含週末部署分析</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-label">分析模組</div>
+      <div class="hero-stat-value" style="color:var(--purple)">12+</div>
+      <div class="hero-stat-sub">期權/政治/FDA</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-label">費用</div>
+      <div class="hero-stat-value" style="color:var(--yellow)">免費</div>
+      <div class="hero-stat-sub">完全開放閱讀</div>
     </div>
   </div>
-</main>
+  <div class="hero-cta-row">
+    <a href="latest.html" class="btn-primary">📊 查看今日日報</a>
+    <a href="archive.html" class="btn-secondary">📋 歷史記錄</a>
+  </div>
+</div>
 
+<div style="display:flex;justify-content:center;padding:0 24px 24px">
+</div>
+
+<!-- ══ 主內容 ══ -->
+<div class="main">
+
+  <!-- 今日精選 -->
+  <div class="section-label">📊 今日市場概覽</div>
+  <div class="today-grid">
+
+    <!-- 左側主區 -->
+    <div class="today-main">
+
+      <!-- 市場情緒 -->
+      <div class="mood-card" id="mood-card">
+        <div class="mood-header">
+          <span class="mood-badge" id="mood-badge" style="background:#f59e0b22;color:#f59e0b">震盪</span>
+          <span class="mood-score">市場情緒 <span id="mood-score">—</span>/100</span>
+        </div>
+        <div class="mood-bar-bg">
+          <div class="mood-bar-fill" id="mood-bar" style="width:50%;background:#f59e0b"></div>
+        </div>
+        <div class="mood-headline" id="mood-headline">載入今日日報中...</div>
+        <div class="mood-metrics">
+          <div class="mood-metric">
+            <div class="mood-metric-label">Fear & Greed</div>
+            <div class="mood-metric-value" id="fg-score" style="color:var(--green)">—</div>
+            <div class="mood-metric-sub" id="fg-label">—</div>
+          </div>
+          <div class="mood-metric">
+            <div class="mood-metric-label">VIX</div>
+            <div class="mood-metric-value" id="vix-val" style="color:var(--yellow)">—</div>
+            <div class="mood-metric-sub" id="vix-level">—</div>
+          </div>
+          <div class="mood-metric">
+            <div class="mood-metric-label">政治風向</div>
+            <div class="mood-metric-value" id="pol-sent" style="color:var(--text2);font-size:14px">—</div>
+            <div class="mood-metric-sub">政治情緒</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI 精選期權 -->
+      <div class="pick-card" id="pick-card">
+        <div class="pick-header">⭐ AI 精選期權機會</div>
+        <div>
+          <span class="pick-ticker" id="pick-ticker">—</span>
+          <span class="pick-direction" id="pick-direction" style="background:#22c55e22;color:#22c55e">—</span>
+        </div>
+        <div class="pick-reason" id="pick-reason">載入中...</div>
+        <div class="pick-details">
+          <div class="pick-detail">Strike: <span id="pick-strike">—</span></div>
+          <div class="pick-detail">入場: <span id="pick-entry">—</span></div>
+          <div class="pick-detail">風險: <span id="pick-risk" style="color:var(--red)">—</span></div>
+        </div>
+      </div>
+
+      <!-- 今日操作清單 -->
+      <div class="section-label" style="margin-top:8px">📋 今日操作清單</div>
+      <div class="trade-list" id="trade-list">
+        <div style="color:var(--text3);font-size:13px;padding:16px;text-align:center">載入中...</div>
+      </div>
+      <a href="latest.html" class="view-all" style="margin-top:4px">
+        查看完整日報（含政治雷達、FDA、期權掃描）→
+      </a>
+    </div>
+
+    <!-- 右側側邊欄 -->
+    <div class="today-sidebar">
+
+<!-- 本週事件日曆 -->
+      <div class="sidebar-card">
+        <div class="sidebar-card-title">📅 本週重要事件</div>
+        <div id="event-list">
+          <div style="color:var(--text3);font-size:12px;padding:8px 0">載入中...</div>
+        </div>
+      </div>
+
+      <!-- 政治風向 -->
+      <div class="sidebar-card">
+        <div class="sidebar-card-title">🏛 政治風向雷達</div>
+        <div id="political-summary" style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:10px">載入中...</div>
+        <div id="political-tickers" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ 功能特色 ══ -->
+  <div class="section-label">✨ 為什麼選擇 AI 美股日報</div>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">🔍</div>
+      <div class="feature-title">全市場期權掃描</div>
+      <div class="feature-desc">每日自動掃描標普500全部500+成分股的期權異動，找出最有價值的機會。</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🏛</div>
+      <div class="feature-title">政治風向追蹤</div>
+      <div class="feature-desc">追蹤特朗普動態、國會議員股票申報、政策消息，第一時間捕捉政治驅動的板塊機會。</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">💊</div>
+      <div class="feature-title">FDA 事件分析</div>
+      <div class="feature-desc">追蹤即將到來的FDA審批事件，提供通過/拒絕兩種情境下的期權操作建議。</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📊</div>
+      <div class="feature-title">多信號確認</div>
+      <div class="feature-desc">需要3個以上信號同向才推薦，大幅降低假信號，提升操作勝率。</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📅</div>
+      <div class="feature-title">週末部署策略</div>
+      <div class="feature-desc">週六週日提供下週市場展望和期權部署清單，讓你提前做好準備。</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔔</div>
+      <div class="feature-title">即時推送通知</div>
+      <div class="feature-desc">透過 ntfy 手機推送，每天日報生成後第一時間通知，不錯過任何機會。</div>
+    </div>
+  </div>
+
+  <!-- ══ 歷史記錄 ══ -->
+  <div class="section-label">📋 歷史日報</div>
+  <div class="archive-grid" id="archive-grid">
+    <div style="color:var(--text3);font-size:13px;padding:16px">載入中...</div>
+  </div>
+  <a href="archive.html" class="view-all">查看全部歷史日報 →</a>
+
+  <!-- ══ 訂閱區塊 ══ -->
+  <div class="subscribe-section" style="margin-top:32px">
+    <div class="subscribe-title">📬 訂閱每日日報</div>
+    <div class="subscribe-sub">
+      完全免費 · 每天台灣時間 19:00 自動發送<br>
+      包含今日操作清單、期權推介、政治風向分析
+    </div>
+    <div class="subscribe-options">
+      <div class="subscribe-option" onclick="window.open('https://ntfy.sh/kidandkitty-stock-daily','_blank')">
+        <span class="subscribe-option-icon">📱</span>
+        <div>
+          <div style="font-size:13px;font-weight:700">手機推送通知</div>
+          <div style="font-size:11px;color:var(--text3);font-weight:400">安裝 ntfy app 訂閱</div>
+        </div>
+      </div>
+      <div class="subscribe-option" onclick="window.open('latest.html','_blank')">
+        <span class="subscribe-option-icon">🌐</span>
+        <div>
+          <div style="font-size:13px;font-weight:700">網頁版日報</div>
+          <div style="font-size:11px;color:var(--text3);font-weight:400">每天直接瀏覽</div>
+        </div>
+      </div>
+      <div class="subscribe-option" onclick="window.open('https://github.com/kidandkitty/ai-stock-daily','_blank')">
+        <span class="subscribe-option-icon">⭐</span>
+        <div>
+          <div style="font-size:13px;font-weight:700">GitHub 開源</div>
+          <div style="font-size:11px;color:var(--text3);font-weight:400">自己部署免費使用</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══ 頁腳 ══ -->
 <footer>
-  AI 自動生成 · 僅供參考，不構成投資建議 · 數據來源 Yahoo Finance
+  <div class="footer-inner">
+    <div>
+      <div class="footer-logo">📈 AI 美股日報</div>
+      
+    </div>
+    <div class="footer-links">
+      <a href="latest.html" class="footer-link">今日日報</a>
+      <a href="archive.html" class="footer-link">歷史記錄</a>
+      <a href="https://github.com/kidandkitty/ai-stock-daily" class="footer-link" target="_blank">GitHub</a>
+      <a href="https://ntfy.sh/kidandkitty-stock-daily" class="footer-link" target="_blank">推送訂閱</a>
+    </div>
+  </div>
+  <div class="footer-disclaimer">
+    ⚠️ 本網站所有內容僅供參考，不構成任何投資建議。<br>
+    投資有風險，期權交易可能導致本金全部損失，請謹慎評估自身風險承受能力。
+  </div>
 </footer>
 
 <script>
-  const moodClass = { "多頭": "mood-bull", "空頭": "mood-bear", "震盪": "mood-side" };
+// 載入今日日報數據
+async function loadTodayData() {
+  try {
+    // 先載入 index.json 取得最新日期
+    const idxRes = await fetch('index.json');
+    if (!idxRes.ok) return;
+    const index = await idxRes.json();
 
-  fetch("index.json")
-    .then(r => r.json())
-    .then(data => {
-      const list = document.getElementById("report-list");
-      if (!data.length) {
-        list.innerHTML = `<div class="empty"><div style="font-size:32px">📭</div><p>尚無報告，明日盤前見！</p></div>`;
-        return;
-      }
-      list.innerHTML = data.map(item => `
-        <a href="reports/${item.date}.html" class="report-card">
-          <span class="date">${item.date}</span>
-          <span class="headline">${item.headline || '—'}</span>
-          <span class="mood-tag ${moodClass[item.mood] || 'mood-side'}">${item.mood || '—'}</span>
-          <span class="arrow">›</span>
-        </a>
-      `).join("");
-    })
-    .catch(() => {
-      document.getElementById("report-list").innerHTML =
-        `<div class="empty"><div style="font-size:32px">⚠️</div><p>無法載入報告列表</p></div>`;
-    });
+    // 填入歷史記錄
+    renderArchive(index);
+
+    if (!index.length) return;
+    const latest = index[0];
+
+    // 填入英雄區塊日期
+    document.getElementById('hero-date').textContent = latest.date;
+
+    // 載入最新日報 HTML 提取數據
+    // 直接用 latest.html 的 meta 數據顯示
+    const mood = latest.mood || '震盪';
+    const headline = latest.headline || '—';
+
+    // 設定市場情緒
+    const moodColors = {'多頭':'#22c55e','空頭':'#ef4444','震盪':'#f59e0b'};
+    const mc = moodColors[mood] || '#f59e0b';
+    document.getElementById('mood-badge').textContent = mood;
+    document.getElementById('mood-badge').style.background = mc + '22';
+    document.getElementById('mood-badge').style.color = mc;
+    document.getElementById('hero-mood-badge').textContent = '● ' + mood;
+    document.getElementById('hero-mood-badge').style.background = mc + '22';
+    document.getElementById('hero-mood-badge').style.color = mc;
+    document.getElementById('mood-headline').textContent = '💡 ' + headline;
+
+  } catch(e) {
+    console.log('載入數據失敗:', e);
+  }
+}
+
+function renderArchive(index) {
+  const grid = document.getElementById('archive-grid');
+  if (!index || !index.length) {
+    grid.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:16px">暫無歷史記錄</div>';
+    return;
+  }
+  const moodColors = {'多頭':'#22c55e','空頭':'#ef4444','震盪':'#f59e0b'};
+  // 只顯示最近6筆
+  const recent = index.slice(0, 6);
+  grid.innerHTML = recent.map(item => {
+    const mc = moodColors[item.mood] || '#f59e0b';
+    const modeLabel = {
+      'friday':'📅 週五版','saturday':'🗓 週六版','sunday':'🗓 週日版','weekday':'📈 每日版'
+    }[item.mode] || '📈 每日版';
+    return `
+    <a href="reports/${item.date}.html" class="archive-card">
+      <div class="archive-date">${item.date} · ${modeLabel}</div>
+      <div class="archive-headline">${item.headline || '—'}</div>
+      <div class="archive-meta">
+        <span class="archive-mood" style="background:${mc}22;color:${mc}">${item.mood || '—'}</span>
+        <span class="archive-arrow">查看 →</span>
+      </div>
+    </a>`;
+  }).join('');
+}
+
+function toggleMenu() {
+  // 手機版選單（簡單版）
+  const links = document.querySelector('.nav-links');
+  const cta   = document.querySelector('.nav-cta');
+  if (links.style.display === 'flex') {
+    links.style.display = '';
+    cta.style.display   = '';
+  } else {
+    links.style.cssText  = 'display:flex;flex-direction:column;position:absolute;top:56px;left:0;right:0;background:var(--bg2);padding:12px;border-bottom:1px solid var(--border);gap:4px;z-index:99';
+    cta.style.cssText    = 'display:block;margin:8px 12px;text-align:center';
+  }
+}
+
+loadTodayData();
 </script>
 </body>
 </html>
