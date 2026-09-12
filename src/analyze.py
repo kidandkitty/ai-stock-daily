@@ -453,6 +453,143 @@ def fetch_event_calendar() -> list:
     return unique[:10]
 
 
+def fetch_momentum_stocks() -> list:
+    """
+    掃描自選股過去兩天累計升跌幅，找出爆升/爆跌股
+    累計升跌超過5%自動列入重點追蹤
+    """
+    print("[爆升股追蹤] 掃描中...")
+    momentum_stocks = []
+    try:
+        import yfinance as yf
+        for ticker in WATCHLIST + ["DELL", "PLTR", "ARM", "SMCI", "MU", "SNOW", "CRWD", "PANW"]:
+            try:
+                t    = yf.Ticker(ticker)
+                hist = t.history(period="5d")
+                if len(hist) < 3:
+                    continue
+
+                # 過去兩天累計漲跌幅
+                close_today    = float(hist["Close"].iloc[-1])
+                close_2day_ago = float(hist["Close"].iloc[-3])
+                two_day_chg    = round((close_today - close_2day_ago) / close_2day_ago * 100, 2)
+
+                # 今天單日漲跌幅
+                close_yesterday = float(hist["Close"].iloc[-2])
+                today_chg       = round((close_today - close_yesterday) / close_yesterday * 100, 2)
+
+                # 成交量異動
+                avg_vol  = float(hist["Volume"].iloc[:-1].mean())
+                last_vol = float(hist["Volume"].iloc[-1])
+                vol_ratio= round(last_vol / avg_vol, 1) if avg_vol > 0 else 1.0
+
+                # 只記錄有明顯動能的股票
+                if abs(two_day_chg) >= 4 or abs(today_chg) >= 3:
+                    momentum_stocks.append({
+                        "ticker":       ticker,
+                        "today_chg":    today_chg,
+                        "two_day_chg":  two_day_chg,
+                        "close":        round(close_today, 2),
+                        "vol_ratio":    vol_ratio,
+                        "momentum":     "爆升" if two_day_chg >= 4 else "爆跌" if two_day_chg <= -4 else "強勢" if today_chg >= 3 else "弱勢",
+                    })
+                time.sleep(0.2)
+            except Exception:
+                continue
+
+        # 按兩日漲幅絕對值排序
+        momentum_stocks.sort(key=lambda x: abs(x["two_day_chg"]), reverse=True)
+        print(f"  發現 {len(momentum_stocks)} 支動能股")
+
+    except Exception as e:
+        print(f"[WARN] 爆升股追蹤: {e}")
+
+    return momentum_stocks[:8]
+
+
+# ══════════════════════════════════════════════════════════
+# 新增：個股新聞掃描（追蹤爆升/爆跌原因）
+# ══════════════════════════════════════════════════════════
+def fetch_stock_news(tickers: list) -> dict:
+    """
+    針對自選股抓取最新新聞，判斷新聞方向（利多/利空/中性）
+    用於修正技術指標與新聞面矛盾的問題
+    """
+    print("[個股新聞] 抓取中...")
+    stock_news = {}
+
+    # 正面關鍵詞
+    bullish_keywords = [
+        "beat", "surge", "soar", "rally", "jump", "rise", "gain",
+        "record", "upgrade", "buy", "outperform", "strong", "growth",
+        "profit", "revenue beat", "raised guidance", "partnership",
+        "deal", "contract", "breakthrough", "爆升", "大漲", "創新高"
+    ]
+    # 負面關鍵詞
+    bearish_keywords = [
+        "miss", "fall", "drop", "decline", "cut", "downgrade", "sell",
+        "underperform", "weak", "loss", "revenue miss", "lowered guidance",
+        "lawsuit", "investigation", "recall", "layoff", "warning",
+        "爆跌", "大跌", "下調", "虧損"
+    ]
+
+    for ticker in tickers:
+        try:
+            query = f"{ticker} stock news today 2026"
+            encoded = requests.utils.quote(query)
+            url = f"https://news.google.com/rss/search?q={encoded}&hl=en-US&gl=US&ceid=US:en"
+            r   = requests.get(url, timeout=8, headers={"User-Agent": "Mozilla/5.0"})
+            if r.status_code != 200:
+                continue
+            root  = ET.fromstring(r.content)
+            items = list(root.iter("item"))[:3]
+
+            news_list  = []
+            bull_count = 0
+            bear_count = 0
+
+            for item in items:
+                title   = item.findtext("title", "").strip()
+                pubdate = item.findtext("pubDate", "")
+                if not title or not is_recent_news(pubdate, max_days=3):
+                    continue
+
+                title_lower = title.lower()
+                bull = sum(1 for k in bullish_keywords if k in title_lower)
+                bear = sum(1 for k in bearish_keywords if k in title_lower)
+                bull_count += bull
+                bear_count += bear
+
+                news_list.append({
+                    "title": title[:100],
+                    "date":  pubdate[:16],
+                    "bull":  bull,
+                    "bear":  bear,
+                })
+
+            # 判斷新聞方向
+            if bull_count > bear_count + 1:
+                news_direction = "bullish"
+            elif bear_count > bull_count + 1:
+                news_direction = "bearish"
+            else:
+                news_direction = "neutral"
+
+            stock_news[ticker] = {
+                "news":           news_list,
+                "news_direction": news_direction,
+                "bull_count":     bull_count,
+                "bear_count":     bear_count,
+            }
+            time.sleep(0.3)
+
+        except Exception as e:
+            print(f"[WARN] 個股新聞 {ticker}: {e}")
+
+    print(f"  掃描 {len(stock_news)} 支個股新聞完成")
+    return stock_news
+
+
 # ══════════════════════════════════════════════════════════
 # 8. 週末專用：下週部署分析
 # ══════════════════════════════════════════════════════════
@@ -746,8 +883,8 @@ def fetch_political_intelligence() -> dict:
 # ══════════════════════════════════════════════════════════
 def ai_analyze(
     watchlist_data, scan_results, fda_events, political_data,
-    fear_greed, vix_data, market_news, event_calendar,
-    day_mode: str, friday_data=None, weekend_data=None
+    fear_greed, vix_data, market_news, event_calendar, stock_news,
+    momentum_stocks, day_mode: str, friday_data=None, weekend_data=None
 ) -> dict:
 
     today = datetime.date.today().strftime("%Y年%m月%d日")
@@ -778,17 +915,19 @@ def ai_analyze(
             })
 
     payload = {
-        "date":           today,
-        "day_mode":       day_mode,
-        "fear_greed":     fear_greed,
-        "vix":            vix_data,
-        "market_news":    market_news[:8],
-        "event_calendar": event_calendar[:8],
-        "technical":      tech_summary,
-        "top_options":    scan_results[:5],
-        "fda_events":     fda_events[:3],
-        "political_news": political_data.get("news", [])[:6],
-        "congress_trades":political_data.get("congress_trades", [])[:5],
+        "date":             today,
+        "day_mode":         day_mode,
+        "fear_greed":       fear_greed,
+        "vix":              vix_data,
+        "market_news":      market_news[:8],
+        "event_calendar":   event_calendar[:8],
+        "stock_news":       stock_news,
+        "momentum_stocks":  momentum_stocks,
+        "technical":        tech_summary,
+        "top_options":      scan_results[:5],
+        "fda_events":       fda_events[:3],
+        "political_news":   political_data.get("news", [])[:6],
+        "congress_trades":  political_data.get("congress_trades", [])[:5],
     }
 
     # 週末加入下週數據
@@ -952,11 +1091,34 @@ def ai_analyze(
 }}
 
 分析原則：
+
+【最重要：新聞優先原則】
+- 每個 trade_plans 必須有對應的新聞催化劑或爆升/爆跌原因
+- 若 stock_news 顯示個股新聞方向與技術指標方向矛盾：
+  → 新聞方向優先，技術指標降權
+  → 例如：技術指標顯示超買建議PUT，但新聞bullish → 改為CALL或觀望
+  → 例如：技術指標建議CALL，但新聞bearish → 改為PUT或觀望
+- 沒有新聞催化劑支撐的推介，signal_strength 最高只能給 3
+
+【排除條件（以下情況不推介）】
+- 過去兩天升跌幅度不足1%的股票 → 不推介，期權時間值損耗太大
+- 新聞方向與技術方向完全相反且無法判斷 → 填觀望，不給操作建議
+- IV極低（低於20%）且無催化劑 → 不推介
+
+【爆升股追蹤原則】
+- momentum_stocks 列出了過去兩天爆升/爆跌的股票，必須優先分析
+- 若某股票兩日累計升幅超過5%，必須列入 trade_plans 說明：
+  → 爆升原因（結合 stock_news 和 market_news）
+  → 是否仍有追入空間（看 RSI、均線位置）
+  → 過熱則建議觀望或反向 PUT
+- 若某股票兩日累計跌幅超過5%，分析是否有反彈機會
+- Dell、AMD、PLTR 等非自選股若出現在 momentum_stocks，也要分析
+
+【其他原則】
 - 週末模式（saturday/sunday）：trade_plans 是下週預備清單，非今日操作
 - strike 必須根據當前股價給出具體數字
 - 財報前一律建議Spread策略
 - signal_strength 需3個以上信號同向才給4-5分
-- 結合 market_news 和 event_calendar 分析催化劑
 - fda_analysis 每個事件必須給出明確的操作方向（Call/Put/觀望）和Strike
 - FDA 審批前一天入場，到期日選審批日後一週
 - 若無法識別具體股票代碼，ticker填—並說明原因
@@ -1004,7 +1166,7 @@ def ai_analyze(
 def build_html(
     watchlist_data, scan_results, fda_events, political_data,
     analysis, fear_greed, vix_data, market_news, event_calendar,
-    day_mode: str, friday_data=None, weekend_data=None
+    day_mode: str, momentum_stocks=None, friday_data=None, weekend_data=None
 ) -> str:
 
     mood_color  = {"多頭": "#22c55e", "空頭": "#ef4444", "震盪": "#f59e0b"}.get(analysis.get("market_mood","震盪"), "#6b7280")
@@ -1342,6 +1504,31 @@ def build_html(
           <div style="font-size:11px;color:#64748b">Short % of Float 高，若盤前急漲可考慮 CALL 追入</div>
         </div>"""
 
+    # ── 爆升/爆跌股 HTML ──
+    momentum_html = ""
+    if momentum_stocks:
+        for m in momentum_stocks:
+            chg2   = m.get("two_day_chg", 0)
+            chg1   = m.get("today_chg", 0)
+            mc     = "#22c55e" if chg2 >= 0 else "#ef4444"
+            label  = m.get("momentum", "")
+            lc     = {"爆升":"#22c55e","強勢":"#22c55e","爆跌":"#ef4444","弱勢":"#ef4444"}.get(label,"#f59e0b")
+            vol    = m.get("vol_ratio", 1.0)
+            vol_str= f"{vol:.1f}x 均量" if vol >= 2 else "正常成交量"
+            momentum_html += f"""
+            <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #1e293b">
+              <span style="font-weight:800;color:#f1f5f9;width:56px;font-size:14px">{m['ticker']}</span>
+              <span style="background:{lc}22;color:{lc};padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700">{label}</span>
+              <div style="flex:1">
+                <div style="display:flex;gap:12px;font-size:12px">
+                  <span style="color:#64748b">今日：<span style="color:{'#22c55e' if chg1>=0 else '#ef4444'};font-weight:600">{chg1:+.2f}%</span></span>
+                  <span style="color:#64748b">兩日：<span style="color:{mc};font-weight:600">{chg2:+.2f}%</span></span>
+                  <span style="color:#64748b">成交：<span style="color:#f59e0b">{vol_str}</span></span>
+                </div>
+              </div>
+              <span style="font-size:12px;color:#64748b">${m.get('close','—')}</span>
+            </div>"""
+
     # ── 自選股動向 ──
     movers_html = ""
     for m in analysis.get("key_movers",[]):
@@ -1606,6 +1793,9 @@ body{{background:#0a0f1e;color:#e2e8f0;font-family:'Helvetica Neue',Arial,sans-s
   <div class="sec">📊 自選股動向</div>
   <div style="background:#0f172a;border-radius:12px;padding:4px 16px;border:1px solid #1e293b">{movers_html}</div>
 
+  {f'''<div class="sec">🚀 爆升 / 爆跌股追蹤</div>
+  <div style="background:#0f172a;border-radius:12px;padding:4px 16px;border:1px solid #1e293b">{momentum_html}</div>''' if momentum_html else ''}
+
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px" class="grid2">
     <div style="background:#0f172a;border-radius:10px;padding:14px;border:1px solid #1e293b">
       <div style="font-size:10px;color:#475569;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">板塊輪動</div>
@@ -1636,7 +1826,7 @@ body{{background:#0a0f1e;color:#e2e8f0;font-family:'Helvetica Neue',Arial,sans-s
 # ══════════════════════════════════════════════════════════
 # 14. 儲存報告
 # ══════════════════════════════════════════════════════════
-def save_report(html: str, analysis: dict):
+def save_report(html: str, analysis: dict, fear_greed: dict = {}, vix_data: dict = {}):
     os.makedirs("web/reports", exist_ok=True)
     date_str = datetime.date.today().isoformat()
     for path in [f"web/reports/{date_str}.html", "web/latest.html"]:
@@ -1647,7 +1837,36 @@ def save_report(html: str, analysis: dict):
     if os.path.exists(index_path):
         with open(index_path) as f:
             index = json.load(f)
-    entry = {"date": date_str, "headline": analysis.get("headline",""), "mood": analysis.get("market_mood",""), "mode": analysis.get("day_mode","")}
+
+    top = analysis.get("top_option_pick", {})
+    entry = {
+        # 基本資訊
+        "date":        date_str,
+        "headline":    analysis.get("headline", ""),
+        "mood":        analysis.get("market_mood", ""),
+        "mood_score":  analysis.get("mood_score", 50),
+        "mode":        analysis.get("day_mode", ""),
+        "summary":     analysis.get("summary", ""),
+        # Fear & Greed + VIX
+        "fg_score":    fear_greed.get("score", 50),
+        "fg_label":    fear_greed.get("label", "中性"),
+        "vix":         vix_data.get("current", 20),
+        "vix_level":   vix_data.get("level", "正常"),
+        # 政治
+        "pol_sent":    analysis.get("political_sentiment", "中性"),
+        "pol_summary": analysis.get("political_summary", ""),
+        # AI 精選期權
+        "top_ticker":  top.get("ticker", ""),
+        "top_dir":     top.get("direction", ""),
+        "top_strike":  top.get("key_strike", ""),
+        "top_entry":   top.get("entry_zone", ""),
+        "top_risk":    top.get("risk", ""),
+        "top_reason":  top.get("reason", ""),
+        # 風險
+        "risk_warning": analysis.get("risk_warning", ""),
+        "sector":       analysis.get("sector_rotation", ""),
+    }
+
     index = [e for e in index if e["date"] != date_str]
     index.insert(0, entry)
     with open(index_path, "w", encoding="utf-8") as f:
@@ -1734,6 +1953,14 @@ def main():
     event_calendar = fetch_event_calendar()
     print(f"  抓取 {len(event_calendar)} 個事件")
 
+    print("\n[8.5/10] 個股新聞掃描（判斷新聞方向）...")
+    stock_news = fetch_stock_news(WATCHLIST)
+    print(f"  掃描 {len(stock_news)} 支個股新聞")
+
+    print("\n[8.7/10] 爆升/爆跌股追蹤...")
+    momentum_stocks = fetch_momentum_stocks()
+    print(f"  發現 {len(momentum_stocks)} 支動能股")
+
     friday_data  = None
     weekend_data = None
 
@@ -1751,8 +1978,8 @@ def main():
     print("\n[10/10] Gemini AI 整合分析...")
     analysis = ai_analyze(
         watchlist_data, scan_results, fda_events, political_data,
-        fear_greed, vix_data, market_news, event_calendar,
-        day_mode, friday_data, weekend_data
+        fear_greed, vix_data, market_news, event_calendar, stock_news,
+        momentum_stocks, day_mode, friday_data, weekend_data
     )
     print(f"  標題：{analysis.get('headline')}")
     print(f"  模式：{analysis.get('day_mode')}")
@@ -1761,9 +1988,9 @@ def main():
     html = build_html(
         watchlist_data, scan_results, fda_events, political_data,
         analysis, fear_greed, vix_data, market_news, event_calendar,
-        day_mode, friday_data, weekend_data
+        day_mode, momentum_stocks, friday_data, weekend_data
     )
-    save_report(html, analysis)
+    save_report(html, analysis, fear_greed, vix_data)
     send_email(html, analysis, day_mode)
     send_push_notification(analysis, day_mode)
 
