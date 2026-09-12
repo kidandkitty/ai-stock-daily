@@ -1,9 +1,25 @@
 [
   {
     "date": "2026-09-12",
-    "headline": "通脹升溫加息預期再起 週末佈局防守與科技個股",
+    "headline": "通脹升溫加息預期再起 科技巨頭逆勢領漲",
     "mood": "震盪",
-    "mode": "saturday"
+    "mood_score": 50,
+    "mode": "saturday",
+    "summary": "本週美股在通脹居高不下與Fed加息預期升溫下呈震盪走勢。然而，DELL、AMD及META等AI概念股展現極強韌性。期權市場顯示UNH與BAC避險Put大增。下週建議順應AI強勢股做多，並適度佈局防禦性部位。",
+    "fg_score": 50,
+    "fg_label": "中性",
+    "vix": 15.84,
+    "vix_level": "正常",
+    "pol_sent": "中性",
+    "pol_summary": "川普原油投資因中東局勢獲利，國會推進禁止議員炒股法案，佩洛西提前佈局BE引發關注。",
+    "top_ticker": "DELL",
+    "top_dir": "CALL",
+    "top_strike": "570",
+    "top_entry": "560.0 - 567.0",
+    "top_risk": "短線漲幅較大或面臨獲利回吐",
+    "top_reason": "兩日爆升且成交量放大1.9倍，AI伺服器浪潮推動資金強勢流入。",
+    "risk_warning": "下週通脹數據後續發酵，Fed 9月會議前利率期貨波動加劇。",
+    "sector": "資金從傳統醫療與公用事業流出，重新回流至AI硬體與伺服器板塊。"
   },
   {
     "date": "2026-09-11",
