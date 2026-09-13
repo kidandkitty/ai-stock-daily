@@ -1,5 +1,27 @@
 [
   {
+    "date": "2026-09-13",
+    "headline": "通脹升溫加息預期再起 科技巨頭震盪輪動",
+    "mood": "震盪",
+    "mood_score": 52,
+    "mode": "sunday",
+    "summary": "本週美股受通脹升溫與美聯儲加息預期干擾呈現震盪，但DELL與META等AI龍頭強勢衝高。下週迎來央行週，建議利用價差策略部署DELL與META，並關注UNH異動及美聯儲決議。",
+    "fg_score": 50,
+    "fg_label": "中性",
+    "vix": 15.84,
+    "vix_level": "正常",
+    "pol_sent": "中性",
+    "pol_summary": "國會提案打擊議員股票交易，佩洛西揭露重倉Bloom Energy，川普因中東局勢帶動石油投資獲利。",
+    "top_ticker": "DELL",
+    "top_dir": "CALL",
+    "top_strike": "570",
+    "top_entry": "565.00 - 568.00",
+    "top_risk": "短線急漲後拉回整理風險",
+    "top_reason": "AI伺服器強勁需求催化，單日暴漲近12%且成交量暴增1.9倍。",
+    "risk_warning": "下週美聯儲決議及通脹預期攀升可能引發整體大盤劇烈波動。",
+    "sector": "資金從傳統防守板塊流向AI伺服器與半導體，醫療保健出現異常看空異動。"
+  },
+  {
     "date": "2026-09-12",
     "headline": "通脹升溫加息預期再起 科技巨頭逆勢領漲",
     "mood": "震盪",
