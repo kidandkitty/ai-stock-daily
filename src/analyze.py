@@ -1304,7 +1304,7 @@ def ai_analyze(
   → entry_timing填「事件已發生，觀望」
 - 只有upcoming/expected/PDUFA date/anticipated等未來式字眼才生成操作建議"""
 
-    models_to_try = ["gemini-2.5-flash", "gemini-3.6-flash"]
+    models_to_try = ["gemini-3.6-flash", "gemini-2.0-flash", "gemini-1.5-flash"]
     response = None
     for model_name in models_to_try:
         for attempt in range(3):
@@ -1911,7 +1911,12 @@ def build_html(
             has_ticker = ticker and ticker != "—"
             ticker_html = f'<span style="font-size:16px;font-weight:800;color:#f1f5f9">{ticker}</span>' if has_ticker else ""
             prob = fa.get("approval_prob", "—")
-            prob_color = "#22c55e" if prob and prob != "—" and int(prob.replace("%","")) >= 60 else "#f59e0b" if prob and prob != "—" else "#64748b"
+            # 安全轉換：只處理純數字或百分比，其他一律顯示黃色
+            try:
+                prob_num = int(str(prob).replace("%","").strip())
+                prob_color = "#22c55e" if prob_num >= 60 else "#f59e0b"
+            except (ValueError, TypeError):
+                prob_color = "#f59e0b"
             fda_html += f"""
             <div style="background:#0f172a;border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid #1e293b">
               <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
