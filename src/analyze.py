@@ -1193,7 +1193,7 @@ def ai_analyze(
   "political_hot_tickers": ["受影響股票3個"],
   "political_sentiment": "利多/利空/中性",
   "congress_highlight": "最值得關注的國會動態30字",
-  "political_realtime_analysis": {
+  "political_realtime_analysis": {{
     "trump_market_impact": "特朗普最新動態對市場的影響50字",
     "trump_affected_tickers": ["受特朗普動態影響的股票代碼，最多3個"],
     "trump_direction": "利多/利空/中性",
@@ -1214,7 +1214,7 @@ def ai_analyze(
       }}
     ],
     "best_political_trade": "今日最佳政治驅動交易機會30字"
-  },
+  }},
   "fda_analysis": [
     {{
       "ticker": "相關股票代碼，如BIIB，若無則填—",
