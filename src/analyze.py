@@ -879,12 +879,139 @@ def fetch_political_intelligence() -> dict:
 
 
 # ══════════════════════════════════════════════════════════
-# 12. AI 分析
+# 新增：政治實時信號追蹤（取代延遲45天的議員申報）
 # ══════════════════════════════════════════════════════════
+def fetch_political_realtime() -> dict:
+    """
+    追蹤更實時的政治信號：
+    1. 特朗普 Truth Social / 最新動態
+    2. 政府合約公告（誰拿到大合約）
+    3. 白宮政策動向影響板塊
+    4. 議員委員會職位 + 相關板塊
+    """
+    print("[政治實時信號] 抓取中...")
+
+    trump_signals   = []
+    gov_contracts   = []
+    policy_signals  = []
+
+    # ── 1. 特朗普最新動態 ──
+    trump_queries = [
+        ("trump truth social post stock market today 2026", "特朗普動態"),
+        ("trump executive order policy stock impact 2026",  "行政命令"),
+        ("trump tariff trade policy announcement 2026",     "關稅政策"),
+        ("trump energy oil semiconductor policy 2026",      "能源/科技政策"),
+    ]
+    for query, label in trump_queries:
+        try:
+            encoded = requests.utils.quote(query)
+            url     = f"https://news.google.com/rss/search?q={encoded}&hl=en-US&gl=US&ceid=US:en"
+            r       = requests.get(url, timeout=8, headers={"User-Agent": "Mozilla/5.0"})
+            if r.status_code != 200: continue
+            root = ET.fromstring(r.content)
+            for item in list(root.iter("item"))[:2]:
+                title   = item.findtext("title", "").strip()
+                pubdate = item.findtext("pubDate", "")
+                if title and is_recent_news(pubdate, max_days=3):
+                    trump_signals.append({
+                        "category": label,
+                        "title":    title[:100],
+                        "date":     pubdate[:16],
+                    })
+            time.sleep(0.3)
+        except Exception as e:
+            print(f"[WARN] 特朗普動態({label}): {e}")
+
+    # ── 2. 政府合約公告 ──
+    contract_queries = [
+        ("government defense contract awarded billion 2026", "國防合約"),
+        ("pentagon contract NVDA Microsoft Amazon 2026",     "科技合約"),
+        ("government contract LMT RTX NOC awarded 2026",    "軍工合約"),
+    ]
+    for query, label in contract_queries:
+        try:
+            encoded = requests.utils.quote(query)
+            url     = f"https://news.google.com/rss/search?q={encoded}&hl=en-US&gl=US&ceid=US:en"
+            r       = requests.get(url, timeout=8, headers={"User-Agent": "Mozilla/5.0"})
+            if r.status_code != 200: continue
+            root = ET.fromstring(r.content)
+            for item in list(root.iter("item"))[:2]:
+                title   = item.findtext("title", "").strip()
+                pubdate = item.findtext("pubDate", "")
+                if title and is_recent_news(pubdate, max_days=7):
+                    # 提取相關股票代碼
+                    import re as _re
+                    tickers = _re.findall(r'\b([A-Z]{2,5})\b', title)
+                    exclude = {"THE","GOP","SEC","IRS","FBI","CIA","FDA","ETF","IPO","CEO","CFO","AI","US","UK","EU"}
+                    tickers = [t for t in tickers if t not in exclude]
+                    gov_contracts.append({
+                        "category": label,
+                        "title":    title[:100],
+                        "date":     pubdate[:16],
+                        "tickers":  tickers[:3],
+                    })
+            time.sleep(0.3)
+        except Exception as e:
+            print(f"[WARN] 政府合約({label}): {e}")
+
+    # ── 3. 白宮政策動向 ──
+    policy_queries = [
+        ("white house policy semiconductor chip AI 2026",   "半導體/AI政策"),
+        ("white house energy oil gas policy stock 2026",    "能源政策"),
+        ("federal reserve white house interest rate 2026",  "貨幣政策"),
+        ("white house china trade tariff stock 2026",       "貿易政策"),
+    ]
+    for query, label in policy_queries:
+        try:
+            encoded = requests.utils.quote(query)
+            url     = f"https://news.google.com/rss/search?q={encoded}&hl=en-US&gl=US&ceid=US:en"
+            r       = requests.get(url, timeout=8, headers={"User-Agent": "Mozilla/5.0"})
+            if r.status_code != 200: continue
+            root = ET.fromstring(r.content)
+            for item in list(root.iter("item"))[:2]:
+                title   = item.findtext("title", "").strip()
+                pubdate = item.findtext("pubDate", "")
+                if title and is_recent_news(pubdate, max_days=5):
+                    policy_signals.append({
+                        "category": label,
+                        "title":    title[:100],
+                        "date":     pubdate[:16],
+                    })
+            time.sleep(0.3)
+        except Exception as e:
+            print(f"[WARN] 白宮政策({label}): {e}")
+
+    # 去重
+    def dedup(items):
+        seen, unique = set(), []
+        for item in items:
+            key = item["title"][:40]
+            if key not in seen:
+                seen.add(key)
+                unique.append(item)
+        return unique
+
+    result = {
+        "trump_signals":  dedup(trump_signals)[:6],
+        "gov_contracts":  dedup(gov_contracts)[:4],
+        "policy_signals": dedup(policy_signals)[:6],
+        # 議員委員會職位對應板塊（靜態數據，不需要抓取）
+        "committee_sectors": [
+            {"committee": "軍事委員會", "sectors": ["LMT","RTX","NOC","GD","BA"], "bias": "利多國防股"},
+            {"committee": "科技委員會", "sectors": ["NVDA","MSFT","GOOGL","META","AMZN"], "bias": "利多科技股"},
+            {"committee": "能源委員會", "sectors": ["XOM","CVX","COP","OXY"], "bias": "利多能源股"},
+            {"committee": "金融委員會", "sectors": ["JPM","BAC","GS","MS"], "bias": "利多金融股"},
+        ],
+    }
+
+    print(f"  特朗普動態 {len(result['trump_signals'])} 條 · 政府合約 {len(result['gov_contracts'])} 條 · 政策信號 {len(result['policy_signals'])} 條")
+    return result
+
+
 def ai_analyze(
     watchlist_data, scan_results, fda_events, political_data,
     fear_greed, vix_data, market_news, event_calendar, stock_news,
-    momentum_stocks, day_mode: str, friday_data=None, weekend_data=None
+    momentum_stocks, political_realtime, day_mode: str, friday_data=None, weekend_data=None
 ) -> dict:
 
     today = datetime.date.today().strftime("%Y年%m月%d日")
@@ -915,19 +1042,20 @@ def ai_analyze(
             })
 
     payload = {
-        "date":             today,
-        "day_mode":         day_mode,
-        "fear_greed":       fear_greed,
-        "vix":              vix_data,
-        "market_news":      market_news[:8],
-        "event_calendar":   event_calendar[:8],
-        "stock_news":       stock_news,
-        "momentum_stocks":  momentum_stocks,
-        "technical":        tech_summary,
-        "top_options":      scan_results[:5],
-        "fda_events":       fda_events[:3],
-        "political_news":   political_data.get("news", [])[:6],
-        "congress_trades":  political_data.get("congress_trades", [])[:5],
+        "date":               today,
+        "day_mode":           day_mode,
+        "fear_greed":         fear_greed,
+        "vix":                vix_data,
+        "market_news":        market_news[:8],
+        "event_calendar":     event_calendar[:8],
+        "stock_news":         stock_news,
+        "momentum_stocks":    momentum_stocks,
+        "political_realtime": political_realtime,
+        "technical":          tech_summary,
+        "top_options":        scan_results[:5],
+        "fda_events":         fda_events[:3],
+        "political_news":     political_data.get("news", [])[:6],
+        "congress_trades":    political_data.get("congress_trades", [])[:5],
     }
 
     # 週末加入下週數據
@@ -1064,7 +1192,29 @@ def ai_analyze(
   "political_summary": "政治風向影響50字",
   "political_hot_tickers": ["受影響股票3個"],
   "political_sentiment": "利多/利空/中性",
-  "congress_highlight": "最值得關注的議員持倉30字",
+  "congress_highlight": "最值得關注的國會動態30字",
+  "political_realtime_analysis": {
+    "trump_market_impact": "特朗普最新動態對市場的影響50字",
+    "trump_affected_tickers": ["受特朗普動態影響的股票代碼，最多3個"],
+    "trump_direction": "利多/利空/中性",
+    "gov_contract_picks": [
+      {{
+        "ticker": "拿到合約的公司代碼",
+        "contract": "合約描述15字",
+        "impact": "預計股價影響20字",
+        "suggestion": "CALL/PUT/觀望"
+      }}
+    ],
+    "policy_sector_impact": [
+      {{
+        "policy": "政策名稱10字",
+        "sectors": ["受影響板塊股票代碼"],
+        "direction": "利多/利空",
+        "urgency": "高/中/低"
+      }}
+    ],
+    "best_political_trade": "今日最佳政治驅動交易機會30字"
+  },
   "fda_analysis": [
     {{
       "ticker": "相關股票代碼，如BIIB，若無則填—",
@@ -1090,7 +1240,32 @@ def ai_analyze(
   "summary": "整體摘要100字"
 }}
 
-分析原則：
+【政治實時信號原則（取代延遲45天的議員申報）】
+- political_realtime 包含特朗普動態、政府合約、白宮政策，延遲只有1-3天
+- 特朗普 Truth Social 貼文或行政命令 → 立即分析受益/受損板塊
+- 政府合約公告 → 中標公司股票通常當天或隔天反應，是最實時的政治信號
+- 白宮政策方向（半導體/能源/貿易）→ 判斷中長線板塊方向
+- 議員申報延遲最長45天，參考價值低，不作主要分析依據
+- 但若有最新議員新聞（1週內），仍可作輔助參考
+
+【數據誠信原則（最重要）】
+- 每個 trade_plans 必須標明數據來源和日期
+- Strike 和入場區間必須基於真實的支撐阻力位計算，不能憑空估算
+- 不能虛構新聞標題、股價或回測結果
+- 沒有即時數據的推斷必須在 signals 中標明「估算」
+- 事實和推論必須分開：有數據支持的才能寫，沒有就直接填「數據不足」
+- 冇即時數據就停止估算，不要填假數字
+
+【市場機會分析框架】
+- 先列出能核實的最新數據和日期
+- 找出值得研究的交易設定，按信號強度排序
+- 講明可能入場區、目標、失效條件和主要風險
+- 沒有即時數據就停止估算
+
+【關鍵價位框架】
+- 每個支撐阻力位必須解釋依據（均線/歷史高低點/成交密集區）
+- 標示數據日期
+- 不能假裝知道即時價格，strike 必須基於技術位計算
 
 【最重要：新聞優先原則】
 - 每個 trade_plans 必須有對應的新聞催化劑或爆升/爆跌原因
@@ -1116,7 +1291,7 @@ def ai_analyze(
 
 【其他原則】
 - 週末模式（saturday/sunday）：trade_plans 是下週預備清單，非今日操作
-- strike 必須根據當前股價給出具體數字
+- strike 必須根據當前股價和技術支撐阻力位給出具體數字
 - 財報前一律建議Spread策略
 - signal_strength 需3個以上信號同向才給4-5分
 - fda_analysis 每個事件必須給出明確的操作方向（Call/Put/觀望）和Strike
@@ -1166,7 +1341,8 @@ def ai_analyze(
 def build_html(
     watchlist_data, scan_results, fda_events, political_data,
     analysis, fear_greed, vix_data, market_news, event_calendar,
-    day_mode: str, momentum_stocks=None, friday_data=None, weekend_data=None
+    day_mode: str, momentum_stocks=None, political_realtime=None,
+    friday_data=None, weekend_data=None
 ) -> str:
 
     mood_color  = {"多頭": "#22c55e", "空頭": "#ef4444", "震盪": "#f59e0b"}.get(analysis.get("market_mood","震盪"), "#6b7280")
@@ -1609,6 +1785,107 @@ def build_html(
           </div>
         </div>"""
 
+    # ── 政治實時信號 HTML ──
+    pr = analysis.get("political_realtime_analysis", {})
+    pr_data = political_realtime or {}
+
+    # 特朗普動態
+    trump_dir   = pr.get("trump_direction", "中性")
+    trump_color = {"利多":"#22c55e","利空":"#ef4444","中性":"#f59e0b"}.get(trump_dir,"#f59e0b")
+    trump_tickers_html = " ".join(
+        f'<span style="background:#ef444422;color:#ef4444;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:700">{t}</span>'
+        for t in pr.get("trump_affected_tickers", [])
+    )
+    trump_news_html = ""
+    for n in pr_data.get("trump_signals", [])[:3]:
+        cat_color = {"特朗普動態":"#ef4444","行政命令":"#f59e0b","關稅政策":"#f59e0b","能源/科技政策":"#a78bfa"}.get(n.get("category",""),"#64748b")
+        trump_news_html += f"""
+        <div style="display:flex;gap:8px;padding:7px 0;border-bottom:1px solid #1e293b">
+          <span style="background:{cat_color}22;color:{cat_color};padding:1px 6px;border-radius:4px;font-size:10px;font-weight:700;white-space:nowrap">{n.get('category','')}</span>
+          <div>
+            <div style="font-size:12px;color:#e2e8f0;line-height:1.4">{n.get('title','')}</div>
+            <div style="font-size:10px;color:#475569;margin-top:1px">{n.get('date','')}</div>
+          </div>
+        </div>"""
+
+    # 政府合約
+    contracts_html = ""
+    for c in pr.get("gov_contract_picks", [])[:3]:
+        sug   = c.get("suggestion","觀望")
+        sug_c = "#22c55e" if sug=="CALL" else "#ef4444" if sug=="PUT" else "#64748b"
+        contracts_html += f"""
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #1e293b;flex-wrap:wrap">
+          <span style="font-weight:800;color:#f1f5f9;font-size:15px">{c.get('ticker','—')}</span>
+          <span style="background:{sug_c}22;color:{sug_c};padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700">{sug}</span>
+          <div style="flex:1">
+            <div style="font-size:12px;color:#94a3b8">{c.get('contract','')}</div>
+            <div style="font-size:11px;color:#64748b;margin-top:2px">{c.get('impact','')}</div>
+          </div>
+        </div>"""
+    # 補充原始合約新聞
+    if not contracts_html:
+        for n in pr_data.get("gov_contracts", [])[:3]:
+            tickers_html = " ".join(f'<span style="background:#f59e0b22;color:#f59e0b;padding:1px 6px;border-radius:4px;font-size:11px">{t}</span>' for t in n.get("tickers",[]))
+            contracts_html += f"""
+            <div style="padding:8px 0;border-bottom:1px solid #1e293b">
+              <div style="font-size:12px;color:#e2e8f0;margin-bottom:4px">{n.get('title','')}</div>
+              <div style="display:flex;gap:6px;align-items:center">
+                <span style="font-size:10px;color:#475569">{n.get('date','')}</span>
+                {tickers_html}
+              </div>
+            </div>"""
+
+    # 政策板塊影響
+    policy_html = ""
+    for p in pr.get("policy_sector_impact", [])[:3]:
+        pc    = "#22c55e" if p.get("direction")=="利多" else "#ef4444"
+        urg_c = {"高":"#ef4444","中":"#f59e0b","低":"#22c55e"}.get(p.get("urgency","中"),"#f59e0b")
+        tickers_str = " ".join(
+            f'<span style="background:{pc}22;color:{pc};padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700">{t}</span>'
+            for t in p.get("sectors",[])
+        )
+        policy_html += f"""
+        <div style="display:flex;gap:8px;padding:8px 0;border-bottom:1px solid #1e293b;align-items:flex-start;flex-wrap:wrap">
+          <span style="background:{urg_c}22;color:{urg_c};padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700;white-space:nowrap">{p.get('urgency','中')}優先</span>
+          <div style="flex:1">
+            <div style="font-size:12px;color:#e2e8f0;margin-bottom:4px">{p.get('policy','')}</div>
+            <div style="display:flex;gap:4px;flex-wrap:wrap">{tickers_str}</div>
+          </div>
+          <span style="background:{pc}22;color:{pc};padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700">{p.get('direction','')}</span>
+        </div>"""
+
+    best_trade = pr.get("best_political_trade","")
+
+    political_realtime_html = f"""
+    <div style="background:#0f172a;border-radius:12px;padding:16px;border:1px solid #334155;margin-bottom:4px">
+
+      <!-- 特朗普動態 -->
+      <div style="margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+          <span style="font-size:10px;color:#475569;letter-spacing:1px;text-transform:uppercase">🇺🇸 特朗普最新動態</span>
+          <span style="background:{trump_color}22;color:{trump_color};padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700">{trump_dir}</span>
+          {trump_tickers_html}
+        </div>
+        <div style="font-size:13px;color:#94a3b8;line-height:1.5;margin-bottom:8px">{pr.get('trump_market_impact','—')}</div>
+        {trump_news_html or '<div style="color:#475569;font-size:12px">暫無最新特朗普動態</div>'}
+      </div>
+
+      <!-- 政府合約 -->
+      <div style="border-top:1px solid #1e293b;padding-top:12px;margin-bottom:14px">
+        <div style="font-size:10px;color:#475569;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">📋 政府合約公告（最實時的政治信號）</div>
+        {contracts_html or '<div style="color:#475569;font-size:12px;padding:8px 0">暫無最新政府合約公告</div>'}
+      </div>
+
+      <!-- 政策板塊影響 -->
+      <div style="border-top:1px solid #1e293b;padding-top:12px;margin-bottom:12px">
+        <div style="font-size:10px;color:#475569;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">🏛 白宮政策板塊影響</div>
+        {policy_html or '<div style="color:#475569;font-size:12px;padding:8px 0">暫無最新政策動態</div>'}
+      </div>
+
+      <!-- 最佳政治驅動交易 -->
+      {f'<div style="background:#0a0f1e;border-radius:8px;padding:12px;border-left:3px solid #f59e0b"><div style="font-size:10px;color:#f59e0b;margin-bottom:4px">⭐ 今日最佳政治驅動交易機會</div><div style="font-size:13px;color:#e2e8f0;line-height:1.5">{best_trade}</div></div>' if best_trade else ''}
+    </div>"""
+
     # ── 國會申報 ──
     congress_html = ""
     trades = political_data.get("congress_trades",[])
@@ -1777,6 +2054,9 @@ body{{background:#0a0f1e;color:#e2e8f0;font-family:'Helvetica Neue',Arial,sans-s
     <div style="font-size:10px;color:#475569;margin-bottom:8px">最新消息</div>
     {news_html or '<div style="color:#475569;font-size:12px;padding:8px 0">暫無相關新聞</div>'}
   </div>
+
+  <div class="sec">⚡ 政治實時信號（特朗普動態 · 政府合約 · 白宮政策）</div>
+  {political_realtime_html}
 
   <div class="sec">📋 國會議員持倉</div>
   <div style="background:#0f172a;border-radius:12px;padding:16px;border:1px solid #1e293b;margin-bottom:4px">
@@ -1961,6 +2241,10 @@ def main():
     momentum_stocks = fetch_momentum_stocks()
     print(f"  發現 {len(momentum_stocks)} 支動能股")
 
+    print("\n[8.9/10] 政治實時信號追蹤...")
+    political_realtime = fetch_political_realtime()
+    print(f"  特朗普動態 {len(political_realtime.get('trump_signals',[]))} 條 · 政府合約 {len(political_realtime.get('gov_contracts',[]))} 條")
+
     friday_data  = None
     weekend_data = None
 
@@ -1979,7 +2263,7 @@ def main():
     analysis = ai_analyze(
         watchlist_data, scan_results, fda_events, political_data,
         fear_greed, vix_data, market_news, event_calendar, stock_news,
-        momentum_stocks, day_mode, friday_data, weekend_data
+        momentum_stocks, political_realtime, day_mode, friday_data, weekend_data
     )
     print(f"  標題：{analysis.get('headline')}")
     print(f"  模式：{analysis.get('day_mode')}")
@@ -1988,7 +2272,7 @@ def main():
     html = build_html(
         watchlist_data, scan_results, fda_events, political_data,
         analysis, fear_greed, vix_data, market_news, event_calendar,
-        day_mode, momentum_stocks, friday_data, weekend_data
+        day_mode, momentum_stocks, political_realtime, friday_data, weekend_data
     )
     save_report(html, analysis, fear_greed, vix_data)
     send_email(html, analysis, day_mode)
