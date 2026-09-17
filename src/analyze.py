@@ -1304,24 +1304,44 @@ def ai_analyze(
   → entry_timing填「事件已發生，觀望」
 - 只有upcoming/expected/PDUFA date/anticipated等未來式字眼才生成操作建議"""
 
-    models_to_try = ["gemini-3.6-flash", "gemini-2.0-flash", "gemini-1.5-flash"]
+    # 最新可用模型（2026年9月）
+    # gemini-3.7-flash: 最新最強（2026年8月發布）
+    # gemini-3.6-flash: 穩定版（2026年7月發布）
+    # gemini-3.5-flash: 備用
+    # gemini-3.5-flash-lite: 最輕量備用
+    models_to_try = ["gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite"]
     response = None
     for model_name in models_to_try:
-        for attempt in range(3):
+        for attempt in range(4):
             try:
                 response = gemini_client.models.generate_content(model=model_name, contents=prompt)
                 print(f"  [OK] 使用模型：{model_name}")
                 break
             except Exception as e:
-                if attempt < 2:
-                    wait = 20 * (attempt + 1)
-                    print(f"[WARN] {model_name} 重試{attempt+1}/3，等待{wait}秒: {e}")
-                    time.sleep(wait)
+                err_str = str(e)
+                # 404 = 模型不存在，直接跳下一個
+                if "404" in err_str or "NOT_FOUND" in err_str or "no longer available" in err_str or "not found" in err_str.lower():
+                    print(f"[WARN] {model_name} 不可用，跳過")
+                    break
+                # 503 = 高需求，等待後重試
+                elif "503" in err_str or "UNAVAILABLE" in err_str:
+                    if attempt < 3:
+                        wait = 30 * (attempt + 1)
+                        print(f"[WARN] {model_name} 高需量，等待{wait}秒重試({attempt+1}/3)")
+                        time.sleep(wait)
+                    else:
+                        print(f"[WARN] {model_name} 持續503，嘗試下一個模型")
                 else:
-                    print(f"[WARN] {model_name} 失敗")
-        if response: break
+                    if attempt < 3:
+                        wait = 20 * (attempt + 1)
+                        print(f"[WARN] {model_name} 重試{attempt+1}/3，等待{wait}秒: {e}")
+                        time.sleep(wait)
+                    else:
+                        print(f"[WARN] {model_name} 失敗")
+        if response:
+            break
     if not response:
-        raise Exception("所有模型都無法連線")
+        raise Exception("所有模型都無法連線，請稍後重試")
 
     raw = response.text.strip()
     raw = re.sub(r'```json\s*', '', raw)
