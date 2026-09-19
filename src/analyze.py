@@ -1147,6 +1147,16 @@ def ai_analyze(
   "mood_score": 0到100整數,
   "headline": "今日最重要一句話20字以內",
   "news_summary": "根據財經新聞的市場重點摘要50字",
+  "market_news_analysis": [
+    {{
+      "title": "新聞英文標題（原文）",
+      "zh_summary": "中文摘要20字",
+      "impact": "對市場的具體影響20字",
+      "direction": "利多/利空/中性",
+      "affected_tickers": ["受影響股票代碼最多3個"],
+      "action": "買Call/買Put/觀望/持有"
+    }}
+  ],
   "key_events_today": ["重要事件1", "重要事件2", "重要事件3"],
   "trade_plans": [
     {{
@@ -1642,18 +1652,51 @@ def build_html(
           </div>
         </div>"""
 
-    # ── 財經新聞 HTML ──
-    cat_colors = {"市場動態":"#3b82f6","財報":"#22c55e","Fed/通脹":"#f59e0b","科技/AI":"#a78bfa","大市":"#64748b"}
+    # ── 財經新聞 HTML（含中文解讀）──
+    cat_colors   = {"市場動態":"#3b82f6","財報":"#22c55e","Fed/通脹":"#f59e0b","科技/AI":"#a78bfa","大市":"#64748b"}
+    dir_colors   = {"利多":"#22c55e","利空":"#ef4444","中性":"#64748b"}
+    action_colors= {"買Call":"#22c55e","買Put":"#ef4444","觀望":"#64748b","持有":"#3b82f6"}
+
+    # 建立新聞分析字典（用標題前40字作key匹配）
+    news_analysis_map = {}
+    for na in analysis.get("market_news_analysis", []):
+        key = na.get("title","")[:40]
+        news_analysis_map[key] = na
+
     market_news_html = ""
     for n in market_news[:8]:
-        cc = cat_colors.get(n.get("category",""),"#64748b")
+        cc  = cat_colors.get(n.get("category",""),"#64748b")
+        key = n.get("title","")[:40]
+        na  = news_analysis_map.get(key, {})
+        zh_summary   = na.get("zh_summary","")
+        impact       = na.get("impact","")
+        direction    = na.get("direction","")
+        affected     = na.get("affected_tickers",[])
+        action       = na.get("action","")
+        dir_color    = dir_colors.get(direction,"#64748b")
+        action_color = action_colors.get(action,"#64748b")
+        tickers_html = " ".join(
+            f'<span style="background:#f59e0b22;color:#f59e0b;padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700">{t}</span>'
+            for t in affected
+        )
         market_news_html += f"""
-        <div style="display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #1e293b">
-          <span style="background:{cc}22;color:{cc};padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;white-space:nowrap;margin-top:1px">{n.get('category','')}</span>
-          <div>
-            <div style="font-size:13px;color:#e2e8f0;line-height:1.4">{n.get('title','')}</div>
-            <div style="font-size:11px;color:#475569;margin-top:2px">{n.get('date','')}</div>
+        <div style="padding:12px 0;border-bottom:1px solid #1e293b">
+          <div style="display:flex;gap:8px;margin-bottom:6px;align-items:flex-start">
+            <span style="background:{cc}22;color:{cc};padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;white-space:nowrap;margin-top:1px">{n.get('category','')}</span>
+            <div style="flex:1">
+              <div style="font-size:12px;color:#64748b;line-height:1.4">{n.get('title','')}</div>
+              <div style="font-size:10px;color:#334155;margin-top:1px">{n.get('date','')}</div>
+            </div>
           </div>
+          {f"""<div style="background:#0a0f1e;border-radius:8px;padding:10px;border-left:2px solid {dir_color}">
+            <div style="font-size:13px;color:#e2e8f0;font-weight:600;margin-bottom:4px">{zh_summary}</div>
+            <div style="font-size:12px;color:#94a3b8;margin-bottom:6px">{impact}</div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span style="background:{dir_color}22;color:{dir_color};padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700">{direction}</span>
+              <span style="background:{action_color}22;color:{action_color};padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700">{action}</span>
+              {tickers_html}
+            </div>
+          </div>""" if zh_summary else ""}
         </div>"""
 
     # ── 事件日曆 HTML ──
