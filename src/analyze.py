@@ -1008,10 +1008,198 @@ def fetch_political_realtime() -> dict:
     return result
 
 
+# ══════════════════════════════════════════════════════════
+# 12a. 昨日推介追蹤（成效追蹤）
+# ══════════════════════════════════════════════════════════
+def fetch_previous_recommendations() -> list:
+    """
+    讀取 index.json 最新一條記錄的 trade_plans，
+    抓取各股票當前價格，計算昨日推介的表現。
+    返回：[{ticker, direction, strike, entry_zone, current_price, chg_pct, result}]
+    """
+    index_path = "web/index.json"
+    if not os.path.exists(index_path):
+        print("  [跳過] 未找到 index.json，跳過昨日追蹤")
+        return []
+
+    try:
+        with open(index_path) as f:
+            index = json.load(f)
+    except Exception as e:
+        print(f"  [WARN] 讀取 index.json 失敗: {e}")
+        return []
+
+    # 找最近一條（排除今日）
+    today_str = datetime.date.today().isoformat()
+    prev_entry = None
+    for entry in index:
+        if entry.get("date", "") != today_str:
+            prev_entry = entry
+            break
+
+    if not prev_entry:
+        print("  [跳過] 無昨日記錄")
+        return []
+
+    prev_date   = prev_entry.get("date", "")
+    trade_plans = prev_entry.get("trade_plans", [])
+
+    # 若 index.json 舊格式不含 trade_plans，嘗試從對應 HTML 記錄略過
+    if not trade_plans:
+        # 嘗試從 top_ticker 建一個最簡單記錄
+        top = {
+            "ticker":     prev_entry.get("top_ticker", ""),
+            "direction":  prev_entry.get("top_dir", ""),
+            "strike":     prev_entry.get("top_strike", ""),
+            "entry_zone": prev_entry.get("top_entry", ""),
+        }
+        if top["ticker"]:
+            trade_plans = [top]
+        else:
+            print("  [跳過] 昨日記錄無推介資料")
+            return []
+
+    import yfinance as yf
+    results = []
+    for plan in trade_plans[:5]:   # 最多追蹤5筆
+        ticker = plan.get("ticker", "").strip()
+        if not ticker or ticker == "—":
+            continue
+        direction   = plan.get("direction", "")
+        strike_raw  = plan.get("strike", "—")
+        entry_zone  = plan.get("entry_zone", "—")
+
+        try:
+            info = yf.Ticker(ticker).fast_info
+            current = round(float(info.last_price), 2)
+        except Exception:
+            current = None
+
+        # 解析 entry_zone 中間值作為入場基準
+        entry_mid = None
+        if entry_zone and entry_zone != "—":
+            nums = re.findall(r"[\d.]+", str(entry_zone))
+            if nums:
+                entry_mid = sum(float(x) for x in nums) / len(nums)
+
+        chg_pct = None
+        result  = "未知"
+        if current and entry_mid:
+            chg_pct = round((current - entry_mid) / entry_mid * 100, 1)
+            if direction == "CALL":
+                result = "✅ 獲利" if chg_pct > 1.5 else ("🔴 虧損" if chg_pct < -1.5 else "⚪ 持平")
+            elif direction == "PUT":
+                result = "✅ 獲利" if chg_pct < -1.5 else ("🔴 虧損" if chg_pct > 1.5 else "⚪ 持平")
+
+        results.append({
+            "date":        prev_date,
+            "ticker":      ticker,
+            "direction":   direction,
+            "strike":      strike_raw,
+            "entry_zone":  entry_zone,
+            "current":     current,
+            "chg_pct":     chg_pct,
+            "result":      result,
+        })
+        print(f"    {ticker} {direction} 入場{entry_zone} → 現價{current} ({chg_pct:+.1f}%) {result}" if chg_pct is not None else f"    {ticker} {direction} 無法取得價格")
+
+    return results
+
+
+# ══════════════════════════════════════════════════════════
+# 12b. 分析師評級變動掃描
+# ══════════════════════════════════════════════════════════
+def fetch_analyst_ratings() -> list:
+    """
+    掃描 Google News RSS 找升降評事件（3天內），
+    返回：[{ticker, firm, action, old_rating, new_rating, price_target, title, date}]
+    """
+    queries = []
+    for t in WATCHLIST:
+        queries.append((f"{t} analyst upgrade downgrade price target 2026", t))
+    # 加入 S&P 整體分析師評級
+    queries.append(("stock analyst upgrade downgrade rating change today 2026", "MARKET"))
+
+    results  = []
+    seen     = set()
+
+    upgrade_kw   = ["upgrade", "upgraded", "raises", "buy", "outperform", "overweight",
+                    "strong buy", "positive", "initiates coverage", "reiterates buy"]
+    downgrade_kw = ["downgrade", "downgraded", "lowers", "sell", "underperform",
+                    "underweight", "negative", "cuts", "reduces", "bear"]
+
+    for query, hint_ticker in queries:
+        try:
+            encoded = requests.utils.quote(query)
+            url     = f"https://news.google.com/rss/search?q={encoded}&hl=en-US&gl=US&ceid=US:en"
+            r       = requests.get(url, timeout=8, headers={"User-Agent": "Mozilla/5.0"})
+            if r.status_code != 200:
+                continue
+            root = ET.fromstring(r.content)
+            for item in list(root.iter("item"))[:3]:
+                title   = item.findtext("title", "").strip()
+                pubdate = item.findtext("pubDate", "")
+                link    = item.findtext("link", "")
+
+                if not title or not is_recent_news(pubdate, max_days=3):
+                    continue
+
+                title_lower = title.lower()
+                # 必須含評級相關字眼
+                is_upgrade   = any(k in title_lower for k in upgrade_kw)
+                is_downgrade = any(k in title_lower for k in downgrade_kw)
+                if not is_upgrade and not is_downgrade:
+                    continue
+
+                # 去重
+                key = title[:50]
+                if key in seen:
+                    continue
+                seen.add(key)
+
+                # 嘗試從標題解析 ticker
+                ticker_found = hint_ticker if hint_ticker != "MARKET" else ""
+                for t in WATCHLIST:
+                    if t in title.upper():
+                        ticker_found = t
+                        break
+
+                # 解析目標價
+                price_target = "—"
+                pt_match = re.search(r'\$\s*([\d,.]+)', title)
+                if pt_match:
+                    price_target = "$" + pt_match.group(1)
+
+                # 解析券商名稱（第一個詞若非股票代碼視為券商）
+                words = title.split()
+                firm  = words[0] if words and not words[0].isupper() else "—"
+
+                action = "升評" if is_upgrade else "降評"
+
+                results.append({
+                    "ticker":       ticker_found,
+                    "firm":         firm[:20],
+                    "action":       action,
+                    "price_target": price_target,
+                    "title":        title[:100],
+                    "date":         pubdate[:16],
+                    "direction":    "CALL" if is_upgrade else "PUT",
+                })
+            time.sleep(0.3)
+        except Exception as e:
+            print(f"[WARN] 分析師評級({hint_ticker}): {e}")
+
+    results.sort(key=lambda x: x["date"], reverse=True)
+    results = results[:10]
+    print(f"  發現 {len(results)} 條分析師評級變動")
+    return results
+
+
 def ai_analyze(
     watchlist_data, scan_results, fda_events, political_data,
     fear_greed, vix_data, market_news, event_calendar, stock_news,
-    momentum_stocks, political_realtime, day_mode: str, friday_data=None, weekend_data=None
+    momentum_stocks, political_realtime, day_mode: str, friday_data=None, weekend_data=None,
+    prev_recs=None, analyst_ratings=None
 ) -> dict:
 
     today = datetime.date.today().strftime("%Y年%m月%d日")
@@ -1056,6 +1244,8 @@ def ai_analyze(
         "fda_events":         fda_events[:3],
         "political_news":     political_data.get("news", [])[:6],
         "congress_trades":    political_data.get("congress_trades", [])[:5],
+        "prev_recommendations": prev_recs or [],
+        "analyst_ratings":      analyst_ratings or [],
     }
 
     # 週末加入下週數據
@@ -1246,6 +1436,25 @@ def ai_analyze(
   "key_movers": [
     {{"ticker": "代碼", "signal": "強勢或弱勢或觀察", "reason": "原因20字"}}
   ],
+  "prev_rec_review": [
+    {{
+      "ticker": "昨日推介代碼",
+      "direction": "CALL或PUT",
+      "result": "✅ 獲利/🔴 虧損/⚪ 持平/⏳ 未到期",
+      "chg_pct": "實際股價變動如+2.3%",
+      "lesson": "經驗教訓或後市展望20字"
+    }}
+  ],
+  "analyst_highlights": [
+    {{
+      "ticker": "股票代碼",
+      "firm": "券商名稱",
+      "action": "升評/降評",
+      "price_target": "目標價如$200",
+      "impact": "對股價影響20字",
+      "trade_suggestion": "CALL/PUT/觀望"
+    }}
+  ],
   "risk_warning": "今日最大風險30字",
   "summary": "整體摘要100字"
 }}
@@ -1312,42 +1521,71 @@ def ai_analyze(
   → if_rejected填「—」
   → call_strike和put_strike全部填「—」
   → entry_timing填「事件已發生，觀望」
-- 只有upcoming/expected/PDUFA date/anticipated等未來式字眼才生成操作建議"""
+- 只有upcoming/expected/PDUFA date/anticipated等未來式字眼才生成操作建議
 
-    # 最新可用模型（2026年9月）
-    # gemini-3.7-flash: 最新最強（2026年8月發布）
-    # gemini-3.6-flash: 穩定版（2026年7月發布）
-    # gemini-3.5-flash: 備用
-    # gemini-3.5-flash-lite: 最輕量備用
-    models_to_try = ["gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite"]
+【昨日推介成效追蹤（prev_recommendations）】
+- prev_recommendations 含昨日推介的股票、入場區間、現時股價、漲跌幅
+- 必須逐一填入 prev_rec_review，包括：
+  → result：根據 chg_pct 和 direction 判斷（CALL漲>1.5%=✅，跌<-1.5%=🔴，否則⚪）
+  → lesson：若虧損，說明錯誤判斷或市場變化；若獲利，確認信號是否有效
+- 若無昨日記錄，prev_rec_review 填空陣列 []
+
+【分析師評級原則（analyst_ratings）】
+- analyst_ratings 含最新券商升降評事件（3天內）
+- 升評（upgrade/buy）+ 目標價 → 通常短期利多，CALL方向
+- 降評（downgrade/sell）→ 通常短期利空，PUT方向
+- 必須填入 analyst_highlights，優先選影響自選股（WATCHLIST）的評級
+- 若同一股票同日有升評也有降評（分歧），說明分歧并建議觀望"""
+
+    # 最新可用模型優先序（2026年9月）
+    # gemini-2.5-flash-lite: Google最新推薦輕量模型
+    # gemini-2.5-flash: 穩定主力
+    # gemini-2.5-pro: 最強但配額較低
+    # gemini-3.6-flash: 舊名備用
+    models_to_try = [
+        "gemini-2.5-flash-lite",
+        "gemini-2.5-flash",
+        "gemini-2.5-pro",
+        "gemini-3.6-flash",
+        "gemini-1.5-flash-latest",
+    ]
     response = None
     for model_name in models_to_try:
-        for attempt in range(4):
+        for attempt in range(5):
             try:
-                response = gemini_client.models.generate_content(model=model_name, contents=prompt)
+                # 使用 Chat API（官方推薦，避免AFC警告）
+                chat = gemini_client.chats.create(model=model_name)
+                response = chat.send_message(prompt)
                 print(f"  [OK] 使用模型：{model_name}")
                 break
             except Exception as e:
                 err_str = str(e)
-                # 404 = 模型不存在，直接跳下一個
-                if "404" in err_str or "NOT_FOUND" in err_str or "no longer available" in err_str or "not found" in err_str.lower():
+                # 404 / NOT_FOUND = 模型名稱不存在，直接跳下一個（不重試）
+                if ("404" in err_str or "NOT_FOUND" in err_str
+                        or "no longer available" in err_str
+                        or "not found" in err_str.lower()
+                        or "is not supported" in err_str):
                     print(f"[WARN] {model_name} 不可用，跳過")
                     break
-                # 503 = 高需求，等待後重試
+                # 429 = 配額超限，等待後重試
+                elif "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
+                    wait = 60 * (attempt + 1)
+                    print(f"[WARN] {model_name} 配額超限，等待{wait}秒({attempt+1}/5)")
+                    time.sleep(wait)
+                # 503 = 高需求暫時不可用，等待後重試（等待較久）
                 elif "503" in err_str or "UNAVAILABLE" in err_str:
-                    if attempt < 3:
-                        wait = 30 * (attempt + 1)
-                        print(f"[WARN] {model_name} 高需量，等待{wait}秒重試({attempt+1}/3)")
-                        time.sleep(wait)
-                    else:
-                        print(f"[WARN] {model_name} 持續503，嘗試下一個模型")
+                    wait = 60 * (attempt + 1)
+                    print(f"[WARN] {model_name} 高需量，等待{wait}秒重試({attempt+1}/5)")
+                    time.sleep(wait)
                 else:
-                    if attempt < 3:
-                        wait = 20 * (attempt + 1)
-                        print(f"[WARN] {model_name} 重試{attempt+1}/3，等待{wait}秒: {e}")
+                    if attempt < 4:
+                        wait = 30 * (attempt + 1)
+                        print(f"[WARN] {model_name} 重試{attempt+1}/5，等待{wait}秒: {e}")
                         time.sleep(wait)
                     else:
-                        print(f"[WARN] {model_name} 失敗")
+                        print(f"[WARN] {model_name} 所有重試失敗: {e}")
+                if attempt == 4:
+                    print(f"[WARN] {model_name} 放棄，嘗試下一個模型")
         if response:
             break
     if not response:
@@ -1650,6 +1888,66 @@ def build_html(
             <span style="color:#64748b">風險：<span style="color:#f59e0b">{plan.get('risk','—')}</span></span>
             <span style="color:#64748b">政治：<span style="color:#3b82f6">{plan.get('political_factor','無')}</span></span>
           </div>
+        </div>"""
+
+    # ── 昨日推介成效追蹤 HTML ──
+    prev_review_html = ""
+    prev_reviews = analysis.get("prev_rec_review", [])
+    if prev_reviews and not is_weekend:
+        rows_html = ""
+        for rv in prev_reviews:
+            result_icon = rv.get("result", "⚪ 持平")
+            rc = "#22c55e" if "✅" in result_icon else "#ef4444" if "🔴" in result_icon else "#64748b"
+            dc2 = "#22c55e" if rv.get("direction") == "CALL" else "#ef4444"
+            rows_html += f"""
+            <div style="display:grid;grid-template-columns:80px 70px 60px 1fr;gap:8px;padding:10px 0;border-bottom:1px solid #1e293b;align-items:center">
+              <div style="font-size:15px;font-weight:800;color:#f1f5f9">{rv.get('ticker','—')}</div>
+              <span style="background:{dc2}22;color:{dc2};padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;text-align:center">{rv.get('direction','—')}</span>
+              <div style="font-size:14px;font-weight:700;color:{rc}">{rv.get('chg_pct','—')}</div>
+              <div>
+                <div style="font-size:12px;font-weight:700;color:{rc}">{result_icon}</div>
+                <div style="font-size:11px;color:#64748b;margin-top:2px">{rv.get('lesson','')}</div>
+              </div>
+            </div>"""
+        prev_review_html = f"""
+        <div style="background:#0f172a;border-radius:12px;padding:16px;margin-bottom:16px;border:1px solid #1e293b">
+          <div style="font-size:13px;font-weight:700;color:#94a3b8;margin-bottom:12px;display:flex;align-items:center;gap:6px">
+            📊 昨日推介成效追蹤
+          </div>
+          <div style="font-size:10px;color:#475569;margin-bottom:10px;display:grid;grid-template-columns:80px 70px 60px 1fr;gap:8px;padding-bottom:6px;border-bottom:1px solid #1e293b">
+            <span>股票</span><span>方向</span><span>變動</span><span>結果 / 分析</span>
+          </div>
+          {rows_html}
+        </div>"""
+
+    # ── 分析師評級 HTML ──
+    analyst_html = ""
+    analyst_items = analysis.get("analyst_highlights", [])
+    if analyst_items:
+        analyst_rows = ""
+        for ah in analyst_items:
+            ac = "#22c55e" if ah.get("action") == "升評" else "#ef4444"
+            ts = ah.get("trade_suggestion", "觀望")
+            tc = "#22c55e" if ts == "CALL" else "#ef4444" if ts == "PUT" else "#64748b"
+            analyst_rows += f"""
+            <div style="background:#0a0f1e;border-radius:8px;padding:10px;margin-bottom:8px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="font-size:16px;font-weight:800;color:#f1f5f9">{ah.get('ticker','—')}</span>
+                  <span style="background:{ac}22;color:{ac};padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700">{ah.get('action','—')}</span>
+                  <span style="color:#64748b;font-size:11px">{ah.get('firm','—')}</span>
+                </div>
+                <div style="text-align:right">
+                  <div style="font-size:13px;font-weight:700;color:#e2e8f0">{ah.get('price_target','—')}</div>
+                  <span style="background:{tc}22;color:{tc};padding:1px 7px;border-radius:10px;font-size:11px">{ts}</span>
+                </div>
+              </div>
+              <div style="font-size:11px;color:#94a3b8">{ah.get('impact','')}</div>
+            </div>"""
+        analyst_html = f"""
+        <div style="background:#0f172a;border-radius:12px;padding:16px;margin-bottom:16px;border:1px solid #1e293b">
+          <div style="font-size:13px;font-weight:700;color:#94a3b8;margin-bottom:12px">📋 分析師評級變動</div>
+          {analyst_rows}
         </div>"""
 
     # ── 財經新聞 HTML（含中文解讀）──
@@ -2111,6 +2409,10 @@ body{{background:#0a0f1e;color:#e2e8f0;font-family:'Helvetica Neue',Arial,sans-s
 
   {top_html}
 
+  {prev_review_html}
+
+  {analyst_html}
+
   <div class="sec">{trade_label}</div>
   {trade_html or '<div style="color:#475569;padding:16px 0;text-align:center">暫無操作建議</div>'}
 
@@ -2220,6 +2522,8 @@ def save_report(html: str, analysis: dict, fear_greed: dict = {}, vix_data: dict
         # 風險
         "risk_warning": analysis.get("risk_warning", ""),
         "sector":       analysis.get("sector_rotation", ""),
+        # 昨日推介追蹤（供下一天的 fetch_previous_recommendations 使用）
+        "trade_plans":  analysis.get("trade_plans", []),
     }
 
     index = [e for e in index if e["date"] != date_str]
@@ -2320,6 +2624,14 @@ def main():
     political_realtime = fetch_political_realtime()
     print(f"  特朗普動態 {len(political_realtime.get('trump_signals',[]))} 條 · 政府合約 {len(political_realtime.get('gov_contracts',[]))} 條")
 
+    print("\n[8.95/10] 昨日推介追蹤...")
+    prev_recs = fetch_previous_recommendations()
+    print(f"  追蹤 {len(prev_recs)} 筆昨日推介")
+
+    print("\n[8.97/10] 分析師評級掃描...")
+    analyst_ratings = fetch_analyst_ratings()
+    print(f"  發現 {len(analyst_ratings)} 條評級變動")
+
     friday_data  = None
     weekend_data = None
 
@@ -2338,7 +2650,8 @@ def main():
     analysis = ai_analyze(
         watchlist_data, scan_results, fda_events, political_data,
         fear_greed, vix_data, market_news, event_calendar, stock_news,
-        momentum_stocks, political_realtime, day_mode, friday_data, weekend_data
+        momentum_stocks, political_realtime, day_mode, friday_data, weekend_data,
+        prev_recs=prev_recs, analyst_ratings=analyst_ratings
     )
     print(f"  標題：{analysis.get('headline')}")
     print(f"  模式：{analysis.get('day_mode')}")
