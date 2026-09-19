@@ -1657,7 +1657,7 @@ def build_html(
     dir_colors   = {"利多":"#22c55e","利空":"#ef4444","中性":"#64748b"}
     action_colors= {"買Call":"#22c55e","買Put":"#ef4444","觀望":"#64748b","持有":"#3b82f6"}
 
-    # 建立新聞分析字典（用標題前40字作key匹配）
+    # 建立新聞分析字典
     news_analysis_map = {}
     for na in analysis.get("market_news_analysis", []):
         key = na.get("title","")[:40]
@@ -1676,9 +1676,24 @@ def build_html(
         dir_color    = dir_colors.get(direction,"#64748b")
         action_color = action_colors.get(action,"#64748b")
         tickers_html = " ".join(
-            f'<span style="background:#f59e0b22;color:#f59e0b;padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700">{t}</span>'
+            '<span style="background:#f59e0b22;color:#f59e0b;padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700">' + t + '</span>'
             for t in affected
         )
+        # 先把 AI 解讀區塊計算好，避免 nested f-string
+        if zh_summary:
+            insight_html = (
+                '<div style="background:#0a0f1e;border-radius:8px;padding:10px;border-left:2px solid ' + dir_color + '">'
+                '<div style="font-size:13px;color:#e2e8f0;font-weight:600;margin-bottom:4px">' + zh_summary + '</div>'
+                '<div style="font-size:12px;color:#94a3b8;margin-bottom:6px">' + impact + '</div>'
+                '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+                '<span style="background:' + dir_color + '22;color:' + dir_color + ';padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700">' + direction + '</span>'
+                '<span style="background:' + action_color + '22;color:' + action_color + ';padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700">' + action + '</span>'
+                + tickers_html +
+                '</div></div>'
+            )
+        else:
+            insight_html = ""
+
         market_news_html += f"""
         <div style="padding:12px 0;border-bottom:1px solid #1e293b">
           <div style="display:flex;gap:8px;margin-bottom:6px;align-items:flex-start">
@@ -1688,15 +1703,7 @@ def build_html(
               <div style="font-size:10px;color:#334155;margin-top:1px">{n.get('date','')}</div>
             </div>
           </div>
-          {f"""<div style="background:#0a0f1e;border-radius:8px;padding:10px;border-left:2px solid {dir_color}">
-            <div style="font-size:13px;color:#e2e8f0;font-weight:600;margin-bottom:4px">{zh_summary}</div>
-            <div style="font-size:12px;color:#94a3b8;margin-bottom:6px">{impact}</div>
-            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-              <span style="background:{dir_color}22;color:{dir_color};padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700">{direction}</span>
-              <span style="background:{action_color}22;color:{action_color};padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700">{action}</span>
-              {tickers_html}
-            </div>
-          </div>""" if zh_summary else ""}
+          {insight_html}
         </div>"""
 
     # ── 事件日曆 HTML ──
