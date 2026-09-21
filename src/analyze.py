@@ -1537,55 +1537,82 @@ def ai_analyze(
 - 必須填入 analyst_highlights，優先選影響自選股（WATCHLIST）的評級
 - 若同一股票同日有升評也有降評（分歧），說明分歧并建議觀望"""
 
-    # 最新可用模型優先序（2026年9月）
-    # gemini-2.5-flash-lite: Google最新推薦輕量模型
-    # gemini-2.5-flash: 穩定主力
-    # gemini-2.5-pro: 最強但配額較低
-    # gemini-3.6-flash: 舊名備用
-    models_to_try = [
-        "gemini-2.5-flash-lite",
-        "gemini-2.5-flash",
-        "gemini-2.5-pro",
+    # ── 動態取得可用模型，再補充固定備用清單 ──
+    # 先嘗試從 API 列出含 "flash" 的模型，找到就插到優先位置
+    dynamic_models = []
+    try:
+        for m in gemini_client.models.list():
+            name = getattr(m, "name", "") or ""
+            # name 格式為 "models/gemini-xxx"，取後半部
+            short = name.replace("models/", "")
+            # 只要 flash 或 pro，且支援 generateContent
+            methods = getattr(m, "supported_generation_methods", []) or []
+            if ("generateContent" in methods
+                    and ("flash" in short or "pro" in short)
+                    and "gemini" in short):
+                dynamic_models.append(short)
+        # 按名稱排序：數字越大越新，lite 放前面（速度快）
+        dynamic_models.sort(key=lambda x: (
+            -sum(int(c) for c in re.findall(r'\d', x)),
+            "lite" not in x
+        ))
+        print(f"  [模型列表] 可用: {dynamic_models[:5]}")
+    except Exception as e:
+        print(f"  [WARN] 無法列出模型: {e}")
+
+    # 固定備用清單（已知曾可用）
+    fallback_models = [
         "gemini-3.6-flash",
-        "gemini-1.5-flash-latest",
+        "gemini-3.5-flash",
+        "gemini-3.5-flash-lite",
+        "gemini-3.0-flash",
+        "gemini-2.0-flash-lite",
     ]
+    # 合並：動態優先，去重
+    seen_m = set()
+    models_to_try = []
+    for m in dynamic_models + fallback_models:
+        if m not in seen_m:
+            seen_m.add(m)
+            models_to_try.append(m)
+
     response = None
     for model_name in models_to_try:
-        for attempt in range(5):
+        for attempt in range(4):
             try:
-                # 使用 Chat API（官方推薦，避免AFC警告）
-                chat = gemini_client.chats.create(model=model_name)
-                response = chat.send_message(prompt)
+                # 使用 models.generate_content（穩定，SDK 所有版本通用）
+                response = gemini_client.models.generate_content(
+                    model=model_name, contents=prompt
+                )
                 print(f"  [OK] 使用模型：{model_name}")
                 break
             except Exception as e:
                 err_str = str(e)
-                # 404 / NOT_FOUND = 模型名稱不存在，直接跳下一個（不重試）
+                # 404 / NOT_FOUND = 模型不存在，直接跳下一個（不重試）
                 if ("404" in err_str or "NOT_FOUND" in err_str
                         or "no longer available" in err_str
                         or "not found" in err_str.lower()
                         or "is not supported" in err_str):
                     print(f"[WARN] {model_name} 不可用，跳過")
                     break
-                # 429 = 配額超限，等待後重試
+                # 429 = 配額超限
                 elif "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
-                    wait = 60 * (attempt + 1)
-                    print(f"[WARN] {model_name} 配額超限，等待{wait}秒({attempt+1}/5)")
+                    wait = 45 * (2 ** attempt)   # 45 / 90 / 180 / 360 秒
+                    print(f"[WARN] {model_name} 配額超限，等待{wait}秒({attempt+1}/4)")
                     time.sleep(wait)
-                # 503 = 高需求暫時不可用，等待後重試（等待較久）
+                # 503 = 高需求，指數退避
                 elif "503" in err_str or "UNAVAILABLE" in err_str:
-                    wait = 60 * (attempt + 1)
-                    print(f"[WARN] {model_name} 高需量，等待{wait}秒重試({attempt+1}/5)")
+                    wait = 30 * (2 ** attempt)   # 30 / 60 / 120 / 240 秒
+                    print(f"[WARN] {model_name} 高需量，等待{wait}秒({attempt+1}/4)")
                     time.sleep(wait)
                 else:
-                    if attempt < 4:
-                        wait = 30 * (attempt + 1)
-                        print(f"[WARN] {model_name} 重試{attempt+1}/5，等待{wait}秒: {e}")
+                    wait = 20 * (attempt + 1)
+                    if attempt < 3:
+                        print(f"[WARN] {model_name} 重試{attempt+1}/4，等待{wait}秒: {e}")
                         time.sleep(wait)
                     else:
-                        print(f"[WARN] {model_name} 所有重試失敗: {e}")
-                if attempt == 4:
-                    print(f"[WARN] {model_name} 放棄，嘗試下一個模型")
+                        print(f"[WARN] {model_name} 失敗: {e}")
+                        break
         if response:
             break
     if not response:
