@@ -1,5 +1,56 @@
 [
   {
+    "date": "2026-09-24",
+    "headline": "債息飆升美股受壓，聯儲局釋放加息信號",
+    "mood": "震盪",
+    "mood_score": 50,
+    "mode": "weekday",
+    "summary": "今日市場受美債收益率飆升與聯儲局加息言論夾擊，納指與道指顯著受壓。情緒指數中性，操作上以順勢做空弱勢股（如ARM）為主，科技股高檔震盪需嚴控風險。",
+    "fg_score": 50,
+    "fg_label": "中性",
+    "vix": 16.05,
+    "vix_level": "正常",
+    "pol_sent": "中性",
+    "pol_summary": "特朗普July股票交易披露引起關注，國會及政策面無突發重大立法，市場焦點集中於聯儲局貨幣政策與利率走向。",
+    "top_ticker": "ARM",
+    "top_dir": "PUT",
+    "top_strike": "300.0",
+    "top_entry": "302.0 - 305.0",
+    "top_risk": "短線超賣後可能出現急彈",
+    "top_reason": "兩日暴跌8%且動能向下，順勢做空勝率高",
+    "risk_warning": "美債收益率持續飆升可能進一步壓抑股市估值，注意控制倉位。",
+    "sector": "資金由高估值科技股流出，防守型板塊相對抗跌。",
+    "trade_plans": [
+      {
+        "rank": 1,
+        "ticker": "ARM",
+        "direction": "PUT",
+        "strategy": "直接買Put",
+        "strike": "300.0",
+        "expiry": "2026-10-02",
+        "expiry_reason": "短線動能轉弱，順勢佈局",
+        "entry_zone": "302.0 - 305.0",
+        "entry_timing": "反彈至阻力位不破時入場",
+        "delta_range": "0.35-0.45",
+        "est_premium": "$8.50 - $11.00",
+        "signal_strength": 4,
+        "signals": [
+          "過去兩日爆跌逾8%",
+          "成交量配合下跌",
+          "大盤整體氣氛偏弱"
+        ],
+        "max_loss": "權利金全額",
+        "target_gain": "+50% 至 +100%",
+        "stop_loss_price": 312.0,
+        "stop_loss_option": "期權價值跌幅達40%",
+        "squeeze_risk": "低",
+        "risk": "短線跌幅過大可能面臨技術性反彈",
+        "political_factor": "無",
+        "best_day_to_enter": "早盤開盤後"
+      }
+    ]
+  },
+  {
     "date": "2026-09-23",
     "headline": "納指創新高油價回落，AI族群續強",
     "mood": "震盪",
@@ -543,10 +594,5 @@
     "date": "2026-08-21",
     "headline": "TSLA領漲，期權IV飆升提防交割日波動",
     "mood": "震盪"
-  },
-  {
-    "date": "2026-08-20",
-    "headline": "科技股隱波驟升，Meta獨現極端買權流向",
-    "mood": "震盪偏空"
   }
 ]
