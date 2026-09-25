@@ -1,5 +1,56 @@
 [
   {
+    "date": "2026-09-25",
+    "headline": "債市拋售與殖利率飆升壓抑美股，市場聚焦通膨與就業數據。",
+    "mood": "震盪",
+    "mood_score": 50,
+    "mode": "friday",
+    "summary": "本週五市場受債市拋售與殖利率上升壓抑，整體情緒偏向中性震盪。技術面上多數大型科技股維持多頭排列但短線面臨超買修正。操作上建議控制倉位，避開高風險過週末持倉，並聚焦具備法人升評及基本面支撐的標的。",
+    "fg_score": 50,
+    "fg_label": "中性",
+    "vix": 15.39,
+    "vix_level": "正常",
+    "pol_sent": "中性",
+    "pol_summary": "川普交易與政治動態持續影響國防與科技板塊，政府合約與政策風向為短期短線交易提供明確催化劑。",
+    "top_ticker": "MSFT",
+    "top_dir": "CALL",
+    "top_strike": "520.0",
+    "top_entry": "507.0 - 512.0",
+    "top_risk": "總體債市殖利率波動可能壓抑科技股漲幅。",
+    "top_reason": "獲得分析師升評支持且均線多頭排列，回測支撐後具備上攻潛力。",
+    "risk_warning": "債市殖利率持續攀升與週末國際政經消息可能導致週一開盤跳空風險。",
+    "sector": "資金在債市殖利率攀升下由高估值科技股部分輪動至防禦型與金融板塊。",
+    "trade_plans": [
+      {
+        "rank": 1,
+        "ticker": "MSFT",
+        "direction": "CALL",
+        "strategy": "直接買Call",
+        "strike": "520.0",
+        "expiry": "2026-10-09",
+        "expiry_reason": "涵蓋財報前動能",
+        "entry_zone": "507.0 - 512.0",
+        "entry_timing": "回測支撐位時分批低吸",
+        "delta_range": "0.35-0.45",
+        "est_premium": "12.08",
+        "signal_strength": 4,
+        "signals": [
+          "多頭排列均線支撐",
+          "券商升評與核心買盤支持",
+          "技術面維持健康整理"
+        ],
+        "max_loss": "權利金全額",
+        "target_gain": "+50%",
+        "stop_loss_price": "490.0",
+        "stop_loss_option": "腰斬或跌破關鍵支撐",
+        "squeeze_risk": "低",
+        "risk": "債市殖利率飆升拖累大盤",
+        "political_factor": "科技委員會利多關注",
+        "best_day_to_enter": "下週一開盤"
+      }
+    ]
+  },
+  {
     "date": "2026-09-24",
     "headline": "債息飆升美股受壓，聯儲局釋放加息信號",
     "mood": "震盪",
@@ -588,11 +639,6 @@
   {
     "date": "2026-08-23",
     "headline": "特斯拉暴漲領跑，全市場IV飆升預告波動",
-    "mood": "震盪"
-  },
-  {
-    "date": "2026-08-21",
-    "headline": "TSLA領漲，期權IV飆升提防交割日波動",
     "mood": "震盪"
   }
 ]
