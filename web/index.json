@@ -1,5 +1,83 @@
 [
   {
+    "date": "2026-09-26",
+    "headline": "升息疑慮壓制大盤，AI與國防龍頭相對強勢",
+    "mood": "震盪",
+    "mood_score": 50,
+    "mode": "saturday",
+    "summary": "本週美股受鷹派升息疑慮影響出現高位震盪，但AI龍頭（MSFT、AMD）與軍工防禦股（RTX）展現強勁抗跌性。下週聚焦非農就業數據，建議VIX低位時善用Bull Call Spread部署MSFT與RTX。",
+    "fg_score": 50,
+    "fg_label": "中性",
+    "vix": 14.87,
+    "vix_level": "極低（期權便宜）",
+    "pol_sent": "中性",
+    "pol_summary": "特朗普交易申報引發市場注意，但實質政策重心仍在國防預算與半導體供應鏈保護。",
+    "top_ticker": "RTX",
+    "top_dir": "CALL",
+    "top_strike": "195.0",
+    "top_entry": "188.5 - 190.0",
+    "top_risk": "大盤整體流動性緊縮導致跟漲乏力",
+    "top_reason": "IV飆升107%且P/C比率低至0.31，主力大單極端看多國防板塊。",
+    "risk_warning": "美國國債收益率衝高及10月升息預期升溫導致美股整體估值承壓。",
+    "sector": "資金由高估值軟體轉向防禦型軍工及具獲利支撐的AI硬體龍頭。",
+    "trade_plans": [
+      {
+        "rank": 1,
+        "ticker": "MSFT",
+        "direction": "CALL",
+        "strategy": "Bull Call Spread",
+        "strike": "520.0",
+        "expiry": "2026-10-16",
+        "expiry_reason": "覆蓋下月財報前動能並避開單週損耗",
+        "entry_zone": "512.0 - 516.0",
+        "entry_timing": "週一開盤拉回至均線支撐時入場",
+        "delta_range": "0.40-0.50",
+        "est_premium": "$6.00 - $8.00",
+        "signal_strength": 4,
+        "signals": [
+          "CoreWeave機構升評利多",
+          " Copilot升級為AI操作系統題材",
+          "兩日漲幅+3.11%技術面強勢"
+        ],
+        "max_loss": "所付出的期權權利金",
+        "target_gain": "100% - 150% 權利金收益",
+        "stop_loss_price": "500.00",
+        "stop_loss_option": "期權價值虧損50%止損",
+        "squeeze_risk": "低",
+        "risk": "大盤若因升息疑慮大幅回檔",
+        "political_factor": "科技委員會利多支持",
+        "best_day_to_enter": "週一早盤"
+      },
+      {
+        "rank": 2,
+        "ticker": "RTX",
+        "direction": "CALL",
+        "strategy": "直接買Call",
+        "strike": "195.0",
+        "expiry": "2026-10-16",
+        "expiry_reason": "配合期權異動主力建倉週期",
+        "entry_zone": "188.5 - 190.0",
+        "entry_timing": "週一開盤確認買盤延續時入場",
+        "delta_range": "0.35-0.45",
+        "est_premium": "$3.50 - $4.50",
+        "signal_strength": 4,
+        "signals": [
+          "IV異動飆升107%",
+          "Put/Call比率達0.31顯示極端看多",
+          "軍事委員會國防避險板塊利多"
+        ],
+        "max_loss": "100% 權利金",
+        "target_gain": "120% 權利金收益",
+        "stop_loss_price": "185.00",
+        "stop_loss_option": "期權價值虧損45%止損",
+        "squeeze_risk": "低",
+        "risk": "國防預算法案延宕風險",
+        "political_factor": "國防委員會地緣政局偏好",
+        "best_day_to_enter": "週一或週二"
+      }
+    ]
+  },
+  {
     "date": "2026-09-25",
     "headline": "債市拋售與殖利率飆升壓抑美股，市場聚焦通膨與就業數據。",
     "mood": "震盪",
@@ -634,11 +712,6 @@
   {
     "date": "2026-08-24",
     "headline": "輝達財報前科技震盪，特朗普調倉引關注",
-    "mood": "震盪"
-  },
-  {
-    "date": "2026-08-23",
-    "headline": "特斯拉暴漲領跑，全市場IV飆升預告波動",
     "mood": "震盪"
   }
 ]
