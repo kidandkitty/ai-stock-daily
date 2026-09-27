@@ -1,5 +1,110 @@
 [
   {
+    "date": "2026-09-27",
+    "headline": "美債收益率飆升壓制大盤，AI巨頭逆勢放量挺升",
+    "mood": "震盪",
+    "mood_score": 50,
+    "mode": "sunday",
+    "summary": "週日市場中性震盪，美債收益率走高壓制整體估值，但VIX降至14.87提供極佳買期權環境。微軟放量強攻與RTX軍工異動資金顯著，下週佈局首選MSFT及RTX看漲策略。",
+    "fg_score": 50,
+    "fg_label": "中性",
+    "vix": 14.87,
+    "vix_level": "極低（期權便宜）",
+    "pol_sent": "利多",
+    "pol_summary": "美國軍工國防部獲12億美元導彈合約利多加持，軍工板塊受惠；國會與特朗普股票申報揭露引發市場短期討論。",
+    "top_ticker": "MSFT",
+    "top_dir": "CALL",
+    "top_strike": "520.0",
+    "top_entry": "512.0 - 516.0",
+    "top_risk": "美債收益率飆升引發科技股整體估值回調風險",
+    "top_reason": "放量1.8倍突破，CoreWeave升評及AI基建需求強勁，技術與資金面均優。",
+    "risk_warning": "美債收益率若持續攀升突破高點，恐引發美股科技股無差別高檔拋售。",
+    "sector": "資金自高估值非美晶片股流出，轉向具實際獲利利基之科技巨頭（MSFT）與國防軍工（RTX）。",
+    "trade_plans": [
+      {
+        "rank": 1,
+        "ticker": "MSFT",
+        "direction": "CALL",
+        "strategy": "直接買Call",
+        "strike": "520.0",
+        "expiry": "2026-10-16",
+        "expiry_reason": "涵蓋10月底財報前主升段行情",
+        "entry_zone": "512.0 - 516.0",
+        "entry_timing": "週一開盤回踩支撐不破時",
+        "delta_range": "0.40-0.50",
+        "est_premium": "$10.50 - $12.25",
+        "signal_strength": 4,
+        "signals": [
+          "成交量放大1.8倍強勢攻擊",
+          "獲CoreWeave等機構調升評級",
+          "技術面多頭排列突破新高"
+        ],
+        "max_loss": "100% 期權權利金",
+        "target_gain": "60% - 100%",
+        "stop_loss_price": "498.0",
+        "stop_loss_option": "期權合約價值虧損35%止損",
+        "squeeze_risk": "低",
+        "risk": "美債收益率持續攀升壓制大型科技股估值",
+        "political_factor": "特朗普申報出售部分MSFT持股（市場已消化）",
+        "best_day_to_enter": "週一早盤或回踩512附近"
+      },
+      {
+        "rank": 2,
+        "ticker": "RTX",
+        "direction": "CALL",
+        "strategy": "Bull Call Spread",
+        "strike": "190.0",
+        "expiry": "2026-10-16",
+        "expiry_reason": "配合國防合約催化及異動期權發酵",
+        "entry_zone": "188.5 - 189.5",
+        "entry_timing": "週一或週二開盤拉回時",
+        "delta_range": "0.45-0.55",
+        "est_premium": "$3.50 - $4.50",
+        "signal_strength": 4,
+        "signals": [
+          "IV飆升116%顯示主力異常卡位",
+          "P/C比率低至0.31呈現極端買Call偏好",
+          "軍事委員會政策及國防12億合約雙重利多"
+        ],
+        "max_loss": "淨支付權利金",
+        "target_gain": "50% - 80%",
+        "stop_loss_price": "185.0",
+        "stop_loss_option": "期權合約價值虧損30%止損",
+        "squeeze_risk": "低",
+        "risk": "大盤高檔拉回帶動整體板塊回檔",
+        "political_factor": "國防部巨額訂單利多溢出效應",
+        "best_day_to_enter": "週二開盤前段"
+      },
+      {
+        "rank": 3,
+        "ticker": "AMD",
+        "direction": "PUT",
+        "strategy": "Bear Put Spread",
+        "strike": "610.0",
+        "expiry": "2026-10-09",
+        "expiry_reason": "短線極端超買之技術修正需求",
+        "entry_zone": "625.0 - 631.0",
+        "entry_timing": "週一衝高見頂乏力時",
+        "delta_range": "0.30-0.40",
+        "est_premium": "$12.00 - $15.00",
+        "signal_strength": 3,
+        "signals": [
+          "RSI高達80.4處於極端超買",
+          "今年暴漲187%面臨逢高獲利結算壓力",
+          "遠離下方均線與支撐456.16"
+        ],
+        "max_loss": "淨支付權利金",
+        "target_gain": "50% - 80%",
+        "stop_loss_price": "638.0",
+        "stop_loss_option": "期權合約價值虧損30%止損",
+        "squeeze_risk": "低",
+        "risk": "AI晶片追捧熱度持續進行無預警強攻",
+        "political_factor": "無",
+        "best_day_to_enter": "週一衝高時"
+      }
+    ]
+  },
+  {
     "date": "2026-09-26",
     "headline": "升息疑慮壓制大盤，AI與國防龍頭相對強勢",
     "mood": "震盪",
@@ -707,11 +812,6 @@
   {
     "date": "2026-08-25",
     "headline": "輝達財報前科技股承壓，特朗普換股引關注",
-    "mood": "震盪"
-  },
-  {
-    "date": "2026-08-24",
-    "headline": "輝達財報前科技震盪，特朗普調倉引關注",
     "mood": "震盪"
   }
 ]
