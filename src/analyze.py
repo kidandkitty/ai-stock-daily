@@ -1655,7 +1655,7 @@ def build_html(
     }
     day_label = day_labels.get(day_mode, "📈 AI 美股日報")
 
-    # ── 1. 週末橫幅提示 ──
+    # ── 週末橫幅提示 ──
     weekend_banner = ""
     if is_weekend:
         weekend_banner = f"""
@@ -1663,51 +1663,15 @@ def build_html(
           <span style="color:#f59e0b;font-size:13px;font-weight:600">🏖 今天美股休市 · 以下為下週部署分析</span>
         </div>"""
 
-    # ── 2. 昨日推介追蹤（僅週一至週五顯示） ──
-    prev_rec_html = ""
-    weekday_num = datetime.date.today().weekday()
-    if weekday_num in range(0, 5):
-        prev_recs = analysis.get("prev_rec_review", [])
-        if prev_recs:
-            rows = ""
-            for item in prev_recs:
-                res = item.get("result", "⚪ 持平")
-                res_col = "#22c55e" if "獲利" in res or "✅" in res else ("#ef4444" if "虧損" in res or "🔴" in res else "#94a3b8")
-                dc = "#22c55e" if item.get("direction") == "CALL" else "#ef4444"
-                rows += f"""
-                <tr style="border-bottom:1px solid #1e293b;font-size:13px">
-                  <td style="padding:10px;font-weight:700;color:#f1f5f9">{item.get('ticker','—')}</td>
-                  <td style="padding:10px"><span style="background:{dc}22;color:{dc};padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700">{item.get('direction','—')}</span></td>
-                  <td style="padding:10px;color:{res_col};font-weight:700">{res}</td>
-                  <td style="padding:10px;color:#e2e8f0;font-weight:600">{item.get('chg_pct','—')}</td>
-                  <td style="padding:10px;color:#94a3b8;font-size:12px">{item.get('lesson','—')}</td>
-                </tr>"""
-            prev_rec_html = f"""
-            <div style="background:#0f172a;border:1px solid #334155;border-radius:12px;padding:18px;margin-bottom:20px">
-              <div style="font-size:10px;color:#3b82f6;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;font-weight:700">🎯 昨日推介追蹤</div>
-              <div style="overflow-x:auto">
-                <table style="width:100%;border-collapse:collapse;text-align:left">
-                  <thead>
-                    <tr style="border-bottom:1px solid #334155;color:#64748b;font-size:11px;text-transform:uppercase">
-                      <th style="padding:8px">股票</th>
-                      <th style="padding:8px">方向</th>
-                      <th style="padding:8px">結果</th>
-                      <th style="padding:8px">變動</th>
-                      <th style="padding:8px">復盤備註</th>
-                    </tr>
-                  </thead>
-                  <tbody>{rows}</tbody>
-                </table>
-              </div>
-            </div>"""
-
-    # ── 3. 週末分析 HTML ──
+    # ── 週末分析 HTML ──
     weekend_html = ""
     wa = analysis.get("weekend_analysis", {})
     if wa and is_weekend:
+        # 本週回顧
         winners_html = " ".join(f'<span style="background:#22c55e22;color:#22c55e;padding:3px 10px;border-radius:4px;font-size:13px;font-weight:700">{t}</span>' for t in wa.get("this_week_winners",[]))
         losers_html  = " ".join(f'<span style="background:#ef444422;color:#ef4444;padding:3px 10px;border-radius:4px;font-size:13px;font-weight:700">{t}</span>' for t in wa.get("this_week_losers",[]))
 
+        # 下週日曆
         impact_color = {"高":"#ef4444","中":"#f59e0b","低":"#22c55e"}
         week_cal_html = ""
         for ev in wa.get("next_week_key_events",[]):
@@ -1719,6 +1683,7 @@ def build_html(
               <span style="background:{ic}22;color:{ic};padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700">{ev.get('impact','')}</span>
             </div>"""
 
+        # 下週精選期權
         next_picks_html = ""
         for p in wa.get("next_week_picks",[]):
             dc  = "#22c55e" if p.get("direction") == "CALL" else "#ef4444"
@@ -1739,12 +1704,14 @@ def build_html(
               <div style="font-size:12px;color:#94a3b8">📅 {p.get('catalyst','—')}</div>
             </div>"""
 
+        # 週一重點關注
         monday_html = " ".join(f'<span style="background:#3b82f622;color:#3b82f6;padding:3px 10px;border-radius:4px;font-size:13px;font-weight:700">{t}</span>' for t in wa.get("watchlist_for_monday",[]))
 
         weekend_html = f"""
         <div style="background:#0f172a;border:1px solid #f59e0b55;border-radius:12px;padding:18px;margin-bottom:16px">
           <div style="font-size:10px;color:#f59e0b;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px">{day_label}</div>
 
+          <!-- 本週回顧 -->
           <div style="background:#0a0f1e;border-radius:8px;padding:14px;margin-bottom:12px">
             <div style="font-size:10px;color:#475569;text-transform:uppercase;margin-bottom:8px">本週市場回顧</div>
             <div style="font-size:13px;color:#94a3b8;line-height:1.6;margin-bottom:10px">{wa.get('this_week_recap','—')}</div>
@@ -1756,26 +1723,31 @@ def build_html(
             </div>
           </div>
 
+          <!-- 下週展望 -->
           <div style="background:#0a0f1e;border-radius:8px;padding:14px;margin-bottom:12px">
             <div style="font-size:10px;color:#475569;text-transform:uppercase;margin-bottom:6px">下週展望 · {wa.get('next_week_theme','—')}</div>
             <div style="font-size:13px;color:#94a3b8;line-height:1.6">{wa.get('next_week_outlook','—')}</div>
           </div>
 
+          <!-- 下週事件日曆 -->
           <div style="margin-bottom:12px">
             <div style="font-size:10px;color:#475569;text-transform:uppercase;margin-bottom:8px">下週事件日曆</div>
             {week_cal_html or '<div style="color:#475569;font-size:12px">暫無事件數據</div>'}
           </div>
 
+          <!-- 下週期權部署 -->
           <div style="margin-bottom:12px">
             <div style="font-size:10px;color:#475569;text-transform:uppercase;margin-bottom:8px">下週期權部署清單</div>
             {next_picks_html or '<div style="color:#475569;font-size:12px">暫無明確推薦</div>'}
           </div>
 
+          <!-- 週一重點關注 -->
           <div style="background:#0a0f1e;border-radius:8px;padding:12px;margin-bottom:10px">
             <div style="font-size:10px;color:#475569;text-transform:uppercase;margin-bottom:6px">⚡ 週一開盤重點關注</div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">{monday_html}</div>
           </div>
 
+          <!-- 風險與策略 -->
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
             <div style="background:#0a0f1e;border-radius:8px;padding:10px">
               <div style="font-size:10px;color:#475569;margin-bottom:4px">下週風險</div>
@@ -1788,7 +1760,7 @@ def build_html(
           </div>
         </div>"""
 
-    # ── 4. 星期五分析 HTML ──
+    # ── 星期五分析 HTML ──
     friday_html = ""
     fa = analysis.get("friday_analysis", {})
     if fa and is_friday:
@@ -1844,7 +1816,7 @@ def build_html(
           </div>
         </div>"""
 
-    # ── 5. AI 精選期權 ──
+    # ── AI 精選期權 ──
     top = analysis.get("top_option_pick", {})
     top_html = ""
     if top.get("ticker"):
@@ -1864,7 +1836,7 @@ def build_html(
           </div>
         </div>"""
 
-    # ── 6. 操作清單 ──
+    # ── 操作清單 ──
     trade_plans  = analysis.get("trade_plans", [])
     trade_label  = "📋 下週操作預備清單" if is_weekend else "📋 今日操作清單"
     trade_html   = ""
@@ -1934,197 +1906,795 @@ def build_html(
               <div style="font-size:12px;color:#94a3b8">{plan.get('max_loss','—')}</div>
             </div>
             <div style="background:#0a0f1e;border-radius:6px;padding:8px">
-              <div style="font-size:10px;color:#475569;margin-bottom:2px">期權止損條件</div>
-              <div style="font-size:12px;color:#f59e0b">{plan.get('stop_loss_option','—')}</div>
+              <div style="font-size:10px;color:#475569;margin-bottom:2px">期權止損</div>
+              <div style="font-size:12px;color:#ef4444">{plan.get('stop_loss_option','—')}</div>
             </div>
           </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
-            <div>{signals_html}</div>
-            <div style="font-size:11px;color:#ef4444">⚠️ 風險：{plan.get('risk','—')}</div>
+          <div style="margin-bottom:8px">{signals_html}</div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;flex-wrap:wrap;gap:4px">
+            <span style="color:#64748b">風險：<span style="color:#f59e0b">{plan.get('risk','—')}</span></span>
+            <span style="color:#64748b">政治：<span style="color:#3b82f6">{plan.get('political_factor','無')}</span></span>
           </div>
         </div>"""
 
-    # ── 7. 政治風向雷達 ──
-    pol_analysis = analysis.get("political_realtime_analysis", {})
-    trump_tickers_html = " ".join(f'<span style="background:#3b82f622;color:#3b82f6;padding:2px 8px;border-radius:4px;font-size:11px">{t}</span>' for t in pol_analysis.get("trump_affected_tickers", []))
-    
-    gov_contracts_html = ""
-    for c in pol_analysis.get("gov_contract_picks", []):
-        surg = c.get("suggestion", "觀望")
-        scol = "#22c55e" if surg == "CALL" else "#ef4444" if surg == "PUT" else "#f59e0b"
-        gov_contracts_html += f"""
-        <div style="background:#0a0f1e;border-radius:6px;padding:8px;margin-bottom:6px">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <span style="font-weight:700;color:#f1f5f9;font-size:13px">{c.get('ticker','—')}</span>
-            <span style="background:{scol}22;color:{scol};padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700">{surg}</span>
+    # ── 昨日推介成效追蹤 HTML ──
+    prev_review_html = ""
+    prev_reviews = analysis.get("prev_rec_review", [])
+    if prev_reviews and not is_weekend:
+        rows_html = ""
+        for rv in prev_reviews:
+            result_icon = rv.get("result", "⚪ 持平")
+            rc = "#22c55e" if "✅" in result_icon else "#ef4444" if "🔴" in result_icon else "#64748b"
+            dc2 = "#22c55e" if rv.get("direction") == "CALL" else "#ef4444"
+            rows_html += f"""
+            <div style="display:grid;grid-template-columns:80px 70px 60px 1fr;gap:8px;padding:10px 0;border-bottom:1px solid #1e293b;align-items:center">
+              <div style="font-size:15px;font-weight:800;color:#f1f5f9">{rv.get('ticker','—')}</div>
+              <span style="background:{dc2}22;color:{dc2};padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;text-align:center">{rv.get('direction','—')}</span>
+              <div style="font-size:14px;font-weight:700;color:{rc}">{rv.get('chg_pct','—')}</div>
+              <div>
+                <div style="font-size:12px;font-weight:700;color:{rc}">{result_icon}</div>
+                <div style="font-size:11px;color:#64748b;margin-top:2px">{rv.get('lesson','')}</div>
+              </div>
+            </div>"""
+        prev_review_html = f"""
+        <div style="background:#0f172a;border-radius:12px;padding:16px;margin-bottom:16px;border:1px solid #1e293b">
+          <div style="font-size:13px;font-weight:700;color:#94a3b8;margin-bottom:12px;display:flex;align-items:center;gap:6px">
+            📊 昨日推介成效追蹤
           </div>
-          <div style="font-size:11px;color:#94a3b8;margin-top:2px">{c.get('contract','—')} | {c.get('impact','—')}</div>
+          <div style="font-size:10px;color:#475569;margin-bottom:10px;display:grid;grid-template-columns:80px 70px 60px 1fr;gap:8px;padding-bottom:6px;border-bottom:1px solid #1e293b">
+            <span>股票</span><span>方向</span><span>變動</span><span>結果 / 分析</span>
+          </div>
+          {rows_html}
         </div>"""
 
-    pol_html = f"""
-    <div style="background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:18px;margin-bottom:20px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-        <div style="font-size:10px;color:#3b82f6;letter-spacing:2px;text-transform:uppercase;font-weight:700">🏛 政治風向雷達</div>
-        <span style="background:{pol_color}22;color:{pol_color};padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700">風向：{pol_sent}</span>
-      </div>
-      <div style="background:#0a0f1e;border-radius:8px;padding:12px;margin-bottom:10px">
-        <div style="font-size:11px;color:#64748b;margin-bottom:4px">特朗普最新動態影響：</div>
-        <div style="font-size:13px;color:#e2e8f0;line-height:1.5;margin-bottom:6px">{pol_analysis.get('trump_market_impact', analysis.get('political_summary', '—'))}</div>
-        <div style="display:flex;gap:6px;align-items:center">{trump_tickers_html}</div>
-      </div>
-      <div style="margin-bottom:10px">
-        <div style="font-size:11px;color:#64748b;margin-bottom:6px">政府最新合約利多：</div>
-        {gov_contracts_html or '<div style="color:#475569;font-size:12px">近期無顯著政府大單</div>'}
-      </div>
-      <div style="background:#0a0f1e;border-radius:8px;padding:10px">
-        <span style="font-size:11px;color:#f59e0b">💡 最佳政治驅動交易：</span>
-        <span style="font-size:12px;color:#e2e8f0">{pol_analysis.get('best_political_trade', '—')}</span>
-      </div>
-    </div>"""
-
-    # ── 8. FDA 行事曆 ──
-    fda_analysis_list = analysis.get("fda_analysis", [])
-    fda_cards = ""
-    for fda in fda_analysis_list:
-        tk = fda.get("ticker", "—")
-        fda_cards += f"""
-        <div style="background:#0a0f1e;border-radius:8px;padding:12px;margin-bottom:8px">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-            <span style="font-size:15px;font-weight:700;color:#f1f5f9">{tk} · {fda.get('company','—')}</span>
-            <span style="background:#a78bfa22;color:#a78bfa;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700">{fda.get('event_type','—')}</span>
-          </div>
-          <div style="font-size:12px;color:#cbd5e1;margin-bottom:6px">💊 藥物：{fda.get('drug','—')}（預計日期：{fda.get('expected_date','—')} | 通過率：{fda.get('approval_prob','—')}）</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;margin-bottom:6px">
-            <div style="background:#0f172a;padding:6px;border-radius:4px;color:#22c55e">看漲 Strike: {fda.get('call_strike','—')}<br>建議: {fda.get('if_approved','—')}</div>
-            <div style="background:#0f172a;padding:6px;border-radius:4px;color:#ef4444">看跌 Strike: {fda.get('put_strike','—')}<br>建議: {fda.get('if_rejected','—')}</div>
-          </div>
-          <div style="font-size:11px;color:#64748b">⏰ 入場：{fda.get('entry_timing','—')} | 到期建議：{fda.get('expiry_suggest','—')} | 風險：{fda.get('risk_note','—')}</div>
-        </div>"""
-
-    fda_html = f"""
-    <div style="background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:18px;margin-bottom:20px">
-      <div style="font-size:10px;color:#a78bfa;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;font-weight:700">💊 FDA 生技行事曆與分析</div>
-      {fda_cards or '<div style="color:#475569;font-size:12px">近期無關鍵 FDA 事件</div>'}
-    </div>"""
-
-    # ── 9. 分析師評級與市場新聞 ──
-    analyst_items = analysis.get("analyst_highlights", [])
+    # ── 分析師評級 HTML ──
     analyst_html = ""
-    for ah in analyst_items:
-        act_col = "#22c55e" if "升" in ah.get("action","") else "#ef4444"
-        analyst_html += f"""
-        <div style="background:#0a0f1e;border-radius:6px;padding:8px;margin-bottom:6px;font-size:12px">
-          <div style="display:flex;justify-content:space-between">
-            <span style="font-weight:700;color:#f1f5f9">{ah.get('ticker','')} ({ah.get('firm','')})</span>
-            <span style="color:{act_col};font-weight:700">{ah.get('action','')} → 目標 {ah.get('price_target','—')}</span>
-          </div>
-          <div style="color:#94a3b8;margin-top:2px">{ah.get('impact','—')} (建議: {ah.get('trade_suggestion','—')})</div>
+    analyst_items = analysis.get("analyst_highlights", [])
+    if analyst_items:
+        analyst_rows = ""
+        for ah in analyst_items:
+            ac = "#22c55e" if ah.get("action") == "升評" else "#ef4444"
+            ts = ah.get("trade_suggestion", "觀望")
+            tc = "#22c55e" if ts == "CALL" else "#ef4444" if ts == "PUT" else "#64748b"
+            analyst_rows += f"""
+            <div style="background:#0a0f1e;border-radius:8px;padding:10px;margin-bottom:8px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="font-size:16px;font-weight:800;color:#f1f5f9">{ah.get('ticker','—')}</span>
+                  <span style="background:{ac}22;color:{ac};padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700">{ah.get('action','—')}</span>
+                  <span style="color:#64748b;font-size:11px">{ah.get('firm','—')}</span>
+                </div>
+                <div style="text-align:right">
+                  <div style="font-size:13px;font-weight:700;color:#e2e8f0">{ah.get('price_target','—')}</div>
+                  <span style="background:{tc}22;color:{tc};padding:1px 7px;border-radius:10px;font-size:11px">{ts}</span>
+                </div>
+              </div>
+              <div style="font-size:11px;color:#94a3b8">{ah.get('impact','')}</div>
+            </div>"""
+        analyst_html = f"""
+        <div style="background:#0f172a;border-radius:12px;padding:16px;margin-bottom:16px;border:1px solid #1e293b">
+          <div style="font-size:13px;font-weight:700;color:#94a3b8;margin-bottom:12px">📋 分析師評級變動</div>
+          {analyst_rows}
         </div>"""
 
-    news_items = analysis.get("market_news_analysis", [])
+    # ── 財經新聞 HTML（含中文解讀）──
+    cat_colors   = {"市場動態":"#3b82f6","財報":"#22c55e","Fed/通脹":"#f59e0b","科技/AI":"#a78bfa","大市":"#64748b"}
+    dir_colors   = {"利多":"#22c55e","利空":"#ef4444","中性":"#64748b"}
+    action_colors= {"買Call":"#22c55e","買Put":"#ef4444","觀望":"#64748b","持有":"#3b82f6"}
+
+    # 建立新聞分析字典
+    news_analysis_map = {}
+    for na in analysis.get("market_news_analysis", []):
+        key = na.get("title","")[:40]
+        news_analysis_map[key] = na
+
+    market_news_html = ""
+    for n in market_news[:8]:
+        cc  = cat_colors.get(n.get("category",""),"#64748b")
+        key = n.get("title","")[:40]
+        na  = news_analysis_map.get(key, {})
+        zh_summary   = na.get("zh_summary","")
+        impact       = na.get("impact","")
+        direction    = na.get("direction","")
+        affected     = na.get("affected_tickers",[])
+        action       = na.get("action","")
+        dir_color    = dir_colors.get(direction,"#64748b")
+        action_color = action_colors.get(action,"#64748b")
+        tickers_html = " ".join(
+            '<span style="background:#f59e0b22;color:#f59e0b;padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700">' + t + '</span>'
+            for t in affected
+        )
+        # 先把 AI 解讀區塊計算好，避免 nested f-string
+        if zh_summary:
+            insight_html = (
+                '<div style="background:#0a0f1e;border-radius:8px;padding:10px;border-left:2px solid ' + dir_color + '">'
+                '<div style="font-size:13px;color:#e2e8f0;font-weight:600;margin-bottom:4px">' + zh_summary + '</div>'
+                '<div style="font-size:12px;color:#94a3b8;margin-bottom:6px">' + impact + '</div>'
+                '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+                '<span style="background:' + dir_color + '22;color:' + dir_color + ';padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700">' + direction + '</span>'
+                '<span style="background:' + action_color + '22;color:' + action_color + ';padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700">' + action + '</span>'
+                + tickers_html +
+                '</div></div>'
+            )
+        else:
+            insight_html = ""
+
+        market_news_html += f"""
+        <div style="padding:12px 0;border-bottom:1px solid #1e293b">
+          <div style="display:flex;gap:8px;margin-bottom:6px;align-items:flex-start">
+            <span style="background:{cc}22;color:{cc};padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;white-space:nowrap;margin-top:1px">{n.get('category','')}</span>
+            <div style="flex:1">
+              <div style="font-size:12px;color:#64748b;line-height:1.4">{n.get('title','')}</div>
+              <div style="font-size:10px;color:#334155;margin-top:1px">{n.get('date','')}</div>
+            </div>
+          </div>
+          {insight_html}
+        </div>"""
+
+    # ── 事件日曆 HTML ──
+    event_colors = {"📊 財報":"#22c55e","📈 經濟數據":"#f59e0b","🏦 Fed":"#ef4444","📅 期權到期":"#a78bfa","💊 FDA":"#3b82f6"}
+    key_events   = analysis.get("key_events_today",[])
+    key_events_html = "".join(f'<div style="font-size:12px;color:#94a3b8;padding:3px 0">• {ev}</div>' for ev in key_events)
+    event_calendar_html = ""
+    for ev in event_calendar[:8]:
+        ec = event_colors.get(ev.get("category",""),"#64748b")
+        event_calendar_html += f"""
+        <div style="display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #1e293b;align-items:flex-start">
+          <span style="background:{ec}22;color:{ec};padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;white-space:nowrap">{ev.get('category','')}</span>
+          <div>
+            <div style="font-size:13px;color:#e2e8f0;line-height:1.4">{ev.get('title','')}</div>
+            <div style="font-size:11px;color:#475569;margin-top:2px">{ev.get('date','')}</div>
+          </div>
+        </div>"""
+
+    # ── 投資組合建議 ──
+    portfolio = analysis.get("portfolio_suggestion",{})
+    portfolio_html = ""
+    if portfolio:
+        risk_color = {"保守":"#22c55e","平衡":"#f59e0b","積極":"#ef4444"}.get(portfolio.get("risk_level","平衡"),"#f59e0b")
+        portfolio_html = f"""
+        <div style="background:#0f172a;border-radius:10px;padding:16px;border:1px solid #334155">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+            <span style="background:{risk_color}22;color:{risk_color};padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700">{portfolio.get('risk_level','平衡')}</span>
+            <span style="font-size:14px;font-weight:600;color:#f1f5f9">{portfolio.get('theme','—')}</span>
+          </div>
+          <div style="font-size:13px;color:#94a3b8;margin-bottom:8px;line-height:1.6">{portfolio.get('combination','—')}</div>
+          <div style="font-size:12px;color:#64748b">建議預算：<span style="color:#f59e0b">{portfolio.get('total_budget','—')}</span></div>
+          <div style="font-size:12px;color:#64748b;border-top:1px solid #1e293b;padding-top:8px;margin-top:8px">⚠️ {portfolio.get('notes','—')}</div>
+        </div>"""
+
+    # ── 軋空 ──
+    squeeze_list = analysis.get("squeeze_watchlist",[])
+    squeeze_html = ""
+    if squeeze_list:
+        tags = " ".join(f'<span style="background:#ef444422;color:#ef4444;padding:3px 10px;border-radius:4px;font-size:13px;font-weight:700">{t}</span>' for t in squeeze_list)
+        squeeze_html = f"""
+        <div style="background:#0f172a;border-radius:10px;padding:14px 16px;border:1px solid #ef444433;margin-bottom:4px">
+          <div style="font-size:10px;color:#ef4444;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">⚡ 高沽空比例 · 軋空風險股票</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">{tags}</div>
+          <div style="font-size:11px;color:#64748b">Short % of Float 高，若盤前急漲可考慮 CALL 追入</div>
+        </div>"""
+
+    # ── 爆升/爆跌股 HTML ──
+    momentum_html = ""
+    if momentum_stocks:
+        for m in momentum_stocks:
+            chg2   = m.get("two_day_chg", 0)
+            chg1   = m.get("today_chg", 0)
+            mc     = "#22c55e" if chg2 >= 0 else "#ef4444"
+            label  = m.get("momentum", "")
+            lc     = {"爆升":"#22c55e","強勢":"#22c55e","爆跌":"#ef4444","弱勢":"#ef4444"}.get(label,"#f59e0b")
+            vol    = m.get("vol_ratio", 1.0)
+            vol_str= f"{vol:.1f}x 均量" if vol >= 2 else "正常成交量"
+            momentum_html += f"""
+            <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #1e293b">
+              <span style="font-weight:800;color:#f1f5f9;width:56px;font-size:14px">{m['ticker']}</span>
+              <span style="background:{lc}22;color:{lc};padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700">{label}</span>
+              <div style="flex:1">
+                <div style="display:flex;gap:12px;font-size:12px">
+                  <span style="color:#64748b">今日：<span style="color:{'#22c55e' if chg1>=0 else '#ef4444'};font-weight:600">{chg1:+.2f}%</span></span>
+                  <span style="color:#64748b">兩日：<span style="color:{mc};font-weight:600">{chg2:+.2f}%</span></span>
+                  <span style="color:#64748b">成交：<span style="color:#f59e0b">{vol_str}</span></span>
+                </div>
+              </div>
+              <span style="font-size:12px;color:#64748b">${m.get('close','—')}</span>
+            </div>"""
+
+    # ── 自選股動向 ──
+    movers_html = ""
+    for m in analysis.get("key_movers",[]):
+        sc_col = {"強勢":"#22c55e","弱勢":"#ef4444","觀察":"#f59e0b"}.get(m.get("signal",""),"#94a3b8")
+        movers_html += f"""
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #1e293b">
+          <span style="font-weight:700;color:#f1f5f9;width:60px">{m['ticker']}</span>
+          <span style="background:{sc_col}22;color:{sc_col};padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">{m['signal']}</span>
+          <span style="color:#94a3b8;font-size:13px">{m['reason']}</span>
+        </div>"""
+
+    # ── 期權掃描卡片 ──
+    scan_cards = ""
+    for rank, s in enumerate(scan_results[:5], 1):
+        sc        = s.get("score",0)
+        direction = s.get("direction","CALL")
+        dc        = "#22c55e" if direction=="CALL" else "#ef4444"
+        cons      = s.get("direction_consistency","中")
+        cons_col  = "#22c55e" if cons=="高" else "#f59e0b"
+        pre       = s.get("pre_change")
+        iv_str    = f"{s['iv_current']:.0%}" if s.get("iv_current") else "—"
+        pc        = s.get("put_call")
+        pc_str    = f"{pc:.2f}" if pc is not None else "—"
+        exps      = " · ".join(s.get("exp_dates",[])[:2])
+        flags_html= "".join(f'<span style="background:#f59e0b22;color:#f59e0b;padding:2px 7px;border-radius:4px;font-size:11px;margin-right:4px;display:inline-block">{f}</span>' for f in s.get("flags",[]))
+        if pc is not None:
+            if pc < 0.4:   pc_explain,pc_col = "市場大量買Call，偏多","#22c55e"
+            elif pc < 0.8: pc_explain,pc_col = "Call略多，偏多","#22c55e"
+            elif pc < 1.2: pc_explain,pc_col = "Put/Call均衡","#64748b"
+            elif pc < 1.8: pc_explain,pc_col = "市場大量買Put，偏空","#ef4444"
+            else:          pc_explain,pc_col = "Put遠多於Call，強烈偏空","#ef4444"
+        else:
+            pc_explain,pc_col = "—","#64748b"
+        scan_cards += f"""
+        <div style="background:#0f172a;border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid {'#334155' if sc>=60 else '#1e293b'}">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+            <div>
+              <div style="font-size:10px;color:#475569;margin-bottom:2px">#{rank}</div>
+              <div style="font-size:20px;font-weight:800;color:#f1f5f9">{s['ticker']}</div>
+            </div>
+            <div style="text-align:right">
+              <span style="background:{dc}22;color:{dc};padding:4px 14px;border-radius:20px;font-size:14px;font-weight:700">{direction}</span>
+              <div style="font-size:11px;color:{cons_col};margin-top:4px">一致性：{cons}</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+            <div style="background:#0a0f1e;border-radius:6px;padding:6px 10px;flex:1;min-width:70px">
+              <div style="font-size:10px;color:#475569;margin-bottom:1px">盤前</div>
+              <div style="color:{'#22c55e' if (pre or 0)>=0 else '#ef4444'};font-size:14px;font-weight:700">{f"{pre:+.1f}%" if pre is not None else "—"}</div>
+            </div>
+            <div style="background:#0a0f1e;border-radius:6px;padding:6px 10px;flex:1;min-width:70px">
+              <div style="font-size:10px;color:#475569;margin-bottom:1px">IV</div>
+              <div style="color:#f59e0b;font-size:14px;font-weight:700">{iv_str}</div>
+            </div>
+            <div style="background:#0a0f1e;border-radius:6px;padding:6px 10px;flex:1;min-width:70px">
+              <div style="font-size:10px;color:#475569;margin-bottom:1px">評分</div>
+              <div style="color:{dc};font-size:14px;font-weight:700">{sc}</div>
+            </div>
+          </div>
+          <div style="background:#0a0f1e;border-radius:6px;padding:8px 10px;margin-bottom:8px">
+            <div style="font-size:10px;color:#475569;margin-bottom:3px">期權情緒（P/C={pc_str}）</div>
+            <div style="font-size:13px;color:{pc_col};font-weight:600">{pc_explain}</div>
+          </div>
+          <div style="margin-bottom:6px">{flags_html}</div>
+          <div style="font-size:11px;color:#475569">📅 到期日：{exps or '—'}</div>
+        </div>"""
+
+    # ── 政治新聞 ──
     news_html = ""
-    for n in news_items:
-        ndc = "#22c55e" if n.get("direction") == "利多" else "#ef4444" if n.get("direction") == "利空" else "#f59e0b"
+    for n in political_data.get("news",[])[:5]:
+        cc = {"特朗普/股票":"#ef4444","國會申報":"#22c55e","政策板塊":"#f59e0b","Pelosi持倉":"#a78bfa"}.get(n.get("category",""),"#64748b")
         news_html += f"""
-        <div style="background:#0a0f1e;border-radius:6px;padding:10px;margin-bottom:6px">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-            <span style="font-size:12px;font-weight:700;color:#e2e8f0">{n.get('zh_summary','')}</span>
-            <span style="background:{ndc}22;color:{ndc};padding:2px 6px;border-radius:4px;font-size:10px">{n.get('direction','')}</span>
+        <div style="display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #1e293b">
+          <span style="background:{cc}22;color:{cc};padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;white-space:nowrap">{n.get('category','')}</span>
+          <div>
+            <div style="font-size:13px;color:#e2e8f0;line-height:1.4">{n.get('title','')}</div>
+            <div style="font-size:11px;color:#475569;margin-top:2px">{n.get('date','')}</div>
           </div>
-          <div style="font-size:11px;color:#64748b;margin-bottom:2px">{n.get('title','')}</div>
-          <div style="font-size:11px;color:#94a3b8">影響: {n.get('impact','')} | 建議: {n.get('action','')}</div>
         </div>"""
 
-    # ── 10. 組合與風險總結 ──
-    ps = analysis.get("portfolio_suggestion", {})
-    risk_warn = analysis.get("risk_warning", "無")
-    summary_txt = analysis.get("summary", "")
+    # ── 政治實時信號 HTML ──
+    pr = analysis.get("political_realtime_analysis", {})
+    pr_data = political_realtime or {}
 
-    # ── 11. 匯整完整 HTML 頁面 ──
-    html = f"""<!DOCTYPE html>
-<html lang="zh-HK">
+    # 特朗普動態
+    trump_dir   = pr.get("trump_direction", "中性")
+    trump_color = {"利多":"#22c55e","利空":"#ef4444","中性":"#f59e0b"}.get(trump_dir,"#f59e0b")
+    trump_tickers_html = " ".join(
+        f'<span style="background:#ef444422;color:#ef4444;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:700">{t}</span>'
+        for t in pr.get("trump_affected_tickers", [])
+    )
+    trump_news_html = ""
+    for n in pr_data.get("trump_signals", [])[:3]:
+        cat_color = {"特朗普動態":"#ef4444","行政命令":"#f59e0b","關稅政策":"#f59e0b","能源/科技政策":"#a78bfa"}.get(n.get("category",""),"#64748b")
+        trump_news_html += f"""
+        <div style="display:flex;gap:8px;padding:7px 0;border-bottom:1px solid #1e293b">
+          <span style="background:{cat_color}22;color:{cat_color};padding:1px 6px;border-radius:4px;font-size:10px;font-weight:700;white-space:nowrap">{n.get('category','')}</span>
+          <div>
+            <div style="font-size:12px;color:#e2e8f0;line-height:1.4">{n.get('title','')}</div>
+            <div style="font-size:10px;color:#475569;margin-top:1px">{n.get('date','')}</div>
+          </div>
+        </div>"""
+
+    # 政府合約
+    contracts_html = ""
+    for c in pr.get("gov_contract_picks", [])[:3]:
+        sug   = c.get("suggestion","觀望")
+        sug_c = "#22c55e" if sug=="CALL" else "#ef4444" if sug=="PUT" else "#64748b"
+        contracts_html += f"""
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #1e293b;flex-wrap:wrap">
+          <span style="font-weight:800;color:#f1f5f9;font-size:15px">{c.get('ticker','—')}</span>
+          <span style="background:{sug_c}22;color:{sug_c};padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700">{sug}</span>
+          <div style="flex:1">
+            <div style="font-size:12px;color:#94a3b8">{c.get('contract','')}</div>
+            <div style="font-size:11px;color:#64748b;margin-top:2px">{c.get('impact','')}</div>
+          </div>
+        </div>"""
+    # 補充原始合約新聞
+    if not contracts_html:
+        for n in pr_data.get("gov_contracts", [])[:3]:
+            tickers_html = " ".join(f'<span style="background:#f59e0b22;color:#f59e0b;padding:1px 6px;border-radius:4px;font-size:11px">{t}</span>' for t in n.get("tickers",[]))
+            contracts_html += f"""
+            <div style="padding:8px 0;border-bottom:1px solid #1e293b">
+              <div style="font-size:12px;color:#e2e8f0;margin-bottom:4px">{n.get('title','')}</div>
+              <div style="display:flex;gap:6px;align-items:center">
+                <span style="font-size:10px;color:#475569">{n.get('date','')}</span>
+                {tickers_html}
+              </div>
+            </div>"""
+
+    # 政策板塊影響
+    policy_html = ""
+    for p in pr.get("policy_sector_impact", [])[:3]:
+        pc    = "#22c55e" if p.get("direction")=="利多" else "#ef4444"
+        urg_c = {"高":"#ef4444","中":"#f59e0b","低":"#22c55e"}.get(p.get("urgency","中"),"#f59e0b")
+        tickers_str = " ".join(
+            f'<span style="background:{pc}22;color:{pc};padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700">{t}</span>'
+            for t in p.get("sectors",[])
+        )
+        policy_html += f"""
+        <div style="display:flex;gap:8px;padding:8px 0;border-bottom:1px solid #1e293b;align-items:flex-start;flex-wrap:wrap">
+          <span style="background:{urg_c}22;color:{urg_c};padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700;white-space:nowrap">{p.get('urgency','中')}優先</span>
+          <div style="flex:1">
+            <div style="font-size:12px;color:#e2e8f0;margin-bottom:4px">{p.get('policy','')}</div>
+            <div style="display:flex;gap:4px;flex-wrap:wrap">{tickers_str}</div>
+          </div>
+          <span style="background:{pc}22;color:{pc};padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700">{p.get('direction','')}</span>
+        </div>"""
+
+    best_trade = pr.get("best_political_trade","")
+
+    political_realtime_html = f"""
+    <div style="background:#0f172a;border-radius:12px;padding:16px;border:1px solid #334155;margin-bottom:4px">
+
+      <!-- 特朗普動態 -->
+      <div style="margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+          <span style="font-size:10px;color:#475569;letter-spacing:1px;text-transform:uppercase">🇺🇸 特朗普最新動態</span>
+          <span style="background:{trump_color}22;color:{trump_color};padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700">{trump_dir}</span>
+          {trump_tickers_html}
+        </div>
+        <div style="font-size:13px;color:#94a3b8;line-height:1.5;margin-bottom:8px">{pr.get('trump_market_impact','—')}</div>
+        {trump_news_html or '<div style="color:#475569;font-size:12px">暫無最新特朗普動態</div>'}
+      </div>
+
+      <!-- 政府合約 -->
+      <div style="border-top:1px solid #1e293b;padding-top:12px;margin-bottom:14px">
+        <div style="font-size:10px;color:#475569;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">📋 政府合約公告（最實時的政治信號）</div>
+        {contracts_html or '<div style="color:#475569;font-size:12px;padding:8px 0">暫無最新政府合約公告</div>'}
+      </div>
+
+      <!-- 政策板塊影響 -->
+      <div style="border-top:1px solid #1e293b;padding-top:12px;margin-bottom:12px">
+        <div style="font-size:10px;color:#475569;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">🏛 白宮政策板塊影響</div>
+        {policy_html or '<div style="color:#475569;font-size:12px;padding:8px 0">暫無最新政策動態</div>'}
+      </div>
+
+      <!-- 最佳政治驅動交易 -->
+      {f'<div style="background:#0a0f1e;border-radius:8px;padding:12px;border-left:3px solid #f59e0b"><div style="font-size:10px;color:#f59e0b;margin-bottom:4px">⭐ 今日最佳政治驅動交易機會</div><div style="font-size:13px;color:#e2e8f0;line-height:1.5">{best_trade}</div></div>' if best_trade else ''}
+    </div>"""
+
+    # ── 國會申報 ──
+    congress_html = ""
+    trades = political_data.get("congress_trades",[])
+    if trades:
+        for t in trades[:4]:
+            tx = t.get("transaction","")
+            tc = "#22c55e" if "Purchase" in tx or "Buy" in tx else "#ef4444"
+            congress_html += f"""
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #1e293b">
+              <span style="background:{tc}22;color:{tc};font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px">{tx}</span>
+              <span style="font-weight:700;color:#f1f5f9;min-width:52px">{t.get('ticker','')}</span>
+              <span style="color:#94a3b8;font-size:12px;flex:1">{t.get('politician','')}</span>
+            </div>"""
+    else:
+        congress_html = f'<div style="color:#64748b;font-size:13px;padding:8px 0">{analysis.get("congress_highlight","—")}</div>'
+
+    # ── FDA 結構化分析 ──
+    fda_html = ""
+    fda_analysis = analysis.get("fda_analysis", [])
+    if fda_analysis:
+        for fa in fda_analysis:
+            ticker = fa.get("ticker", "—")
+            has_ticker = ticker and ticker != "—"
+            ticker_html = f'<span style="font-size:16px;font-weight:800;color:#f1f5f9">{ticker}</span>' if has_ticker else ""
+            prob = fa.get("approval_prob", "—")
+            # 安全轉換：只處理純數字或百分比，其他一律顯示黃色
+            try:
+                prob_num = int(str(prob).replace("%","").strip())
+                prob_color = "#22c55e" if prob_num >= 60 else "#f59e0b"
+            except (ValueError, TypeError):
+                prob_color = "#f59e0b"
+            fda_html += f"""
+            <div style="background:#0f172a;border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid #1e293b">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+                {ticker_html}
+                <div>
+                  <div style="font-size:13px;font-weight:600;color:#e2e8f0">{fa.get('company','')}</div>
+                  <div style="font-size:11px;color:#a78bfa">{fa.get('event_type','')} · {fa.get('drug','')}</div>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">
+                <div style="background:#0a0f1e;border-radius:6px;padding:8px">
+                  <div style="font-size:10px;color:#475569;margin-bottom:2px">預計日期</div>
+                  <div style="font-size:13px;font-weight:600;color:#e2e8f0">{fa.get('expected_date','—')}</div>
+                </div>
+                <div style="background:#0a0f1e;border-radius:6px;padding:8px">
+                  <div style="font-size:10px;color:#475569;margin-bottom:2px">通過機率</div>
+                  <div style="font-size:13px;font-weight:600;color:{prob_color}">{prob}</div>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">
+                <div style="background:#22c55e11;border-radius:6px;padding:8px;border:1px solid #22c55e33">
+                  <div style="font-size:10px;color:#22c55e;margin-bottom:3px">✅ 通過 → CALL</div>
+                  <div style="font-size:12px;color:#94a3b8;line-height:1.4">{fa.get('if_approved','—')}</div>
+                  <div style="font-size:11px;color:#22c55e;margin-top:4px;font-weight:600">Strike: {fa.get('call_strike','—')}</div>
+                </div>
+                <div style="background:#ef444411;border-radius:6px;padding:8px;border:1px solid #ef444433">
+                  <div style="font-size:10px;color:#ef4444;margin-bottom:3px">❌ 拒絕 → PUT</div>
+                  <div style="font-size:12px;color:#94a3b8;line-height:1.4">{fa.get('if_rejected','—')}</div>
+                  <div style="font-size:11px;color:#ef4444;margin-top:4px;font-weight:600">Strike: {fa.get('put_strike','—')}</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:16px;font-size:11px;flex-wrap:wrap">
+                <span style="color:#64748b">到期建議：<span style="color:#a78bfa;font-weight:600">{fa.get('expiry_suggest','—')}</span></span>
+                <span style="color:#64748b">入場時機：<span style="color:#e2e8f0">{fa.get('entry_timing','—')}</span></span>
+                <span style="color:#64748b">風險：<span style="color:#f59e0b">{fa.get('risk_note','—')}</span></span>
+              </div>
+            </div>"""
+    else:
+        # 備用：顯示原始新聞
+        for ev in fda_events:
+            fda_html += f"""
+            <div style="display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #1e293b">
+              <div style="width:6px;height:6px;border-radius:50%;background:#a78bfa;margin-top:5px;flex-shrink:0"></div>
+              <div>
+                <div style="font-size:13px;color:#e2e8f0">{ev.get('title','')}</div>
+                <div style="font-size:11px;color:#475569;margin-top:2px">{ev.get('date','')}</div>
+              </div>
+            </div>"""
+
+    data_src = political_data.get("data_source","Google News RSS")
+    hot_html = " ".join(f'<span style="background:#3b82f622;color:#3b82f6;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:700">{t}</span>' for t in analysis.get("political_hot_tickers",[]))
+
+    return f"""<!DOCTYPE html>
+<html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI 美股盤前分析 - {analysis.get('date', '')}</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI 美股日報 {analysis['date']}</title>
+<style>
+*{{box-sizing:border-box;margin:0;padding:0}}
+body{{background:#0a0f1e;color:#e2e8f0;font-family:'Helvetica Neue',Arial,sans-serif;padding:16px}}
+.wrap{{max-width:680px;margin:0 auto}}
+.sec{{font-size:10px;letter-spacing:2px;color:#475569;text-transform:uppercase;margin:22px 0 12px}}
+@media(max-width:480px){{.grid2{{grid-template-columns:1fr!important}}}}
+</style>
 </head>
-<body style="margin:0;padding:20px;background:#030712;color:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
-  <div style="max-width:800px;margin:0 auto">
-    
-    <!-- 頂部 Header -->
-    <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1f2937;padding-bottom:16px;margin-bottom:20px">
-      <div>
-        <div style="font-size:12px;color:#3b82f6;font-weight:700;letter-spacing:1px">{day_label}</div>
-        <div style="font-size:24px;font-weight:800;color:#f9fafb;margin-top:4px">{analysis.get('headline', '美股 AI 期權決策日報')}</div>
-        <div style="font-size:12px;color:#6b7280;margin-top:2px">{analysis.get('date', '')}</div>
-      </div>
-      <div style="text-align:right">
-        <div style="font-size:12px;color:#9ca3af">市場情緒</div>
-        <div style="font-size:18px;font-weight:800;color:{mood_color}">{analysis.get('market_mood','震盪')} ({score}分)</div>
-      </div>
-    </div>
+<body>
+<div class="wrap">
 
-    {weekend_banner}
-    {prev_rec_html}
-    {weekend_html}
-    {friday_html}
-    {top_html}
-
-    <!-- 關鍵情緒與數據儀表板 -->
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px">
-      <div style="background:#0f172a;border-radius:8px;padding:12px;border:1px solid #1e293b;text-align:center">
-        <div style="font-size:11px;color:#64748b">Fear & Greed Index</div>
-        <div style="font-size:20px;font-weight:800;color:#f59e0b;margin-top:4px">{fear_greed.get('score',50)}</div>
-        <div style="font-size:10px;color:#94a3b8">{fear_greed.get('label','中性')}</div>
-      </div>
-      <div style="background:#0f172a;border-radius:8px;padding:12px;border:1px solid #1e293b;text-align:center">
-        <div style="font-size:11px;color:#64748b">VIX 指數</div>
-        <div style="font-size:20px;font-weight:800;color:#3b82f6;margin-top:4px">{vix_data.get('current',20)}</div>
-        <div style="font-size:10px;color:#94a3b8">{vix_data.get('level','正常')}</div>
-      </div>
-      <div style="background:#0f172a;border-radius:8px;padding:12px;border:1px solid #1e293b;text-align:center">
-        <div style="font-size:11px;color:#64748b">組合策略風險</div>
-        <div style="font-size:20px;font-weight:800;color:#a78bfa;margin-top:4px">{ps.get('risk_level','平衡')}</div>
-        <div style="font-size:10px;color:#94a3b8">預算: {ps.get('total_budget','10%')}</div>
-      </div>
-    </div>
-
-    <!-- 主要操作清單 -->
-    <div style="margin-bottom:20px">
-      <div style="font-size:14px;font-weight:700;color:#f3f4f6;margin-bottom:12px">{trade_label}</div>
-      {trade_html or '<div style="color:#64748b;font-size:13px">今日無高確信度期權交易訊號</div>'}
-    </div>
-
-    {pol_html}
-    {fda_html}
-
-    <!-- 分析師評級與新聞分析雙欄 -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
-      <div style="background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:14px">
-        <div style="font-size:10px;color:#22c55e;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;font-weight:700">📊 分析師最新評級</div>
-        {analyst_html or '<div style="color:#475569;font-size:12px">無顯著評級變動</div>'}
-      </div>
-      <div style="background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:14px">
-        <div style="font-size:10px;color:#3b82f6;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;font-weight:700">📰 重點財經新聞解讀</div>
-        {news_html or '<div style="color:#475569;font-size:12px">暫無重大財經新聞解讀</div>'}
-      </div>
-    </div>
-
-    <!-- 風險提示與每日總結 -->
-    <div style="background:#0f172a;border:1px solid #ef444455;border-radius:12px;padding:16px;margin-bottom:20px">
-      <div style="font-size:11px;color:#ef4444;font-weight:700;margin-bottom:4px">⚠️ 今日核心風險警告</div>
-      <div style="font-size:13px;color:#fca5a5;margin-bottom:12px">{risk_warn}</div>
-      <div style="font-size:11px;color:#94a3b8;font-weight:700;margin-bottom:4px">📝 每日 AI 分析總結</div>
-      <div style="font-size:13px;color:#cbd5e1;line-height:1.6">{summary_txt}</div>
-    </div>
-
-    <!-- 頁腳 -->
-    <div style="text-align:center;font-size:11px;color:#4b5563;border-top:1px solid #1f2937;padding-top:16px">
-      AI 美股盤前分析系統 · 自動生成於 HKT {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')} · 僅供參考，不構成投資建議
-    </div>
-
+  <div style="text-align:center;padding:24px 0 18px;border-bottom:1px solid #1e293b;margin-bottom:18px">
+    <div style="font-size:10px;letter-spacing:3px;color:#475569;text-transform:uppercase;margin-bottom:6px">{day_label}</div>
+    <div style="font-size:22px;font-weight:800;color:#f8fafc;margin-bottom:4px">AI 美股日報</div>
+    <div style="font-size:13px;color:#64748b">{analysis['date']}</div>
   </div>
+
+  {weekend_banner}
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+    <span style="background:{mood_color}22;color:{mood_color};padding:3px 12px;border-radius:20px;font-size:13px;font-weight:700">{analysis.get('market_mood','—')}</span>
+    <span style="color:#64748b;font-size:13px">市場情緒 {score}/100</span>
+  </div>
+  <div style="background:#1e293b;border-radius:4px;height:5px;margin-bottom:16px;overflow:hidden">
+    <div style="background:{mood_color};height:5px;border-radius:4px;width:{score}%"></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px">
+    <div style="background:#0f172a;border-radius:8px;padding:12px;text-align:center;border:1px solid #1e293b">
+      <div style="font-size:10px;color:#475569;margin-bottom:4px">FEAR & GREED</div>
+      <div style="font-size:20px;font-weight:700;color:{'#22c55e' if fear_greed['score']>50 else '#ef4444'}">{fear_greed['score']}</div>
+      <div style="font-size:11px;color:#64748b">{fear_greed['label']}</div>
+    </div>
+    <div style="background:#0f172a;border-radius:8px;padding:12px;text-align:center;border:1px solid #1e293b">
+      <div style="font-size:10px;color:#475569;margin-bottom:4px">VIX</div>
+      <div style="font-size:20px;font-weight:700;color:{'#ef4444' if vix_data['current']>25 else '#f59e0b' if vix_data['current']>15 else '#22c55e'}">{vix_data['current']}</div>
+      <div style="font-size:11px;color:#64748b">{vix_data['level']}</div>
+    </div>
+    <div style="background:#0f172a;border-radius:8px;padding:12px;text-align:center;border:1px solid #1e293b">
+      <div style="font-size:10px;color:#475569;margin-bottom:4px">信號門檻</div>
+      <div style="font-size:20px;font-weight:700;color:#f59e0b">3+</div>
+      <div style="font-size:11px;color:#64748b">多信號確認</div>
+    </div>
+  </div>
+
+  <div style="background:#0f172a;border-left:3px solid {mood_color};padding:12px 16px;margin-bottom:18px;font-size:15px;font-weight:600;color:#f1f5f9;line-height:1.5;border-radius:0 8px 8px 0">
+    💡 {analysis.get('headline','—')}
+  </div>
+
+  {weekend_html}
+  {friday_html}
+
+  <div class="sec">📰 {'本週' if is_weekend else '今日'}財經新聞</div>
+  <div style="background:#0f172a;border-radius:12px;padding:14px 16px;border:1px solid #1e293b;margin-bottom:4px">
+    <div style="font-size:13px;color:#94a3b8;line-height:1.6;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #1e293b">{analysis.get('news_summary','—')}</div>
+    {market_news_html or '<div style="color:#475569;font-size:13px;padding:8px 0">暫無財經新聞</div>'}
+  </div>
+
+  <div class="sec">📅 {'下週' if is_weekend else '本週'}事件日曆</div>
+  <div style="background:#0f172a;border-radius:12px;padding:14px 16px;border:1px solid #1e293b;margin-bottom:4px">
+    {f'<div style="margin-bottom:10px">{key_events_html}</div>' if key_events_html else ''}
+    {event_calendar_html or '<div style="color:#475569;font-size:13px;padding:8px 0">暫無事件</div>'}
+  </div>
+
+  {top_html}
+
+  {prev_review_html}
+
+  {analyst_html}
+
+  <div class="sec">{trade_label}</div>
+  {trade_html or '<div style="color:#475569;padding:16px 0;text-align:center">暫無操作建議</div>'}
+
+  <div class="sec">💼 {'下週' if is_weekend else '今日'}組合建議</div>
+  {portfolio_html or '<div style="color:#475569;padding:16px 0;text-align:center">—</div>'}
+
+  {squeeze_html}
+
+  <div class="sec">🏛 政治風向雷達</div>
+  <div style="background:#0f172a;border-radius:12px;padding:16px;border:1px solid #1e293b;margin-bottom:4px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <span style="background:{pol_color}22;color:{pol_color};padding:3px 12px;border-radius:20px;font-size:12px;font-weight:700">{pol_sent}</span>
+      <span style="color:#94a3b8;font-size:13px;flex:1">{analysis.get('political_summary','—')}</span>
+    </div>
+    <div style="margin-bottom:12px"><span style="font-size:10px;color:#475569;margin-right:8px">受影響股票</span>{hot_html}</div>
+    <div style="font-size:10px;color:#475569;margin-bottom:8px">最新消息</div>
+    {news_html or '<div style="color:#475569;font-size:12px;padding:8px 0">暫無相關新聞</div>'}
+  </div>
+
+  <div class="sec">⚡ 政治實時信號（特朗普動態 · 政府合約 · 白宮政策）</div>
+  {political_realtime_html}
+
+  <div class="sec">📋 國會議員持倉</div>
+  <div style="background:#0f172a;border-radius:12px;padding:16px;border:1px solid #1e293b;margin-bottom:4px">
+    {congress_html}
+    <div style="font-size:11px;color:#334155;margin-top:8px">來源：{data_src} · STOCK Act 申報延遲最長45天</div>
+  </div>
+
+  <div class="sec">🔍 期權異動掃描 Top 5</div>
+  {scan_cards or '<div style="color:#475569;padding:16px 0;text-align:center">今日無顯著期權異動</div>'}
+
+  <div class="sec">💊 FDA / 生技事件</div>
+  <div style="background:#0f172a;border-radius:12px;padding:14px 16px;border:1px solid #1e293b">{fda_html}</div>
+
+  <div class="sec">📊 自選股動向</div>
+  <div style="background:#0f172a;border-radius:12px;padding:4px 16px;border:1px solid #1e293b">{movers_html}</div>
+
+  {f'''<div class="sec">🚀 爆升 / 爆跌股追蹤</div>
+  <div style="background:#0f172a;border-radius:12px;padding:4px 16px;border:1px solid #1e293b">{momentum_html}</div>''' if momentum_html else ''}
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px" class="grid2">
+    <div style="background:#0f172a;border-radius:10px;padding:14px;border:1px solid #1e293b">
+      <div style="font-size:10px;color:#475569;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">板塊輪動</div>
+      <div style="font-size:13px;color:#cbd5e1;line-height:1.5">{analysis.get('sector_rotation','—')}</div>
+    </div>
+    <div style="background:#0f172a;border-radius:10px;padding:14px;border:1px solid #1e293b">
+      <div style="font-size:10px;color:#475569;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">風險警示</div>
+      <div style="font-size:13px;color:#cbd5e1;line-height:1.5">{analysis.get('risk_warning','—')}</div>
+    </div>
+  </div>
+
+  <div style="background:#0f172a;border-radius:10px;padding:16px;border:1px solid #1e293b;margin-top:10px">
+    <div style="font-size:10px;color:#475569;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">整體摘要</div>
+    <div style="font-size:14px;color:#94a3b8;line-height:1.7">{analysis.get('summary','—')}</div>
+  </div>
+
+  <div style="text-align:center;padding:22px 0;color:#334155;font-size:11px;border-top:1px solid #1e293b;margin-top:24px;line-height:1.8">
+    由 Gemini AI 自動生成 · 掃描標普500全市場<br>
+    僅供參考，不構成投資建議<br>
+    數據：Yahoo Finance · FDA · Google News · {data_src}
+  </div>
+
+</div>
 </body>
 </html>"""
 
-    return html
+
+# ══════════════════════════════════════════════════════════
+# 14. 儲存報告
+# ══════════════════════════════════════════════════════════
+def save_report(html: str, analysis: dict, fear_greed: dict = {}, vix_data: dict = {}):
+    os.makedirs("web/reports", exist_ok=True)
+    date_str = datetime.date.today().isoformat()
+    for path in [f"web/reports/{date_str}.html", "web/latest.html"]:
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(html)
+    index_path = "web/index.json"
+    index = []
+    if os.path.exists(index_path):
+        with open(index_path) as f:
+            index = json.load(f)
+
+    top = analysis.get("top_option_pick", {})
+    entry = {
+        # 基本資訊
+        "date":        date_str,
+        "headline":    analysis.get("headline", ""),
+        "mood":        analysis.get("market_mood", ""),
+        "mood_score":  analysis.get("mood_score", 50),
+        "mode":        analysis.get("day_mode", ""),
+        "summary":     analysis.get("summary", ""),
+        # Fear & Greed + VIX
+        "fg_score":    fear_greed.get("score", 50),
+        "fg_label":    fear_greed.get("label", "中性"),
+        "vix":         vix_data.get("current", 20),
+        "vix_level":   vix_data.get("level", "正常"),
+        # 政治
+        "pol_sent":    analysis.get("political_sentiment", "中性"),
+        "pol_summary": analysis.get("political_summary", ""),
+        # AI 精選期權
+        "top_ticker":  top.get("ticker", ""),
+        "top_dir":     top.get("direction", ""),
+        "top_strike":  top.get("key_strike", ""),
+        "top_entry":   top.get("entry_zone", ""),
+        "top_risk":    top.get("risk", ""),
+        "top_reason":  top.get("reason", ""),
+        # 風險
+        "risk_warning": analysis.get("risk_warning", ""),
+        "sector":       analysis.get("sector_rotation", ""),
+        # 昨日推介追蹤（供下一天的 fetch_previous_recommendations 使用）
+        "trade_plans":  analysis.get("trade_plans", []),
+    }
+
+    index = [e for e in index if e["date"] != date_str]
+    index.insert(0, entry)
+    with open(index_path, "w", encoding="utf-8") as f:
+        json.dump(index[:30], f, ensure_ascii=False, indent=2)
+    print("[OK] 報告儲存完成")
+
+
+# ══════════════════════════════════════════════════════════
+# 15. 發送 Email
+# ══════════════════════════════════════════════════════════
+def send_email(html: str, analysis: dict, day_mode: str):
+    msg = MIMEMultipart("alternative")
+    top     = analysis.get("top_option_pick",{})
+    pol     = analysis.get("political_sentiment","")
+    mode_tag= {"weekday":"📈","friday":"📅週五","saturday":"🗓週六","sunday":"🗓週日"}.get(day_mode,"📈")
+    msg["Subject"] = f"{mode_tag} AI美股日報 {analysis['date']} · {analysis.get('headline','')} · {top.get('ticker','')} {top.get('direction','')} · 政治:{pol}"
+    msg["From"] = EMAIL_FROM
+    msg["To"]   = EMAIL_TO
+    msg.attach(MIMEText(analysis.get("summary",""), "plain", "utf-8"))
+    msg.attach(MIMEText(html, "html", "utf-8"))
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as s:
+        s.login(EMAIL_FROM, EMAIL_PASSWORD)
+        s.sendmail(EMAIL_FROM, EMAIL_TO, msg.as_string())
+    print("[OK] Email 發送完成")
+
+
+def send_push_notification(analysis: dict, day_mode: str):
+    try:
+        top     = analysis.get("top_option_pick",{})
+        mood    = analysis.get("market_mood","-")
+        score   = analysis.get("mood_score",0)
+        headline= analysis.get("headline","-")
+        ticker  = top.get("ticker","-")
+        direction=top.get("direction","-")
+        mode_emoji={"weekday":"📈","friday":"📅","saturday":"🗓","sunday":"🗓"}.get(day_mode,"📈")
+        message = f"{mode_emoji} {mood} {score}/100 | {ticker} {direction} | {headline}"
+        requests.post(
+            "https://ntfy.sh/kidandkitty-stock-daily",
+            data=message.encode("utf-8"),
+            headers={"Title":"AI Stock Daily","Priority":"high","Tags":"stock_chart"},
+            timeout=10,
+        )
+        print("[OK] 推送通知已發送")
+    except Exception as e:
+        print(f"[WARN] 推送通知失敗: {e}")
+
+
+# ══════════════════════════════════════════════════════════
+# 主流程
+# ══════════════════════════════════════════════════════════
+def main():
+    print("=== AI 美股日報 完整版 開始執行 ===")
+
+    day_mode = get_day_mode()
+    print(f"\n📅 今日模式：{day_mode}")
+
+    print("\n[1/10] 取得標普500成分股清單...")
+    sp500 = get_sp500_tickers()
+
+    print("\n[2/10] 抓取自選股數據...")
+    watchlist_data = fetch_watchlist_data()
+
+    print("\n[3/10] 全市場期權異動掃描...")
+    scan_results = scan_options(sp500)
+    print(f"  發現 {len(scan_results)} 支高評分異動股")
+
+    print("\n[4/10] 抓取 FDA 行事曆...")
+    fda_events = fetch_fda_calendar()
+
+    print("\n[5/10] 政治風向雷達...")
+    political_data = fetch_political_intelligence()
+    print(f"  新聞 {len(political_data['news'])} 條")
+
+    print("\n[6/10] 市場情緒指標...")
+    fear_greed = fetch_fear_greed()
+    vix_data   = fetch_vix()
+    print(f"  Fear & Greed: {fear_greed['score']} · VIX: {vix_data['current']}")
+
+    print("\n[7/10] 今日財經新聞（7天內）...")
+    market_news = fetch_market_news()
+    print(f"  抓取 {len(market_news)} 條有效新聞")
+
+    print("\n[8/10] 事件日曆...")
+    event_calendar = fetch_event_calendar()
+    print(f"  抓取 {len(event_calendar)} 個事件")
+
+    print("\n[8.5/10] 個股新聞掃描（判斷新聞方向）...")
+    stock_news = fetch_stock_news(WATCHLIST)
+    print(f"  掃描 {len(stock_news)} 支個股新聞")
+
+    print("\n[8.7/10] 爆升/爆跌股追蹤...")
+    momentum_stocks = fetch_momentum_stocks()
+    print(f"  發現 {len(momentum_stocks)} 支動能股")
+
+    print("\n[8.9/10] 政治實時信號追蹤...")
+    political_realtime = fetch_political_realtime()
+    print(f"  特朗普動態 {len(political_realtime.get('trump_signals',[]))} 條 · 政府合約 {len(political_realtime.get('gov_contracts',[]))} 條")
+
+    print("\n[8.95/10] 昨日推介追蹤...")
+    prev_recs = fetch_previous_recommendations()
+    print(f"  追蹤 {len(prev_recs)} 筆昨日推介")
+
+    print("\n[8.97/10] 分析師評級掃描...")
+    analyst_ratings = fetch_analyst_ratings()
+    print(f"  發現 {len(analyst_ratings)} 條評級變動")
+
+    friday_data  = None
+    weekend_data = None
+
+    if day_mode == "friday":
+        print("\n[9/10] 星期五特別分析...")
+        friday_data = fetch_friday_weekly_analysis()
+        print(f"  下週事件 {len(friday_data.get('next_week_events',[]))} 條")
+    elif day_mode in ("saturday", "sunday"):
+        print(f"\n[9/10] 週末分析（{day_mode}）...")
+        weekend_data = fetch_weekend_analysis(day_mode)
+        print(f"  下週事件 {len(weekend_data.get('next_week_events',[]))} 條")
+    else:
+        print("\n[9/10] 平日模式，跳過週末分析")
+
+    print("\n[10/10] Gemini AI 整合分析...")
+    analysis = ai_analyze(
+        watchlist_data, scan_results, fda_events, political_data,
+        fear_greed, vix_data, market_news, event_calendar, stock_news,
+        momentum_stocks, political_realtime, day_mode, friday_data, weekend_data,
+        prev_recs=prev_recs, analyst_ratings=analyst_ratings
+    )
+    print(f"  標題：{analysis.get('headline')}")
+    print(f"  模式：{analysis.get('day_mode')}")
+
+    print("\n[生成報告與發送]")
+    html = build_html(
+        watchlist_data, scan_results, fda_events, political_data,
+        analysis, fear_greed, vix_data, market_news, event_calendar,
+        day_mode, momentum_stocks, political_realtime, friday_data, weekend_data
+    )
+    save_report(html, analysis, fear_greed, vix_data)
+    send_email(html, analysis, day_mode)
+    send_push_notification(analysis, day_mode)
+
+    print("\n=== 完成 ✓ ===")
+
+
+if __name__ == "__main__":
+    main()
