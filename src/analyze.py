@@ -327,12 +327,19 @@ def fetch_technical_data(ticker: str) -> dict:
             earn_date = "—"
 
         short_pct = short_ratio = None
-        try:
-            info        = t.info
-            short_pct   = round(float(info.get("shortPercentOfFloat", 0) or 0) * 100, 2)
-            short_ratio = round(float(info.get("shortRatio", 0) or 0), 1)
-        except Exception:
-            pass
+        # ETF（SPY/QQQ等）無 fundamentals，跳過避免 yfinance 404 錯誤
+        ETF_TICKERS = {"SPY", "QQQ", "IWM", "DIA", "GLD", "TLT", "XLK", "XLF"}
+        if ticker.upper() not in ETF_TICKERS:
+            try:
+                import sys, io
+                _stderr = sys.stderr
+                sys.stderr = io.StringIO()   # 靜音 yfinance 的 404 stderr 輸出
+                info        = t.info
+                sys.stderr = _stderr
+                short_pct   = round(float(info.get("shortPercentOfFloat", 0) or 0) * 100, 2)
+                short_ratio = round(float(info.get("shortRatio", 0) or 0), 1)
+            except Exception:
+                sys.stderr = _stderr  # 確保恢復 stderr
 
         ma_signal    = "多頭排列" if current > ma20 > ma50 else "空頭排列" if current < ma20 < ma50 else "整理中"
         rsi_signal   = "超買" if rsi > 70 else "超賣" if rsi < 30 else "正常"
@@ -1557,32 +1564,39 @@ def ai_analyze(
     # 先嘗試從 API 列出含 "flash" 的模型，找到就插到優先位置
     dynamic_models = []
     try:
-        for m in gemini_client.models.list():
+        model_list = list(gemini_client.models.list())
+        for m in model_list:
             name = getattr(m, "name", "") or ""
             # name 格式為 "models/gemini-xxx"，取後半部
             short = name.replace("models/", "")
             # 只要 flash 或 pro，且支援 generateContent
             methods = getattr(m, "supported_generation_methods", []) or []
-            if ("generateContent" in methods
+            # 部分版本 SDK 返回屬性名不同，多兼容一個
+            if not methods:
+                methods = getattr(m, "supportedGenerationMethods", []) or []
+            if (("generateContent" in methods or not methods)
                     and ("flash" in short or "pro" in short)
-                    and "gemini" in short):
+                    and "gemini" in short
+                    and "embedding" not in short):
                 dynamic_models.append(short)
-        # 按名稱排序：數字越大越新，lite 放前面（速度快）
+        # 按版本號排序：數字越大越新；non-lite 優先（功能更完整）
         dynamic_models.sort(key=lambda x: (
             -sum(int(c) for c in re.findall(r'\d', x)),
-            "lite" not in x
+            "lite" in x
         ))
         print(f"  [模型列表] 可用: {dynamic_models[:5]}")
     except Exception as e:
         print(f"  [WARN] 無法列出模型: {e}")
 
-    # 固定備用清單（已知曾可用）
+    # 固定備用清單（正確的 Gemini 模型名稱）
     fallback_models = [
-        "gemini-3.6-flash",
-        "gemini-3.5-flash",
-        "gemini-3.5-flash-lite",
-        "gemini-3.0-flash",
-        "gemini-2.0-flash-lite",
+        "gemini-2.5-flash",           # 最新快速模型
+        "gemini-2.5-flash-lite",      # 輕量版
+        "gemini-2.5-pro",             # 最強但慢
+        "gemini-2.0-flash",           # 穩定版
+        "gemini-2.0-flash-lite",      # 輕量
+        "gemini-1.5-flash",           # 舊版備用
+        "gemini-1.5-flash-8b",        # 最輕量備用
     ]
     # 合並：動態優先，去重
     seen_m = set()
@@ -1596,10 +1610,9 @@ def ai_analyze(
     for model_name in models_to_try:
         for attempt in range(4):
             try:
-                # 使用 models.generate_content（穩定，SDK 所有版本通用）
-                response = gemini_client.models.generate_content(
-                    model=model_name, contents=prompt
-                )
+                # 使用 Chat.send_message 避免 Gemini AFC 警告
+                chat = gemini_client.chats.create(model=model_name)
+                response = chat.send_message(prompt)
                 print(f"  [OK] 使用模型：{model_name}")
                 break
             except Exception as e:
