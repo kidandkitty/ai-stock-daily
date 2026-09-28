@@ -28,6 +28,7 @@ SCAN_TOP_N           = 10
 POLITICAL_NEWS_LIMIT = 8
 NEWS_MAX_AGE_DAYS    = 7   # 只保留7天內新聞
 
+# 注意：GitHub Secret 名稱用 "ANTHROPIC_API_KEY"，但實際存放的是 Gemini API Key
 GEMINI_API_KEY = os.environ["ANTHROPIC_API_KEY"]
 EMAIL_FROM     = os.environ["EMAIL_FROM"]
 EMAIL_PASSWORD = os.environ["EMAIL_PASSWORD"]
@@ -1523,6 +1524,21 @@ def ai_analyze(
   → entry_timing填「事件已發生，觀望」
 - 只有upcoming/expected/PDUFA date/anticipated等未來式字眼才生成操作建議
 
+【Strike 與策略一致性原則】
+- 若 strategy 為 Bull Call Spread 或 Bear Put Spread，strike 欄位必須同時給出兩個數值，格式為 "520/530"（低strike/高strike），不可只填單一數字
+- 同一個 ticker 在 trade_plans 與 weekend_analysis 的 next_week_picks 中，strike 和 expiry 必須完全一致，不得出現矛盾
+- Long Call 和 Long Put 的 strike 只填單一數字（如 "520"）
+
+【VIX 與策略選擇原則】
+- VIX < 15（低波動環境）：優先推薦直接買 Long Call 或 Long Put，不推薦 Spread（Spread 是為高 IV 環境設計的降成本工具，低 VIX 時 premium 本已便宜）
+- VIX 15–25（正常環境）：兩者均可，視 IV Rank 決定
+- VIX > 25（高波動環境）：優先推薦 Spread 策略以控制成本
+- 財報前無論 VIX 高低，一律使用 Spread（財報前 IV 通常急升）
+
+【到期日原則】
+- expiry 必須填寫具體日期（格式 YYYY-MM-DD），且必須是真實存在的週五
+- 距今至少 14 天，不可填寫模糊描述如「下週五」或「兩週後」
+
 【昨日推介成效追蹤（prev_recommendations）】
 - prev_recommendations 含昨日推介的股票、入場區間、現時股價、漲跌幅
 - 必須逐一填入 prev_rec_review，包括：
@@ -1633,6 +1649,20 @@ def ai_analyze(
 # ══════════════════════════════════════════════════════════
 # 13. 生成 HTML 報告
 # ══════════════════════════════════════════════════════════
+def _render_event_cal(is_weekend: bool, key_events_html: str, event_calendar_html: str) -> str:
+    """週末模式：事件日曆已在 weekend_html 中顯示，平日才顯示獨立區塊"""
+    if is_weekend:
+        return ""
+    key_part = f'<div style="margin-bottom:10px">{key_events_html}</div>' if key_events_html else ''
+    cal_part = event_calendar_html or '<div style="color:#475569;font-size:13px;padding:8px 0">暫無事件</div>'
+    return f"""
+  <div class="sec">📅 本週事件日曆</div>
+  <div style="background:#0f172a;border-radius:12px;padding:14px 16px;border:1px solid #1e293b;margin-bottom:4px">
+    {key_part}
+    {cal_part}
+  </div>"""
+
+
 def build_html(
     watchlist_data, scan_results, fda_events, political_data,
     analysis, fear_greed, vix_data, market_news, event_calendar,
@@ -2428,11 +2458,7 @@ body{{background:#0a0f1e;color:#e2e8f0;font-family:'Helvetica Neue',Arial,sans-s
     {market_news_html or '<div style="color:#475569;font-size:13px;padding:8px 0">暫無財經新聞</div>'}
   </div>
 
-  <div class="sec">📅 {'下週' if is_weekend else '本週'}事件日曆</div>
-  <div style="background:#0f172a;border-radius:12px;padding:14px 16px;border:1px solid #1e293b;margin-bottom:4px">
-    {f'<div style="margin-bottom:10px">{key_events_html}</div>' if key_events_html else ''}
-    {event_calendar_html or '<div style="color:#475569;font-size:13px;padding:8px 0">暫無事件</div>'}
-  </div>
+  {_render_event_cal(is_weekend, key_events_html, event_calendar_html)}
 
   {top_html}
 
