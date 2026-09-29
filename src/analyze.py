@@ -1565,10 +1565,16 @@ def ai_analyze(
     dynamic_models = []
     try:
         model_list = list(gemini_client.models.list())
+        # 排除非文字生成模型的關鍵字
+        EXCLUDE_KEYWORDS = ("tts", "audio", "native", "bidi", "live", "vision",
+                            "embedding", "aqa", "imagen")
         for m in model_list:
             name = getattr(m, "name", "") or ""
             # name 格式為 "models/gemini-xxx"，取後半部
             short = name.replace("models/", "")
+            # 跳過非文字生成模型
+            if any(kw in short.lower() for kw in EXCLUDE_KEYWORDS):
+                continue
             # 只要 flash 或 pro，且支援 generateContent
             methods = getattr(m, "supported_generation_methods", []) or []
             # 部分版本 SDK 返回屬性名不同，多兼容一個
@@ -1576,8 +1582,7 @@ def ai_analyze(
                 methods = getattr(m, "supportedGenerationMethods", []) or []
             if (("generateContent" in methods or not methods)
                     and ("flash" in short or "pro" in short)
-                    and "gemini" in short
-                    and "embedding" not in short):
+                    and "gemini" in short):
                 dynamic_models.append(short)
         # 按版本號排序：數字越大越新；non-lite 優先（功能更完整）
         dynamic_models.sort(key=lambda x: (
@@ -1612,26 +1617,34 @@ def ai_analyze(
             try:
                 # 使用 Chat.send_message 避免 Gemini AFC 警告
                 chat = gemini_client.chats.create(model=model_name)
-                response = chat.send_message(prompt)
+                resp = chat.send_message(prompt)
+                # 確認有文字回應（TTS/音頻模型返回 None）
+                if not resp or not resp.text:
+                    print(f"[WARN] {model_name} 回傳非文字內容，跳過")
+                    break
+                response = resp
                 print(f"  [OK] 使用模型：{model_name}")
                 break
             except Exception as e:
                 err_str = str(e)
-                # 404 / NOT_FOUND = 模型不存在，直接跳下一個（不重試）
-                if ("404" in err_str or "NOT_FOUND" in err_str
+                # 400/404/NOT_FOUND/INVALID = 模型不存在或不支援，直接跳下一個
+                if ("400" in err_str or "404" in err_str
+                        or "NOT_FOUND" in err_str or "INVALID_ARGUMENT" in err_str
                         or "no longer available" in err_str
                         or "not found" in err_str.lower()
-                        or "is not supported" in err_str):
+                        or "is not supported" in err_str
+                        or "bidiGenerateContent" in err_str
+                        or "WebSocket" in err_str):
                     print(f"[WARN] {model_name} 不可用，跳過")
                     break
                 # 429 = 配額超限
                 elif "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
-                    wait = 45 * (2 ** attempt)   # 45 / 90 / 180 / 360 秒
+                    wait = 45 * (2 ** attempt)
                     print(f"[WARN] {model_name} 配額超限，等待{wait}秒({attempt+1}/4)")
                     time.sleep(wait)
                 # 503 = 高需求，指數退避
                 elif "503" in err_str or "UNAVAILABLE" in err_str:
-                    wait = 30 * (2 ** attempt)   # 30 / 60 / 120 / 240 秒
+                    wait = 30 * (2 ** attempt)
                     print(f"[WARN] {model_name} 高需量，等待{wait}秒({attempt+1}/4)")
                     time.sleep(wait)
                 else:
@@ -1644,6 +1657,7 @@ def ai_analyze(
                         break
         if response:
             break
+
     if not response:
         raise Exception("所有模型都無法連線，請稍後重試")
 
