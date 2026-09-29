@@ -1,5 +1,83 @@
 [
   {
+    "date": "2026-09-29",
+    "headline": "美股因美債殖利率跳升承壓，科技股與大盤開局疲軟",
+    "mood": "震盪",
+    "mood_score": 50,
+    "mode": "weekday",
+    "summary": "今日市場處於中性震盪格局，美債殖利率上升與中東地緣政治使大盤與科技股承壓。然而，個別龍頭如輝達(NVDA)的巨額回購及AMD的百億級收購案提供了結構性亮點。VIX處於15.88低位，適合以直接買入Call策略參與強勢AI個股的超跌反彈或利多發酵，同時留意總體經濟數據與債市動向。",
+    "fg_score": 50,
+    "fg_label": "中性",
+    "vix": 15.88,
+    "vix_level": "正常",
+    "pol_sent": "中性",
+    "pol_summary": "中美達成部分關稅削減建議，國防及科技委員會持續釋放結構性支持政策，但市場焦點短期轉向通膨與利率。",
+    "top_ticker": "NVDA",
+    "top_dir": "CALL",
+    "top_strike": "235",
+    "top_entry": "227.87 - 229.93",
+    "top_risk": "總體經濟面美債殖利率波動及大盤弱勢回檔",
+    "top_reason": "執行長強力背書與1500億美元破紀錄股票回購提供強大下檔保護與上升動能",
+    "risk_warning": "美債殖利率持續跳升可能對整體股市估值造成持續壓力，操作期權應嚴格設定止損。",
+    "sector": "資金由高估值軟體與一般科技股流向具備現金回購護城河的AI硬體龍頭與國防板塊。",
+    "trade_plans": [
+      {
+        "rank": 1,
+        "ticker": "NVDA",
+        "direction": "CALL",
+        "strategy": "直接買Call",
+        "strike": "235",
+        "expiry": "2026-10-16",
+        "expiry_reason": "避開短期波動，給予回購利多發酵時間",
+        "entry_zone": "227.87 - 229.93",
+        "entry_timing": "回測支撐帶時分批低吸",
+        "delta_range": "0.40-0.50",
+        "est_premium": "約 $5.00",
+        "signal_strength": 4,
+        "signals": [
+          "1500億美元巨額回購計劃支撐",
+          "股價逆勢抗跌表現強於大盤",
+          "多頭排列趨勢未變"
+        ],
+        "max_loss": "權利金全數歸零",
+        "target_gain": "50% - 100%",
+        "stop_loss_price": "225.00",
+        "stop_loss_option": "權利金跌幅達 40%",
+        "squeeze_risk": "低",
+        "risk": "大盤整體債券殖利率上升壓抑科技股估值",
+        "political_factor": "科技委員會利多政策支持",
+        "best_day_to_enter": "早盤回測時段"
+      },
+      {
+        "rank": 2,
+        "ticker": "AMD",
+        "direction": "CALL",
+        "strategy": "直接買Call",
+        "strike": "630",
+        "expiry": "2026-10-16",
+        "expiry_reason": "配合重大收購案發酵期選定到期日",
+        "entry_zone": "613.76 - 624.30",
+        "entry_timing": "突破短期整理區間時追入",
+        "delta_range": "0.40-0.45",
+        "est_premium": "約 $25.00",
+        "signal_strength": 4,
+        "signals": [
+          "82億美元收購World Labs AI公司利多",
+          "RSI維持強勢區間",
+          "短線動能強勁"
+        ],
+        "max_loss": "權利金全數歸零",
+        "target_gain": "40% - 80%",
+        "stop_loss_price": "600.00",
+        "stop_loss_option": "權利金跌幅達 40%",
+        "squeeze_risk": "低",
+        "risk": "大盤若遇系統性回調可能拖累升勢",
+        "political_factor": "無",
+        "best_day_to_enter": "開盤後30分鐘"
+      }
+    ]
+  },
+  {
     "date": "2026-09-27",
     "headline": "大盤多頭格局延續，防禦與科技巨頭並進",
     "mood": "多頭",
@@ -807,11 +885,6 @@
   {
     "date": "2026-08-26",
     "headline": "輝達今日盤後財報登場 盤前期權IV飆升",
-    "mood": "震盪"
-  },
-  {
-    "date": "2026-08-25",
-    "headline": "輝達財報前科技股承壓，特朗普換股引關注",
     "mood": "震盪"
   }
 ]
