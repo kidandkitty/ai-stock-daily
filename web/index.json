@@ -1,5 +1,83 @@
 [
   {
+    "date": "2026-09-30",
+    "headline": "美債收益率攀升打壓美股，市場聚焦就業與通脹數據",
+    "mood": "震盪",
+    "mood_score": 50,
+    "mode": "weekday",
+    "summary": "今日市場處於中性震盪格局，受美債收益率上升影響大盤承壓，但個股如輝達因大額回購與分析師升評展現強勁抗跌力道。VIX維持在15.84的正常水平，適合直接買入優質龍頭Call或採用Spread策略。政治面上國防合約落地利多RTX，整體操作宜聚焦有催化劑支撐的科技與國防標的。",
+    "fg_score": 50,
+    "fg_label": "中性",
+    "vix": 15.84,
+    "vix_level": "正常",
+    "pol_sent": "利多",
+    "pol_summary": "中美關稅降溫清單及國防合約持續釋放，國防板塊獲合約大單支撐，政壇動向偏向利多特定龍頭。",
+    "top_ticker": "NVDA",
+    "top_dir": "CALL",
+    "top_strike": "240.0",
+    "top_entry": "227.23 - 229.37",
+    "top_risk": "宏觀美債利率上行引發整體市場回調",
+    "top_reason": "1500億美元破紀錄回購支撐，疊加分析師升評，下檔支撐強勁。",
+    "risk_warning": "美債收益率持續攀升可能對高估值科技股造成估值壓縮，操作期權應嚴控倉位。",
+    "sector": "資金由傳統防禦板塊流向具備回購與AI題材的科技巨頭，國防類股因大型合約表現強勢。",
+    "trade_plans": [
+      {
+        "rank": 1,
+        "ticker": "NVDA",
+        "direction": "CALL",
+        "strategy": "直接買Call",
+        "strike": "240.0",
+        "expiry": "2026-10-23",
+        "expiry_reason": "覆蓋財報前夕及回購利好發酵",
+        "entry_zone": "227.23 - 229.37",
+        "entry_timing": "回測支撐位時分批低吸",
+        "delta_range": "0.35-0.45",
+        "est_premium": "5.12",
+        "signal_strength": 4,
+        "signals": [
+          "破紀錄1500億回購案支撐",
+          "Target券商升評催化",
+          "多頭排列且RSI正常"
+        ],
+        "max_loss": "權利金全數歸零",
+        "target_gain": "50% - 100%",
+        "stop_loss_price": "220.96",
+        "stop_loss_option": "權利金跌幅達 40%",
+        "squeeze_risk": "低",
+        "risk": "大盤受美債收益率拖累波動",
+        "political_factor": "無",
+        "best_day_to_enter": "盤中回測時段"
+      },
+      {
+        "rank": 2,
+        "ticker": "AMD",
+        "direction": "CALL",
+        "strategy": "Bull Call Spread",
+        "strike": "610.0/630.0",
+        "expiry": "2026-10-23",
+        "expiry_reason": "配合超買後震盪拉升期",
+        "entry_zone": "613.53 - 624.22",
+        "entry_timing": "拉回支撐區間尋求買點",
+        "delta_range": "0.30-0.40",
+        "est_premium": "25.64",
+        "signal_strength": 3,
+        "signals": [
+          "分析師升評支持",
+          "AI Agent晶片賽道熱度高",
+          "多頭排列但RSI偏超買"
+        ],
+        "max_loss": "淨支付權利金",
+        "target_gain": "Spread最大價差的50%",
+        "stop_loss_price": "456.16",
+        "stop_loss_option": "價差合約價值腰斬",
+        "squeeze_risk": "低",
+        "risk": "短線RSI超買面臨技術性回調",
+        "political_factor": "無",
+        "best_day_to_enter": "開盤半小時後"
+      }
+    ]
+  },
+  {
     "date": "2026-09-29",
     "headline": "美債收益率創新高美股受壓，科技股分化防禦情緒升溫",
     "mood": "震盪",
@@ -880,10 +958,5 @@
     "date": "2026-08-27",
     "headline": "NVDA爆量領漲科技股，超賣與政治概念股湧現買盤",
     "mood": "多頭"
-  },
-  {
-    "date": "2026-08-26",
-    "headline": "輝達今日盤後財報登場 盤前期權IV飆升",
-    "mood": "震盪"
   }
 ]
