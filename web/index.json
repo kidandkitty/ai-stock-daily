@@ -1,5 +1,83 @@
 [
   {
+    "date": "2026-10-01",
+    "headline": "十年期美債收益率創24年新高，科技股逆市分化",
+    "mood": "震盪",
+    "mood_score": 50,
+    "mode": "weekday",
+    "summary": "市場面臨10年期美債收益率創24年新高的宏觀壓力，但NVIDIA 1500億美元回購與RTX大單提供強大個股支撐。VIX處於正常水準，操作上建議聚焦具備重大利多與明確催化劑的龍頭標的（如NVDA、AMD、RTX），嚴格執行風控。",
+    "fg_score": 50,
+    "fg_label": "中性",
+    "vix": 16.45,
+    "vix_level": "正常",
+    "pol_sent": "利多",
+    "pol_summary": "國防合約與中美關稅調整持續釋放產業利多，科技及軍工板塊受政策面支撐。",
+    "top_ticker": "NVDA",
+    "top_dir": "CALL",
+    "top_strike": "240.0",
+    "top_entry": "227.23 - 229.37",
+    "top_risk": "宏觀利率攀升可能壓抑整體科技股估值",
+    "top_reason": "1500億美元回購計畫提供強大基本面與資金面支撐",
+    "risk_warning": "十年期美債收益率創24年新高，若利率持續攀升恐對全市場估值造成向下修正壓力。",
+    "sector": "資金由高風險成長股流向國防、大型科技回購龍頭與防禦型板塊。",
+    "trade_plans": [
+      {
+        "rank": 1,
+        "ticker": "NVDA",
+        "direction": "CALL",
+        "strategy": "直接買Call",
+        "strike": "240.0",
+        "expiry": "2026-10-16",
+        "expiry_reason": "避開短期波動，給予足夠時間突破阻力",
+        "entry_zone": "227.23 - 229.37",
+        "entry_timing": "回測支撐位時分批低吸",
+        "delta_range": "0.35-0.45",
+        "est_premium": "5.16",
+        "signal_strength": 4,
+        "signals": [
+          "Nvidia宣佈1500億美元破紀錄回購",
+          "多頭排列且新聞面強烈看多",
+          "RSI處於正常健康區間"
+        ],
+        "max_loss": "權威金全數歸零",
+        "target_gain": "+50%至+80%",
+        "stop_loss_price": "210.00",
+        "stop_loss_option": "權威金跌幅達50%",
+        "squeeze_risk": "低",
+        "risk": "大盤受美債收益率飆升拖累",
+        "political_factor": "無",
+        "best_day_to_enter": "盤中回測支撐時"
+      },
+      {
+        "rank": 2,
+        "ticker": "AMD",
+        "direction": "CALL",
+        "strategy": "直接買Call",
+        "strike": "630.0",
+        "expiry": "2026-10-16",
+        "expiry_reason": "配合多頭趨勢及獲升評催化",
+        "entry_zone": "613.53 - 624.22",
+        "entry_timing": "守穩支撐區間後進場",
+        "delta_range": "0.30-0.40",
+        "est_premium": "25.46",
+        "signal_strength": 3,
+        "signals": [
+          "獲得分析師升評支持",
+          "收購AI實驗室拓展業務",
+          "均線多頭排列"
+        ],
+        "max_loss": "權威金全數歸零",
+        "target_gain": "+40%至+70%",
+        "stop_loss_price": "450.00",
+        "stop_loss_option": "權威金跌幅達50%",
+        "squeeze_risk": "低",
+        "risk": "短期RSI偏高有超買疑慮",
+        "political_factor": "無",
+        "best_day_to_enter": "盤中拉回時"
+      }
+    ]
+  },
+  {
     "date": "2026-09-30",
     "headline": "美債收益率攀升打壓美股，市場聚焦就業與通脹數據",
     "mood": "震盪",
@@ -953,10 +1031,5 @@
     "date": "2026-08-28",
     "headline": "川普關稅陰影下科技分化能源強",
     "mood": "震盪"
-  },
-  {
-    "date": "2026-08-27",
-    "headline": "NVDA爆量領漲科技股，超賣與政治概念股湧現買盤",
-    "mood": "多頭"
   }
 ]
