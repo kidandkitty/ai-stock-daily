@@ -1,5 +1,83 @@
 [
   {
+    "date": "2026-10-03",
+    "headline": "就業數據強勁美股收高，特斯拉交付超預期爆發",
+    "mood": "多頭",
+    "mood_score": 65,
+    "mode": "saturday",
+    "summary": "本週美股在強勁非農數據及美債收益率回落的推動下企穩上行。特斯拉交付超預期大漲4.65%，英偉達市值達5.7萬億創歷史新高。下週市場將關注經濟數據披露，建議在VIX適中的情況下，分批佈局高成長板塊，並防範AMD等超買板塊的回調風險。",
+    "fg_score": 50,
+    "fg_label": "中性",
+    "vix": 15.31,
+    "vix_level": "正常",
+    "pol_sent": "利多",
+    "pol_summary": "中美落實600億商品關稅減免利好貿易板塊；雷神獲得207億國防大單，實質利好軍工防務板塊。",
+    "top_ticker": "TSLA",
+    "top_dir": "CALL",
+    "top_strike": "380.0",
+    "top_entry": "355.85 - 360.87",
+    "top_risk": "大盤高位套現壓力影響個股",
+    "top_reason": "交付量大超預期，量價齊升，未現超買",
+    "risk_warning": "美聯儲官員Logan發表鷹派言論，呼籲進一步大幅加息。",
+    "sector": "資金由防守板塊轉回科技及新能源，非農強勁推動成長股重拾升勢。",
+    "trade_plans": [
+      {
+        "rank": 1,
+        "ticker": "TSLA",
+        "direction": "CALL",
+        "strategy": "直接買Call",
+        "strike": "380.0",
+        "expiry": "2026-10-23",
+        "expiry_reason": "覆蓋財報預期升溫期",
+        "entry_zone": "355.85 - 360.87",
+        "entry_timing": "回踩技術支撐位時逢低吸納",
+        "delta_range": "0.40-0.50",
+        "est_premium": "11.50 - 13.00",
+        "signal_strength": 5,
+        "signals": [
+          "交付量大超預期，基本面強勁強勢",
+          "兩日累計升幅高達4.45%且未超買",
+          "均線多頭排列，上攻380強阻力"
+        ],
+        "max_loss": "權利金全損",
+        "target_gain": "50%以上",
+        "stop_loss_price": "348.0",
+        "stop_loss_option": "期權價值損耗50%",
+        "squeeze_risk": "中",
+        "risk": "財報前引含波動率回落",
+        "political_factor": "中美關稅減免利好汽車出口",
+        "best_day_to_enter": "週一開盤半小時後"
+      },
+      {
+        "rank": 2,
+        "ticker": "AMD",
+        "direction": "PUT",
+        "strategy": "Bear Put Spread",
+        "strike": "630/610",
+        "expiry": "2026-10-23",
+        "expiry_reason": "預留兩週等待超買回調",
+        "entry_zone": "616.98 - 627.56",
+        "entry_timing": "股價反彈遇阻633.91歷史高點時",
+        "delta_range": "0.35-0.45",
+        "est_premium": "7.50 - 9.00",
+        "signal_strength": 4,
+        "signals": [
+          "RSI高達84.3，處於極度超買區",
+          "大單資金高位佈局PUT，PC比達1.55",
+          "股價收於阻力位633.91，面臨回調壓力"
+        ],
+        "max_loss": "淨權利金支出",
+        "target_gain": "80%以上",
+        "stop_loss_price": "640.0",
+        "stop_loss_option": "期權組合虧損40%",
+        "squeeze_risk": "低",
+        "risk": "AI板塊整體買盤超預期強勁",
+        "political_factor": "無",
+        "best_day_to_enter": "週二高位震盪時"
+      }
+    ]
+  },
+  {
     "date": "2026-10-01",
     "headline": "十年期美債收益率創24年新高，科技股逆市分化",
     "mood": "震盪",
@@ -1025,11 +1103,6 @@
   {
     "date": "2026-08-31",
     "headline": "科技股走勢分化，特斯拉強彈，生技避險",
-    "mood": "震盪"
-  },
-  {
-    "date": "2026-08-28",
-    "headline": "川普關稅陰影下科技分化能源強",
     "mood": "震盪"
   }
 ]
