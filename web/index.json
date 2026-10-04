@@ -1,5 +1,110 @@
 [
   {
+    "date": "2026-10-04",
+    "headline": "非農降溫緩解升息警報，科技與車企領軍上攻",
+    "mood": "多頭",
+    "mood_score": 62,
+    "mode": "sunday",
+    "summary": "非農降溫緩解短期升息壓力，市場在標普770點關卡前呈現科技與工業輪動。下週佈局聚焦交付超預期之TSLA多頭，以及期權異常看多的GOOGL；對於RSI極端超買之AMD則以Spread防守回調。",
+    "fg_score": 50,
+    "fg_label": "中性",
+    "vix": 15.31,
+    "vix_level": "正常",
+    "pol_sent": "利多",
+    "pol_summary": "五角大廈長期訂單持續釋放利多軍工，而新任Fed主席Warsh的鷹派背景引發中長期高利率擔憂。",
+    "top_ticker": "TSLA",
+    "top_dir": "CALL",
+    "top_strike": "380",
+    "top_entry": "355.85 - 360.87",
+    "top_risk": "大盤衝高回落或380阻力位獲利賣壓",
+    "top_reason": "交車數據亮眼催化股價放量大漲，均線強勢且RSI健康未超買",
+    "risk_warning": "下週FOMC會議紀要與新任主席Warsh言論可能重燃升息顧慮",
+    "sector": "資金自高估值過熱半導體部分流向業績確定性高的電動車與軍工板塊，科技股內部輪動加劇。",
+    "trade_plans": [
+      {
+        "rank": 1,
+        "ticker": "TSLA",
+        "direction": "CALL",
+        "strategy": "直接買Call",
+        "strike": "380",
+        "expiry": "2026-10-23",
+        "expiry_reason": "覆蓋10月21日財報前之交付利多發酵期",
+        "entry_zone": "355.85 - 360.87",
+        "entry_timing": "週一開盤若回測突破平台上方確認支撐時入場",
+        "delta_range": "0.35-0.45",
+        "est_premium": "11.00 - 13.50",
+        "signal_strength": 4,
+        "signals": [
+          "第三季交付量優於預期推動單日爆升4.65%",
+          "成交量放大至均量1.6倍呈現量價齊揚",
+          "均線維持多頭排列且未進入超買區（RSI 57.6）"
+        ],
+        "max_loss": "100% 權利金",
+        "target_gain": "50% - 80%",
+        "stop_loss_price": 352.0,
+        "stop_loss_option": "權利金虧損達40%停損",
+        "squeeze_risk": "低",
+        "risk": "財報前夕獲利回結與整體車市競爭",
+        "political_factor": "無",
+        "best_day_to_enter": "週一早盤回踩支撐區"
+      },
+      {
+        "rank": 2,
+        "ticker": "GOOGL",
+        "direction": "CALL",
+        "strategy": "直接買Call",
+        "strike": "355",
+        "expiry": "2026-10-23",
+        "expiry_reason": "距今19天且避開財報前極限引申波幅跳水",
+        "entry_zone": "333.23 - 337.54",
+        "entry_timing": "股價回踩均線支撐或突破345美元時跟進",
+        "delta_range": "0.30-0.40",
+        "est_premium": "9.50 - 11.50",
+        "signal_strength": 4,
+        "signals": [
+          "期權Put/Call比低至0.19顯示大單強烈看漲",
+          "隱含波動率飆升79%呈現資金積極佈局動能",
+          "技術面處於整理末端具備向上突破阻力潛力"
+        ],
+        "max_loss": "100% 權利金",
+        "target_gain": "45% - 70%",
+        "stop_loss_price": 330.0,
+        "stop_loss_option": "權利金虧損達35%停損",
+        "squeeze_risk": "低",
+        "risk": "自由現金流壓力與AI基建資本支出過高",
+        "political_factor": "科技反壟斷審查政策潛在干擾",
+        "best_day_to_enter": "週二開盤量能放大時"
+      },
+      {
+        "rank": 3,
+        "ticker": "AMD",
+        "direction": "PUT",
+        "strategy": "Bear Put Spread",
+        "strike": "600/630",
+        "expiry": "2026-10-23",
+        "expiry_reason": "19天到期防範高IV環境下權利金過度耗損",
+        "entry_zone": "616.98 - 627.56",
+        "entry_timing": "週一開盤高位滯漲反轉跌破630時進場",
+        "delta_range": "-0.30至-0.45",
+        "est_premium": "8.50 - 10.50",
+        "signal_strength": 4,
+        "signals": [
+          "RSI高達84.3呈現極度嚴重超買信號",
+          "Nvidia發表N1X晶片加劇PC處理器競爭引發滑落4.2%",
+          "期權市場P/C升至1.55且IV急升57%顯示避險買Put遽增"
+        ],
+        "max_loss": "淨權利金支出（約 $9.50）",
+        "target_gain": "100% - 150% 淨收益",
+        "stop_loss_price": 642.0,
+        "stop_loss_option": "標的突破歷史高點或價差價值縮水45%",
+        "squeeze_risk": "低",
+        "risk": "整體半導體板塊延續狂熱慣性上衝",
+        "political_factor": "無",
+        "best_day_to_enter": "週一開盤衝高受阻時"
+      }
+    ]
+  },
+  {
     "date": "2026-10-03",
     "headline": "就業數據強勁美股收高，特斯拉交付超預期爆發",
     "mood": "多頭",
@@ -1098,11 +1203,6 @@
   {
     "date": "2026-09-01",
     "headline": "科技股高檔震盪，避險與防禦資金湧現",
-    "mood": "震盪"
-  },
-  {
-    "date": "2026-08-31",
-    "headline": "科技股走勢分化，特斯拉強彈，生技避險",
     "mood": "震盪"
   }
 ]
