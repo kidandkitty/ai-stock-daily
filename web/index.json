@@ -1,5 +1,110 @@
 [
   {
+    "date": "2026-10-06",
+    "headline": "美股逼近歷史新高，AI 動能強勁引領科技股爆發",
+    "mood": "多頭",
+    "mood_score": 65,
+    "mode": "weekday",
+    "summary": "今日美股在油價走軟推動下接近歷史高點。AI繁榮不減，英偉達與AMD大漲激活科技板塊。雖然美債殖利率上升與高利率仍是隱憂，但強勢動能股突破顯著。操作上建議順應AI及國防政策紅利，逢低分批佈局，並防範超買帶來的技術性回調。",
+    "fg_score": 50,
+    "fg_label": "中性",
+    "vix": 15.16,
+    "vix_level": "正常",
+    "pol_sent": "利多",
+    "pol_summary": "國防合約與科技委員會政策持續釋放利多。雷神獲得244億美元巨額合約，軍工股受強烈支撐；G7釋儲則對能源板塊帶來短期壓力。",
+    "top_ticker": "XOM",
+    "top_dir": "CALL",
+    "top_strike": "175.0",
+    "top_entry": "164.00 - 165.85",
+    "top_risk": "油價受政策釋儲干擾而震盪",
+    "top_reason": "IV飆升46%且P/C比降至0.34，主力資金密集做多",
+    "risk_warning": "高債券殖利率可能對高估值科技股帶來短期估值修正壓力。",
+    "sector": "資金密集流入半導體與國防軍工板塊，能源板塊受油價波動影響呈現震盪整理。",
+    "trade_plans": [
+      {
+        "rank": 1,
+        "ticker": "NVDA",
+        "direction": "CALL",
+        "strategy": "直接買Call",
+        "strike": "245",
+        "expiry": "2026-10-23",
+        "expiry_reason": "避開財報波動並保留充足時間值",
+        "entry_zone": "212.30 - 214.54",
+        "entry_timing": "股價盤中回踩支撐區或強勢突破240關口時",
+        "delta_range": "0.35-0.45",
+        "est_premium": "5.00 - 6.00",
+        "signal_strength": 5,
+        "signals": [
+          "富士康Q3營收暴增提振英偉達需求預期",
+          "均線多頭排列且股價突破歷史新高",
+          "AI行業景氣度持續高企，高利率不改其繁榮"
+        ],
+        "max_loss": "已支付的全部期權權利金",
+        "target_gain": "60% - 80%",
+        "stop_loss_price": "228.00",
+        "stop_loss_option": "期權價值下跌50%時強制止損",
+        "squeeze_risk": "低",
+        "risk": "短期技術指標嚴重超買(RSI 84.3)",
+        "political_factor": "科技委員會政策利多半導體板塊",
+        "best_day_to_enter": "週二或週三回調確認支撐時"
+      },
+      {
+        "rank": 2,
+        "ticker": "AMD",
+        "direction": "CALL",
+        "strategy": "直接買Call",
+        "strike": "660",
+        "expiry": "2026-10-23",
+        "expiry_reason": "給予動能股充足的突破跟進時間",
+        "entry_zone": "499.90 - 510.71",
+        "entry_timing": "若股價突破655或回踩630附近支撐時",
+        "delta_range": "0.30-0.45",
+        "est_premium": "22.00 - 26.00",
+        "signal_strength": 4,
+        "signals": [
+          "單日大漲3.66%且兩日累計上漲3.3%",
+          "市場多頭動能極強，均線強勢多頭排列",
+          "板塊效應顯著，與英偉達形成共振"
+        ],
+        "max_loss": "已支付的全部期權權利金",
+        "target_gain": "50% - 70%",
+        "stop_loss_price": "620.00",
+        "stop_loss_option": "期權價值回撤50%時止損",
+        "squeeze_risk": "低",
+        "risk": "技術面RSI超買(83.7)及木頭姐減持",
+        "political_factor": "無",
+        "best_day_to_enter": "週三盤中回調時分批建倉"
+      },
+      {
+        "rank": 3,
+        "ticker": "MSFT",
+        "direction": "CALL",
+        "strategy": "直接買Call",
+        "strike": "540",
+        "expiry": "2026-10-23",
+        "expiry_reason": "在10月28日財報公佈前5天出場",
+        "entry_zone": "493.59 - 499.08",
+        "entry_timing": "回踩530支撐位附近確認企穩時",
+        "delta_range": "0.35-0.45",
+        "est_premium": "11.00 - 13.00",
+        "signal_strength": 4,
+        "signals": [
+          "分析師升評且AI需求維持高增長預期",
+          "6個月累計上漲41%，趨勢保持多頭排列",
+          "RSI 77.2顯示多頭動能強勁"
+        ],
+        "max_loss": "已支付的全部期權權利金",
+        "target_gain": "50%",
+        "stop_loss_price": "515.00",
+        "stop_loss_option": "期權價值縮水40%時止損",
+        "squeeze_risk": "低",
+        "risk": "RSI超買及財報前的波動壓制",
+        "political_factor": "科技委員會利多AI及科技巨頭",
+        "best_day_to_enter": "週二開盤後半小時內尋找低點"
+      }
+    ]
+  },
+  {
     "date": "2026-10-04",
     "headline": "非農降溫緩解升息警報，科技與車企領軍上攻",
     "mood": "多頭",
@@ -1198,11 +1303,6 @@
   {
     "date": "2026-09-02",
     "headline": "科技股分化加劇，關注NVDA多頭與金融異動",
-    "mood": "震盪"
-  },
-  {
-    "date": "2026-09-01",
-    "headline": "科技股高檔震盪，避險與防禦資金湧現",
     "mood": "震盪"
   }
 ]
