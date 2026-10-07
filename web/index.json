@@ -1,5 +1,110 @@
 [
   {
+    "date": "2026-10-07",
+    "headline": "標普納指創高後回檔，VIX微升至15.36，市場聚焦聯準會會議紀要。",
+    "mood": "震盪",
+    "mood_score": 50,
+    "mode": "weekday",
+    "summary": "今日市場在AI半導體（如NVDA、AMD）強勢創高帶動下維持多頭格局，VIX處於15.36低位，非常適合運用低成本Long Call策略。昨日推薦全數獲利，今日建議聚焦突破動能強勁的AI龍頭股，並嚴守停損紀律以應對高檔震盪。",
+    "fg_score": 50,
+    "fg_label": "中性",
+    "vix": 15.36,
+    "vix_level": "正常",
+    "pol_sent": "利多",
+    "pol_summary": "國防合約持續釋出利多，軍工股獲得國會委員會支持，能源與科技政策維持穩定。",
+    "top_ticker": "NVDA",
+    "top_dir": "CALL",
+    "top_strike": "240",
+    "top_entry": "235.63 - 237.89",
+    "top_risk": "短線乖離過大可能技術性修正",
+    "top_reason": "創52週新高且新聞面利多不斷，資金高度集中於AI晶片龍頭。",
+    "risk_warning": "標普與納指處於高檔，納斯達克RSI已達76.9超買區，慎防聯準會會議紀要釋出鷹派訊號引發短線回檔。",
+    "sector": "資金由防禦型板塊流向AI半導體與高成長科技股，軍工板塊受惠國防合約表現穩健。",
+    "trade_plans": [
+      {
+        "rank": 1,
+        "ticker": "NVDA",
+        "direction": "CALL",
+        "strategy": "直接買Call",
+        "strike": "240",
+        "expiry": "2026-10-23",
+        "expiry_reason": "涵蓋財報前夕及突破後續漲動能",
+        "entry_zone": "235.63 - 237.89",
+        "entry_timing": "回測支撐區間時分批低吸",
+        "delta_range": "0.40-0.50",
+        "est_premium": "5.41",
+        "signal_strength": 4,
+        "signals": [
+          "股價創52週新高動能強勁",
+          "新聞利多頻傳AI需求暢旺",
+          "多頭排列且拉回買盤積極"
+        ],
+        "max_loss": "權利金全數歸零",
+        "target_gain": "50%-100%",
+        "stop_loss_price": "230.00",
+        "stop_loss_option": "權利金跌幅達35%",
+        "squeeze_risk": "低",
+        "risk": "短線過熱可能面臨大盤回檔牽連",
+        "political_factor": "無",
+        "best_day_to_enter": "開盤後30分鐘內"
+      },
+      {
+        "rank": 2,
+        "ticker": "AMD",
+        "direction": "CALL",
+        "strategy": "直接買Call",
+        "strike": "650",
+        "expiry": "2026-10-23",
+        "expiry_reason": "順應AI代理與CPU銷售強勁的突破行情",
+        "entry_zone": "632.60 - 643.11",
+        "entry_timing": "突破阻力或拉回至支撐位附近入場",
+        "delta_range": "0.35-0.45",
+        "est_premium": "25.22",
+        "signal_strength": 4,
+        "signals": [
+          "Meta Muse等AI應用帶動股價創新高",
+          "新聞與分析師評價偏向多頭",
+          "RSI超買但動能延續"
+        ],
+        "max_loss": "權利金全數歸零",
+        "target_gain": "40%-80%",
+        "stop_loss_price": "620.00",
+        "stop_loss_option": "權利金跌幅達40%",
+        "squeeze_risk": "中",
+        "risk": "股價基期高波動劇烈",
+        "political_factor": "無",
+        "best_day_to_enter": "早盤震盪回測時"
+      },
+      {
+        "rank": 3,
+        "ticker": "MSFT",
+        "direction": "CALL",
+        "strategy": "直接買Call",
+        "strike": "530",
+        "expiry": "2026-10-23",
+        "expiry_reason": "搭配券商升評與季報前夕買盤預期",
+        "entry_zone": "520.59 - 526.03",
+        "entry_timing": "支撐位確認後進場",
+        "delta_range": "0.40-0.50",
+        "est_premium": "13.07",
+        "signal_strength": 4,
+        "signals": [
+          "獲得券商正面升評",
+          "多頭排列技術面穩健",
+          "VIX低於15利於買入期權"
+        ],
+        "max_loss": "權利金全數歸零",
+        "target_gain": "35%-70%",
+        "stop_loss_price": "512.00",
+        "stop_loss_option": "權利金跌幅達35%",
+        "squeeze_risk": "低",
+        "risk": "科技股整體回檔壓力",
+        "political_factor": "無",
+        "best_day_to_enter": "盤中回測均線時"
+      }
+    ]
+  },
+  {
     "date": "2026-10-06",
     "headline": "美股逼近歷史新高，AI 動能強勁引領科技股爆發",
     "mood": "多頭",
@@ -1298,11 +1403,6 @@
   {
     "date": "2026-09-03",
     "headline": "大盤低波動震盪，科技個股異動尋求技術突破",
-    "mood": "震盪"
-  },
-  {
-    "date": "2026-09-02",
-    "headline": "科技股分化加劇，關注NVDA多頭與金融異動",
     "mood": "震盪"
   }
 ]
