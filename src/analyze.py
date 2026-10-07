@@ -1612,8 +1612,14 @@ def ai_analyze(
             models_to_try.append(m)
 
     response = None
+    GEMINI_TIMEOUT = 600   # 最多等 10 分鐘，超時直接放棄
+    gemini_start = time.time()
+
     for model_name in models_to_try:
-        for attempt in range(4):
+        if time.time() - gemini_start > GEMINI_TIMEOUT:
+            print(f"[WARN] Gemini 總等待超過{GEMINI_TIMEOUT}秒，放棄")
+            break
+        for attempt in range(3):   # 每個模型最多重試 3 次（原 4 次）
             try:
                 # 使用 Chat.send_message 避免 Gemini AFC 警告
                 chat = gemini_client.chats.create(model=model_name)
@@ -1637,20 +1643,24 @@ def ai_analyze(
                         or "WebSocket" in err_str):
                     print(f"[WARN] {model_name} 不可用，跳過")
                     break
-                # 429 = 配額超限
+                # 429 = 配額超限，等待後重試
                 elif "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
-                    wait = 45 * (2 ** attempt)
-                    print(f"[WARN] {model_name} 配額超限，等待{wait}秒({attempt+1}/4)")
+                    wait = min(30 * (2 ** attempt), 90)  # 最多等 90 秒
+                    print(f"[WARN] {model_name} 配額超限，等待{wait}秒({attempt+1}/3)")
                     time.sleep(wait)
-                # 503 = 高需求，指數退避
+                # 503 = 高需求，縮短等待直接跳下一個模型
                 elif "503" in err_str or "UNAVAILABLE" in err_str:
-                    wait = 30 * (2 ** attempt)
-                    print(f"[WARN] {model_name} 高需量，等待{wait}秒({attempt+1}/4)")
-                    time.sleep(wait)
+                    if attempt < 1:   # 只重試 1 次，失敗就跳下一個
+                        wait = 15
+                        print(f"[WARN] {model_name} 高需量，等待{wait}秒後重試")
+                        time.sleep(wait)
+                    else:
+                        print(f"[WARN] {model_name} 高需量，跳下一個模型")
+                        break
                 else:
-                    wait = 20 * (attempt + 1)
-                    if attempt < 3:
-                        print(f"[WARN] {model_name} 重試{attempt+1}/4，等待{wait}秒: {e}")
+                    wait = 15 * (attempt + 1)
+                    if attempt < 2:
+                        print(f"[WARN] {model_name} 重試{attempt+1}/3，等待{wait}秒: {e}")
                         time.sleep(wait)
                     else:
                         print(f"[WARN] {model_name} 失敗: {e}")
