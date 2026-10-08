@@ -1,5 +1,83 @@
 [
   {
+    "date": "2026-10-08",
+    "headline": "聯準會釋放升息預期，科技板塊高位震盪",
+    "mood": "震盪",
+    "mood_score": 50,
+    "mode": "weekday",
+    "summary": "聯準會重申升息彈性，大盤震盪。特朗普加持Meta為科技股護航，軍工雷神中標巨額合約引領板塊走強，操作上建議買入具政治與合約催化之強勢股Call。",
+    "fg_score": 50,
+    "fg_label": "中性",
+    "vix": 15.41,
+    "vix_level": "正常",
+    "pol_sent": "利多",
+    "pol_summary": "特朗普大舉持股Meta為科技股注入強心針，同時國防部頻頻向雷神(RTX)及洛馬發放巨額合約，軍工板塊政治紅利凸顯。",
+    "top_ticker": "CVX",
+    "top_dir": "CALL",
+    "top_strike": "220.0",
+    "top_entry": "208.50 - 211.00",
+    "top_risk": "國際油價受政策干預劇烈波動",
+    "top_reason": "IV飆升26%，P/C比降至0.32，大量Call單掃貨，G7政策提供短期原油流動性題材。",
+    "risk_warning": "聯準會鷹派升息路徑預期重燃，無風險利率走高壓制高估值科技股。",
+    "sector": "資金由超買科技股（MSFT/QQQ）局部流向具備合約支撐的國防及高IV能源股。",
+    "trade_plans": [
+      {
+        "rank": 1,
+        "ticker": "META",
+        "direction": "CALL",
+        "strategy": "直接買Call",
+        "strike": "750",
+        "expiry": "2026-10-23",
+        "expiry_reason": "避開財報並提供兩週時間緩衝",
+        "entry_zone": "655.02 - 667.51",
+        "entry_timing": "股價回踩技術支撐區間時分批佈局",
+        "delta_range": "0.35-0.45",
+        "est_premium": "28.50 - 31.00",
+        "signal_strength": 4,
+        "signals": [
+          "特朗普大舉持股2500萬美元政治風向利多",
+          "技術面MA多頭排列，RSI 60.8仍有上行空間",
+          "科技委員會政策導向長期利多科技龍頭"
+        ],
+        "max_loss": "權利金全損",
+        "target_gain": "50%以上權利金收益",
+        "stop_loss_price": "647.52",
+        "stop_loss_option": "期權價值跌幅達50%",
+        "squeeze_risk": "低",
+        "risk": "大盤受利率預期拖累回調",
+        "political_factor": "特朗普八月親自買入Meta股份，政治風向顯著偏多",
+        "best_day_to_enter": "週四開盤半小時後"
+      },
+      {
+        "rank": 2,
+        "ticker": "AMZN",
+        "direction": "CALL",
+        "strategy": "直接買Call",
+        "strike": "260",
+        "expiry": "2026-10-23",
+        "expiry_reason": "在10月29日財報前一週到期避險",
+        "entry_zone": "247.39 - 249.78",
+        "entry_timing": "回調至整理區下沿支撐時買入",
+        "delta_range": "0.40-0.50",
+        "est_premium": "5.50 - 6.50",
+        "signal_strength": 3,
+        "signals": [
+          "AI服務收入擴張預期持續發酵",
+          "券商看好其作為十月最佳增長股之一",
+          "技術面上行逼近阻力位259.92"
+        ],
+        "max_loss": "權利金全損",
+        "target_gain": "40%權利金收益",
+        "stop_loss_price": "245.96",
+        "stop_loss_option": "期權價值損耗40%",
+        "squeeze_risk": "低",
+        "risk": "AWS調升保留GPU價格可能壓制短期利潤",
+        "political_factor": "無",
+        "best_day_to_enter": "週四午盤震盪走低時"
+      }
+    ]
+  },
+  {
     "date": "2026-10-07",
     "headline": "美股創歷史新高後高位震盪，AI鏈續強",
     "mood": "多頭",
@@ -1398,11 +1476,6 @@
   {
     "date": "2026-09-04",
     "headline": "VIX維持極低，週五嚴防Theta衰減與週末變數",
-    "mood": "震盪"
-  },
-  {
-    "date": "2026-09-03",
-    "headline": "大盤低波動震盪，科技個股異動尋求技術突破",
     "mood": "震盪"
   }
 ]
