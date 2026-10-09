@@ -1,5 +1,110 @@
 [
   {
+    "date": "2026-10-09",
+    "headline": "VIX處於極低位，聯準會官員放鷹引發週末避險",
+    "mood": "震盪",
+    "mood_score": 52,
+    "mode": "friday",
+    "summary": "大盤在VIX處於14.86的極低成本環境下運行，但聯準會官員放鷹限制了指數爆發力。板塊呈現嚴重分化，資金由前期過熱的半導體轉入雲端運算與資安板塊。週五建議以輕倉防守為主，精準鎖定具備新聞動能的SNOW與AMZN，並以弱勢半導體Put進行對沖。",
+    "fg_score": 50,
+    "fg_label": "中性",
+    "vix": 14.86,
+    "vix_level": "極低（期權便宜）",
+    "pol_sent": "中性",
+    "pol_summary": "特朗普買入科技巨頭股權帶來政策偏向，國防部巨額訂單落地提振軍工板塊情緒。",
+    "top_ticker": "SNOW",
+    "top_dir": "CALL",
+    "top_strike": "370",
+    "top_entry": "362.00 - 365.00",
+    "top_risk": "大盤週五尾盤跳水壓制個股動能",
+    "top_reason": "放量兩天累計漲幅近10%，軟體資金顯著流入",
+    "risk_warning": "油價高漲引發週末通膨升溫憂慮，且週末持倉面臨週一跳空及時間價值衰退雙重打擊。",
+    "sector": "資金由連日大漲的硬體半導體流向企業雲端軟體與網路安全板塊，防禦性軍工股獲買盤支撐。",
+    "trade_plans": [
+      {
+        "rank": 1,
+        "ticker": "SNOW",
+        "direction": "CALL",
+        "strategy": "直接買Call",
+        "strike": "370",
+        "expiry": "2026-10-23",
+        "expiry_reason": "避開週末損耗保留14天操作期",
+        "entry_zone": "362.00 - 365.00",
+        "entry_timing": "開盤回踩成交密集區確認支撐後入場",
+        "delta_range": "0.40-0.50",
+        "est_premium": "14.50 - 16.00",
+        "signal_strength": 4,
+        "signals": [
+          "兩日累計爆升9.66%具強勁動能",
+          "成交量放大1.3倍突破箱體",
+          "VIX為14.86買方期權成本極低"
+        ],
+        "max_loss": "全部權利金",
+        "target_gain": "60% - 90%",
+        "stop_loss_price": 352.0,
+        "stop_loss_option": "權利金虧損35%即止損",
+        "squeeze_risk": "低",
+        "risk": "短線急漲後週末前獲利了結",
+        "political_factor": "無",
+        "best_day_to_enter": "週五開盤回調至均線時"
+      },
+      {
+        "rank": 2,
+        "ticker": "AMZN",
+        "direction": "CALL",
+        "strategy": "直接買Call",
+        "strike": "265",
+        "expiry": "2026-10-23",
+        "expiry_reason": "財報前兩週逢低佈局趨勢行情",
+        "entry_zone": "258.50 - 260.50",
+        "entry_timing": "股價回踩258附近短線支撐時入場",
+        "delta_range": "0.35-0.45",
+        "est_premium": "4.80 - 5.50",
+        "signal_strength": 4,
+        "signals": [
+          "多篇權威外媒看好AI雲端業務擴張",
+          "新聞情緒評級為bullish(3則利多)",
+          "股價接近突破前高阻力位260.69"
+        ],
+        "max_loss": "全部權利金",
+        "target_gain": "50% - 80%",
+        "stop_loss_price": 252.0,
+        "stop_loss_option": "權利金虧損40%止損",
+        "squeeze_risk": "低",
+        "risk": "大盤受通膨擔憂拖累回調",
+        "political_factor": "科技委員會偏多利好大市值科技",
+        "best_day_to_enter": "週五午盤確認站穩260時"
+      },
+      {
+        "rank": 3,
+        "ticker": "AMD",
+        "direction": "PUT",
+        "strategy": "直接買Put",
+        "strike": "590",
+        "expiry": "2026-10-23",
+        "expiry_reason": "避開短期噪音預留兩週走勢空間",
+        "entry_zone": "610.00 - 618.00",
+        "entry_timing": "反彈受阻於日線壓力位時入場",
+        "delta_range": "0.30-0.40",
+        "est_premium": "16.00 - 18.50",
+        "signal_strength": 4,
+        "signals": [
+          "兩日累計重挫5.52%量能縮減",
+          "女巫Cathie Wood大額拋售近3700萬美元",
+          "OpenAI營收報告拖累晶片股回落"
+        ],
+        "max_loss": "全部權利金",
+        "target_gain": "45% - 75%",
+        "stop_loss_price": 630.0,
+        "stop_loss_option": "權利金虧損35%止損",
+        "squeeze_risk": "低",
+        "risk": "半導體板塊突然集體反彈",
+        "political_factor": "無",
+        "best_day_to_enter": "盤中衝高無力時"
+      }
+    ]
+  },
+  {
     "date": "2026-10-08",
     "headline": "美債息飆升壓制科技股，大盤高位回吐",
     "mood": "震盪",
@@ -1471,11 +1576,6 @@
   {
     "date": "2026-09-05",
     "headline": "科技股走勢分化，聚焦半導體反彈與異動Call",
-    "mood": "震盪"
-  },
-  {
-    "date": "2026-09-04",
-    "headline": "VIX維持極低，週五嚴防Theta衰減與週末變數",
     "mood": "震盪"
   }
 ]
