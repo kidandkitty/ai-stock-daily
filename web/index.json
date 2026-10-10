@@ -1,5 +1,110 @@
 [
   {
+    "date": "2026-10-10",
+    "headline": "VIX極低指數蓄勢，財報季前鎖定動量個股",
+    "mood": "多頭",
+    "mood_score": 60,
+    "mode": "saturday",
+    "summary": "美股當前處於VIX 14.84極低波動環境，指數維持多頭排列但內部顯現分化。下週即將迎來Q3財報季與CPI數據，建議利用平價期權部屬強勢突破股SNOW與PLTR之Long Call，同時以弱勢破位股ARM之Long Put平衡風險。",
+    "fg_score": 50,
+    "fg_label": "中性",
+    "vix": 14.84,
+    "vix_level": "極低（期權便宜）",
+    "pol_sent": "中性",
+    "pol_summary": "白宮針對聯準會人事展開調查引發市場對貨幣政策獨立性的關注，國防合約持續釋放利好軍工標的。",
+    "top_ticker": "PEP",
+    "top_dir": "CALL",
+    "top_strike": "135",
+    "top_entry": "125.00 - 126.50",
+    "top_risk": "防禦型板塊短期缺乏強烈市場關注度",
+    "top_reason": "IV急升47%且P/C比降至0.25，大資金異動看多",
+    "risk_warning": "下週CPI公佈及聯準會官員鷹派言論可能引發利率波動",
+    "sector": "資金由部分高估值硬體流向雲端軟體與防禦性板塊，科技股內部呈現明顯分化走勢。",
+    "trade_plans": [
+      {
+        "rank": 1,
+        "ticker": "SNOW",
+        "direction": "CALL",
+        "strategy": "直接買Call",
+        "strike": "380",
+        "expiry": "2026-10-30",
+        "expiry_reason": "避開短期耗損並跨越動能延續期",
+        "entry_zone": "362.00 - 368.00",
+        "entry_timing": "週一開盤拉回測試365支撐不破入場",
+        "delta_range": "0.40-0.50",
+        "est_premium": "12.00 - 15.00",
+        "signal_strength": 4,
+        "signals": [
+          "兩日累計爆升10.83%強勢放量",
+          "成交量放大至2.4倍換手積極",
+          "突破近期整合平台"
+        ],
+        "max_loss": "100% 權利金",
+        "target_gain": "+80%",
+        "stop_loss_price": "355.00",
+        "stop_loss_option": "權利金虧損達 45%",
+        "squeeze_risk": "中",
+        "risk": "獲利回吐賣壓及動能迅速冷卻",
+        "political_factor": "無",
+        "best_day_to_enter": "下週一盤中拉回時"
+      },
+      {
+        "rank": 2,
+        "ticker": "PLTR",
+        "direction": "CALL",
+        "strategy": "直接買Call",
+        "strike": "220",
+        "expiry": "2026-10-30",
+        "expiry_reason": "給予充足時間消化上方整數關卡",
+        "entry_zone": "205.00 - 209.00",
+        "entry_timing": "開盤確認量能維持均量以上時入場",
+        "delta_range": "0.35-0.45",
+        "est_premium": "7.50 - 9.50",
+        "signal_strength": 4,
+        "signals": [
+          "兩日累計漲幅達7.69%",
+          "成交量放大至1.6倍強勢攻擊",
+          "AI與國防軟體政策受惠預期支撐"
+        ],
+        "max_loss": "100% 權利金",
+        "target_gain": "+70%",
+        "stop_loss_price": "200.00",
+        "stop_loss_option": "權利金虧損達 50%",
+        "squeeze_risk": "低",
+        "risk": "大盤拉回引發高Beta股回調",
+        "political_factor": "軍工與政府合約潛在利多",
+        "best_day_to_enter": "下週一早盤"
+      },
+      {
+        "rank": 3,
+        "ticker": "ARM",
+        "direction": "PUT",
+        "strategy": "直接買Put",
+        "strike": "250",
+        "expiry": "2026-10-30",
+        "expiry_reason": "破位後具備兩週以上慣性下跌週期",
+        "entry_zone": "266.00 - 270.00",
+        "entry_timing": "反彈無力測試270阻力時入場",
+        "delta_range": "0.35-0.45",
+        "est_premium": "8.00 - 10.50",
+        "signal_strength": 4,
+        "signals": [
+          "兩日累計重挫-9.54%呈現破位爆跌",
+          "半導體板塊短期分化承壓",
+          "技術均線反轉向下失守短支撐"
+        ],
+        "max_loss": "100% 權利金",
+        "target_gain": "+75%",
+        "stop_loss_price": "276.00",
+        "stop_loss_option": "權利金虧損達 50%",
+        "squeeze_risk": "低",
+        "risk": "晶片股超跌反彈急拉",
+        "political_factor": "無",
+        "best_day_to_enter": "下週二反彈受阻時"
+      }
+    ]
+  },
+  {
     "date": "2026-10-09",
     "headline": "VIX處於極低位，聯準會官員放鷹引發週末避險",
     "mood": "震盪",
@@ -1572,10 +1677,5 @@
     "headline": "VIX維持極低水平，下週關注板塊輪動與突破",
     "mood": "震盪",
     "mode": "sunday"
-  },
-  {
-    "date": "2026-09-05",
-    "headline": "科技股走勢分化，聚焦半導體反彈與異動Call",
-    "mood": "震盪"
   }
 ]
