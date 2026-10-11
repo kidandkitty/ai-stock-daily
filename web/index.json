@@ -1,5 +1,110 @@
 [
   {
+    "date": "2026-10-11",
+    "headline": "VIX極低科技股分化，下週迎銀行財報與CPI",
+    "mood": "震盪",
+    "mood_score": 52,
+    "mode": "sunday",
+    "summary": "VIX跌至14.84極低水平，期權定價便宜。大盤處於震盪格局，但個股分化劇烈。半導體板塊（ARM/AMD/SMCI）遭AI變現質疑拋售，而雲端軟體（SNOW/PLTR）強勢爆發。下週操作應順應輪動，採取買入SNOW/PLTR單邊Call並配置ARM Put對沖策略。",
+    "fg_score": 50,
+    "fg_label": "中性",
+    "vix": 14.84,
+    "vix_level": "極低（期權便宜）",
+    "pol_sent": "中性",
+    "pol_summary": "特朗普涉足個股交易與國防大單齊發，RTX獲63億美元合約，國防與白宮政策關注度激增。",
+    "top_ticker": "SNOW",
+    "top_dir": "CALL",
+    "top_strike": "380",
+    "top_entry": "362.00 - 368.00",
+    "top_risk": "短線技術指標超買回吐",
+    "top_reason": "放量爆升突破平台，資金自半導體轉向軟體應用",
+    "risk_warning": "下週即將迎來CPI通脹數據及大行財報，需防範宏觀波動與盤面輪動加速。",
+    "sector": "資金由高估值半導體硬體轉出，流入SaaS雲端軟體與國防防禦板塊。",
+    "trade_plans": [
+      {
+        "rank": 1,
+        "ticker": "SNOW",
+        "direction": "CALL",
+        "strategy": "直接買Call",
+        "strike": "380",
+        "expiry": "2026-10-30",
+        "expiry_reason": "避開短線損耗並跨越動能延續期",
+        "entry_zone": "362.00 - 368.00",
+        "entry_timing": "週一開盤拉回至365附近獲得支撐時入場",
+        "delta_range": "0.40-0.50",
+        "est_premium": "12.00-15.00",
+        "signal_strength": 4,
+        "signals": [
+          "單日大漲7.42%，兩日累計漲幅10.83%（來源: momentum_stocks, 2026-10-09）",
+          "成交量放大至2.4倍爆發（來源: momentum_stocks）",
+          "SaaS板塊逆勢吸納AI輪動資金"
+        ],
+        "max_loss": "全額權利金",
+        "target_gain": "60% - 100%",
+        "stop_loss_price": 355.0,
+        "stop_loss_option": "權利金虧損達40%停損",
+        "squeeze_risk": "中",
+        "risk": "短線漲幅偏大恐有獲利回吐",
+        "political_factor": "無",
+        "best_day_to_enter": "週一盤中拉回"
+      },
+      {
+        "rank": 2,
+        "ticker": "ARM",
+        "direction": "PUT",
+        "strategy": "直接買Put",
+        "strike": "250",
+        "expiry": "2026-10-30",
+        "expiry_reason": "給予足夠回調下行時間",
+        "entry_zone": "266.00 - 270.00",
+        "entry_timing": "週一早盤若反彈遇阻268附近入場",
+        "delta_range": "0.30-0.40",
+        "est_premium": "8.50-11.00",
+        "signal_strength": 4,
+        "signals": [
+          "兩日累計重挫-9.54%，連續失守支撐（來源: momentum_stocks, 2026-10-09）",
+          "AI營收兌現疑慮引發半導體板塊集體殺跌（來源: market_news）",
+          "弱勢破位未見止跌信號"
+        ],
+        "max_loss": "全額權利金",
+        "target_gain": "50% - 80%",
+        "stop_loss_price": 275.0,
+        "stop_loss_option": "權利金虧損達40%停損",
+        "squeeze_risk": "低",
+        "risk": "超跌後出現技術性抽頭",
+        "political_factor": "無",
+        "best_day_to_enter": "週一弱勢反彈時"
+      },
+      {
+        "rank": 3,
+        "ticker": "PLTR",
+        "direction": "CALL",
+        "strategy": "直接買Call",
+        "strike": "220",
+        "expiry": "2026-10-30",
+        "expiry_reason": "距今約20天，順應強勢突破趨勢",
+        "entry_zone": "205.00 - 209.00",
+        "entry_timing": "週一盤前回踩207附近企穩入場",
+        "delta_range": "0.35-0.45",
+        "est_premium": "7.00-9.50",
+        "signal_strength": 4,
+        "signals": [
+          "單日大漲5.17%，兩日漲幅7.69%（來源: momentum_stocks, 2026-10-09）",
+          "成交量放大1.6倍，站上200整數關口",
+          "國防與企業AI合約雙重催化持續發酵"
+        ],
+        "max_loss": "全額權利金",
+        "target_gain": "50% - 90%",
+        "stop_loss_price": 200.0,
+        "stop_loss_option": "權利金虧損達40%停損",
+        "squeeze_risk": "低",
+        "risk": "整體市場若下挫或遭連帶拖累",
+        "political_factor": "國防合約與政府AI需求受益板塊",
+        "best_day_to_enter": "週一開盤初段"
+      }
+    ]
+  },
+  {
     "date": "2026-10-10",
     "headline": "VIX極低指數蓄勢，財報季前鎖定動量個股",
     "mood": "多頭",
@@ -1671,11 +1776,5 @@
     "headline": "勞動節休市，通漲疑慮與升息預期籠罩市場",
     "mood": "震盪",
     "mode": "weekday"
-  },
-  {
-    "date": "2026-09-06",
-    "headline": "VIX維持極低水平，下週關注板塊輪動與突破",
-    "mood": "震盪",
-    "mode": "sunday"
   }
 ]
