@@ -1,5 +1,110 @@
 [
   {
+    "date": "2026-10-12",
+    "headline": "財報季前夕油價通脹承壓，大盤震盪個股分化",
+    "mood": "震盪",
+    "mood_score": 50,
+    "mode": "weekday",
+    "summary": "大盤在油價上漲及通脹黏性下呈現區間震盪，VIX微升至15.21。半導體板塊受供應鏈問題壓制，軟體與特定AI巨頭（META）顯現韌性。建議以垂直價差應對即將到來的財報季，嚴控單一方向風險。",
+    "fg_score": 50,
+    "fg_label": "中性",
+    "vix": 15.21,
+    "vix_level": "正常",
+    "pol_sent": "中性",
+    "pol_summary": "特朗普大額持倉披露提振個別科技股，但白宮對聯準會決策的干預分歧加劇宏觀不確定性。",
+    "top_ticker": "META",
+    "top_dir": "CALL",
+    "top_strike": "745/765",
+    "top_entry": "740.00 - 744.00",
+    "top_risk": "科技巨頭輪動回調及大盤通脹壓制",
+    "top_reason": "AI新模型催化放量大漲且獲政商資金關注",
+    "risk_warning": "Fed年內升息預期再起推升殖利率，壓制高估值科技股。",
+    "sector": "資金由記憶體晶片流出，轉向具自研AI進展的大型軟體與平台股。",
+    "trade_plans": [
+      {
+        "rank": 1,
+        "ticker": "META",
+        "direction": "CALL",
+        "strategy": "Bull Call Spread",
+        "strike": "745/765",
+        "expiry": "2026-10-30",
+        "expiry_reason": "避開財報波動並保留時間值",
+        "entry_zone": "740.00 - 744.00",
+        "entry_timing": "開盤拉回至742支撐不破時入場",
+        "delta_range": "0.40-0.50",
+        "est_premium": "8.50-10.00",
+        "signal_strength": 4,
+        "signals": [
+          "成交量放大1.8倍且單日逆勢漲3.38%",
+          "Muse AI發布提振多頭情緒",
+          "均線多頭排列且RSI為51.6具續航力"
+        ],
+        "max_loss": "已付權利金全額（約$9.50）",
+        "target_gain": "價差上限或70%權利金收益",
+        "stop_loss_price": 725.0,
+        "stop_loss_option": "權利金虧損達45%停損",
+        "squeeze_risk": "低",
+        "risk": "10月28日財報前IV擠壓與回調",
+        "political_factor": "特朗普大額建倉消息提供題材支撐",
+        "best_day_to_enter": "週二開盤初次回測完成後"
+      },
+      {
+        "rank": 2,
+        "ticker": "AMD",
+        "direction": "PUT",
+        "strategy": "Bear Put Spread",
+        "strike": "590/570",
+        "expiry": "2026-10-30",
+        "expiry_reason": "覆蓋半導體回調週期至財報前",
+        "entry_zone": "595.00 - 600.00",
+        "entry_timing": "反彈受阻於整數關卡時進場",
+        "delta_range": "0.35-0.45",
+        "est_premium": "7.50-9.00",
+        "signal_strength": 4,
+        "signals": [
+          "連續兩日走跌累計跌幅逾4.2%",
+          "亞洲供應鏈瓶頸衝擊新聞發酵",
+          "記憶體板塊弱勢拖累半導體情緒"
+        ],
+        "max_loss": "已付權利金全額（約$8.20）",
+        "target_gain": "價差上限或65%權利金收益",
+        "stop_loss_price": 612.0,
+        "stop_loss_option": "權利金虧損達40%停損",
+        "squeeze_risk": "低",
+        "risk": "晶片股快速技術性超跌反彈",
+        "political_factor": "無",
+        "best_day_to_enter": "週二早盤反彈遇阻時"
+      },
+      {
+        "rank": 3,
+        "ticker": "TSLA",
+        "direction": "CALL",
+        "strategy": "Bull Call Spread",
+        "strike": "380/395",
+        "expiry": "2026-10-30",
+        "expiry_reason": "跨越10月21日財報發布窗口",
+        "entry_zone": "374.85 - 378.00",
+        "entry_timing": "回測支撐375守穩入場",
+        "delta_range": "0.30-0.45",
+        "est_premium": "4.80-6.00",
+        "signal_strength": 4,
+        "signals": [
+          "新聞偏多：Cybercab車隊評級催化",
+          "技術面多頭排列且接近突破阻力382.7",
+          "短線動能改善，多頭評級主導"
+        ],
+        "max_loss": "已付權利金全額（約$5.50）",
+        "target_gain": "價差上限或80%權利金收益",
+        "stop_loss_price": 365.0,
+        "stop_loss_option": "權利金虧損達50%停損",
+        "squeeze_risk": "低",
+        "risk": "10月21日財報業績不及預期",
+        "political_factor": "無",
+        "best_day_to_enter": "週二開盤消化獲利盤後"
+      }
+    ]
+  },
+  {
     "date": "2026-10-11",
     "headline": "VIX極低科技股分化，下週迎銀行財報與CPI",
     "mood": "震盪",
@@ -1768,12 +1873,6 @@
   {
     "date": "2026-09-08",
     "headline": "通膨數據公布前夕 油價上漲壓制大盤",
-    "mood": "震盪",
-    "mode": "weekday"
-  },
-  {
-    "date": "2026-09-07",
-    "headline": "勞動節休市，通漲疑慮與升息預期籠罩市場",
     "mood": "震盪",
     "mode": "weekday"
   }
