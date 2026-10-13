@@ -1,5 +1,110 @@
 [
   {
+    "date": "2026-10-13",
+    "headline": "AI晶片股回檔壓抑大盤，財報季前夕市場多空分歧",
+    "mood": "震盪",
+    "mood_score": 50,
+    "mode": "weekday",
+    "summary": "市場恐慌貪婪指數處於50中性，VIX報15.44。AI資本支出疑慮拖累半導體重挫，但META與蘋果逆勢創高。財報季來臨建議以Spread降低波動風險，做多抗跌軟體龍頭並對沖晶片回檔。",
+    "fg_score": 50,
+    "fg_label": "中性",
+    "vix": 15.44,
+    "vix_level": "正常",
+    "pol_sent": "中性",
+    "pol_summary": "特朗普建倉META引發資金關注，白宮與聯準會人事及通脹言論令利率預期波動加大。",
+    "top_ticker": "ADBE",
+    "top_dir": "PUT",
+    "top_strike": "235.0",
+    "top_entry": "237.00 - 239.00",
+    "top_risk": "短線跌深反彈造成權利金耗損",
+    "top_reason": "IV飆升158%且P/C達1.75主力大舉買Put",
+    "risk_warning": "博通言論引發晶片股拋售潮，且聯準會官員談話可能推升升息恐慌。",
+    "sector": "資金由重挫的半導體晶片板塊外流，轉向現金流穩健的軟體龍頭及消費大型股。",
+    "trade_plans": [
+      {
+        "rank": 1,
+        "ticker": "META",
+        "direction": "CALL",
+        "strategy": "Bull Call Spread",
+        "strike": "760/780",
+        "expiry": "2026-10-30",
+        "expiry_reason": "涵蓋財報週避開極端IV損耗",
+        "entry_zone": "760.00 - 765.00",
+        "entry_timing": "股價回踩760支撐確認不破時入場",
+        "delta_range": "0.45-0.55",
+        "est_premium": "8.50 - 10.00",
+        "signal_strength": 4,
+        "signals": [
+          "兩日累計爆升6.16%逆勢強勁",
+          "推出Muse Wonder AI新模型新聞強烈利多",
+          "均線多頭排列且RSI為54.4未過熱"
+        ],
+        "max_loss": "淨權利金成本約$950/組",
+        "target_gain": "差價收益約$1050/組",
+        "stop_loss_price": 745.0,
+        "stop_loss_option": "權利金虧損達50%立即止損",
+        "squeeze_risk": "低",
+        "risk": "10月21日財報前波動劇烈",
+        "political_factor": "特朗普申報8月大舉建倉META",
+        "best_day_to_enter": "美股開盤後半小時確認買盤"
+      },
+      {
+        "rank": 2,
+        "ticker": "AMD",
+        "direction": "PUT",
+        "strategy": "Bear Put Spread",
+        "strike": "600/580",
+        "expiry": "2026-10-30",
+        "expiry_reason": "避開財報前夕極端定價並對沖跌勢",
+        "entry_zone": "595.00 - 605.00",
+        "entry_timing": "反彈受阻於600整數關口時布局",
+        "delta_range": "0.35-0.45",
+        "est_premium": "7.80 - 9.20",
+        "signal_strength": 4,
+        "signals": [
+          "晶片板塊受博通發言打擊全線重挫",
+          "技術面處於整理中且跌破均線支撐",
+          "MU兩日暴跌8.8%拖累半導體情緒"
+        ],
+        "max_loss": "淨權利金成本約$850/組",
+        "target_gain": "差價收益約$1150/組",
+        "stop_loss_price": 615.0,
+        "stop_loss_option": "權利金虧損達45%嚴格止損",
+        "squeeze_risk": "低",
+        "risk": "空頭回補帶動半導體急彈",
+        "political_factor": "無",
+        "best_day_to_enter": "早盤衝高乏力破均線時入場"
+      },
+      {
+        "rank": 3,
+        "ticker": "AMZN",
+        "direction": "CALL",
+        "strategy": "Bull Call Spread",
+        "strike": "260/270",
+        "expiry": "2026-11-06",
+        "expiry_reason": "跨過10月29日財報釋放利多",
+        "entry_zone": "257.00 - 259.50",
+        "entry_timing": "早盤回踩258附近站穩時進場",
+        "delta_range": "0.35-0.45",
+        "est_premium": "3.50 - 4.20",
+        "signal_strength": 3,
+        "signals": [
+          "新聞偏多顯示自由現金流強勁",
+          "券商Seeking Alpha最新發布升評",
+          "RSI為62.8維持在強勢進攻區間"
+        ],
+        "max_loss": "淨權利金成本約$380/組",
+        "target_gain": "差價收益約$620/組",
+        "stop_loss_price": 252.0,
+        "stop_loss_option": "期權價值回撤50%出場",
+        "squeeze_risk": "低",
+        "risk": "大盤科技股整體拋壓蔓延",
+        "political_factor": "無",
+        "best_day_to_enter": "盤中回檔量縮企穩時"
+      }
+    ]
+  },
+  {
     "date": "2026-10-12",
     "headline": "財報季前夕油價通脹承壓，大盤震盪個股分化",
     "mood": "震盪",
@@ -1867,12 +1972,6 @@
   {
     "date": "2026-09-09",
     "headline": "通脹創三年新高引發升息疑慮，美股高位震盪",
-    "mood": "震盪",
-    "mode": "weekday"
-  },
-  {
-    "date": "2026-09-08",
-    "headline": "通膨數據公布前夕 油價上漲壓制大盤",
     "mood": "震盪",
     "mode": "weekday"
   }
