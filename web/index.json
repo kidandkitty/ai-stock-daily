@@ -1,5 +1,83 @@
 [
   {
+    "date": "2026-10-14",
+    "headline": "CPI通脹升溫燃起升息預期，VIX溫和回升市場觀望",
+    "mood": "震盪",
+    "mood_score": 50,
+    "mode": "weekday",
+    "summary": "2026年10月14日，市場受9月CPI通脹升至3.7%影響，升息預期再起導致美股與債市回檔。VIX微升至16.11，情緒維持中性。個股方面，AMZN獲得分析師升評與財報期待支持，META因AI新品發布展現韌性，而半導體及高動能股如DELL、AMD面臨明顯修正。操作上建議以技術支撐區佈局優質個股的期權，並密切關注通脹與聯準會後續動向。",
+    "fg_score": 50,
+    "fg_label": "中性",
+    "vix": 16.11,
+    "vix_level": "正常",
+    "pol_sent": "中性",
+    "pol_summary": "特朗普成立委員會調查聯準會理事Lisa Cook，並持續披露證券交易與增持Meta股份，政策面與科技股互動頻繁。",
+    "top_ticker": "AMZN",
+    "top_dir": "CALL",
+    "top_strike": "265",
+    "top_entry": "247.64 - 250.12",
+    "top_risk": "CPI通脹數據引發宏觀經濟擔憂",
+    "top_reason": "獲得分析師升評支持，且Q3財報將近，技術面於支撐位整理後有補漲潛力。",
+    "risk_warning": "美國9月CPI通脹升至3.7%燃起升息預期，宏觀經濟數據與聯準會動向可能隨時引發市場劇烈波動，期權操作應嚴控部位。",
+    "sector": "資金在通脹數據公佈後由高估值科技股向防禦性板塊輪動，半導體與高動能股出現較大修正。",
+    "trade_plans": [
+      {
+        "rank": 1,
+        "ticker": "AMZN",
+        "direction": "CALL",
+        "strategy": "直接買Call",
+        "strike": "265",
+        "expiry": "2026-10-30",
+        "expiry_reason": "涵蓋財報前夕的波動預期",
+        "entry_zone": "247.64 - 250.12",
+        "entry_timing": "回測支撐區間分批進場",
+        "delta_range": "0.35-0.45",
+        "est_premium": "$5.95",
+        "signal_strength": 3,
+        "signals": [
+          "券商升評支援",
+          "技術面整理企穩",
+          "選擇權波動率適中"
+        ],
+        "max_loss": "權利金全數歸零",
+        "target_gain": "+40%",
+        "stop_loss_price": 244.0,
+        "stop_loss_option": "權利金跌幅達 50%",
+        "squeeze_risk": "低",
+        "risk": "大盤受CPI通脹數據拖累",
+        "political_factor": "無",
+        "best_day_to_enter": "盤中回測支撐時"
+      },
+      {
+        "rank": 2,
+        "ticker": "META",
+        "direction": "CALL",
+        "strategy": "直接買Call",
+        "strike": "760",
+        "expiry": "2026-11-06",
+        "expiry_reason": "涵蓋財報公佈前後的時間價值",
+        "entry_zone": "671.50 - 681.95",
+        "entry_timing": "股價接近強力支撐時承接",
+        "delta_range": "0.30-0.40",
+        "est_premium": "$25.08",
+        "signal_strength": 3,
+        "signals": [
+          "Muse Wonder AI新品發布利多",
+          "多頭排列趨勢",
+          "特朗普家族持股利多"
+        ],
+        "max_loss": "權利金全數歸零",
+        "target_gain": "+50%",
+        "stop_loss_price": 655.0,
+        "stop_loss_option": "權利金跌幅達 50%",
+        "squeeze_risk": "低",
+        "risk": "科技股整體回檔壓力",
+        "political_factor": "特朗普增持Meta股份",
+        "best_day_to_enter": "回測支撐區"
+      }
+    ]
+  },
+  {
     "date": "2026-10-13",
     "headline": "AI晶片股回檔壓抑大盤，財報季前夕市場多空分歧",
     "mood": "震盪",
@@ -1966,12 +2044,6 @@
   {
     "date": "2026-09-10",
     "headline": "CPI觀望與地緣牽動，大盤高位震盪整理",
-    "mood": "震盪",
-    "mode": "weekday"
-  },
-  {
-    "date": "2026-09-09",
-    "headline": "通脹創三年新高引發升息疑慮，美股高位震盪",
     "mood": "震盪",
     "mode": "weekday"
   }
