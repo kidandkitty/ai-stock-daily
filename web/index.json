@@ -1,5 +1,82 @@
 [
   {
+    "date": "2026-10-15",
+    "headline": "通脹擔憂與AI拋售夾擊，納指重挫，市場尋求支撐",
+    "mood": "震盪",
+    "mood_score": 45,
+    "mode": "weekday",
+    "summary": "今日市場受高通脹數據與AI板塊持續拋售雙重夾擊，納指領跌。VIX維持在16.89正常水平，但個股分化明顯。防禦性與現金流強勁的股份（如AMZN）表現穩健，而半導體與高動能股（如AMD、DELL）遭遇重挫。操作上建議控制倉位，避開過熱板塊，優先選擇具備基本面支撐的標的進行期權佈局。",
+    "fg_score": 50,
+    "fg_label": "中性",
+    "vix": 16.89,
+    "vix_level": "正常",
+    "pol_sent": "中性",
+    "pol_summary": "白宮政策與聯準會人事動態持續牽動市場神經，通脹壓力使貨幣政策走向更受關注。",
+    "top_ticker": "AMD",
+    "top_dir": "PUT",
+    "top_strike": "540",
+    "top_entry": "545 - 550",
+    "top_risk": "短線跌幅已深，提防突發反彈行情。",
+    "top_reason": "半導體及AI類股遭到強烈拋售，技術面處於弱勢整理且動能向下。",
+    "risk_warning": "批發通脹數據超預期帶動升息憂慮，VIX雖然平穩但科技股拋售潮可能擴大，務必嚴設止損。",
+    "sector": "資金自高估值AI及半導體板塊流出，轉向防禦型與現金流穩健的大型科技股。",
+    "trade_plans": [
+      {
+        "rank": 1,
+        "ticker": "AMD",
+        "direction": "PUT",
+        "strategy": "Bear Put Spread",
+        "strike": "540/520",
+        "expiry": "2026-11-06",
+        "expiry_reason": "避開財報前夕並給予下跌空間",
+        "entry_zone": "545 - 550",
+        "entry_timing": "反彈至阻力位受阻時進場",
+        "delta_range": "0.35-0.45",
+        "est_premium": "6.50 - 8.00",
+        "signal_strength": 4,
+        "signals": [
+          "RSI處於28.9超賣區但短期動能向下",
+          "兩日累計跌幅超9%顯示空方主導",
+          "AI板塊整體拋售潮延續"
+        ],
+        "max_loss": "所付期權金",
+        "target_gain": "100%",
+        "stop_loss_price": "565.00",
+        "stop_loss_option": "期權金跌幅達50%",
+        "squeeze_risk": "低",
+        "risk": "短線超賣隨時可能出現技術性反彈",
+        "political_factor": "無",
+        "best_day_to_enter": "盤中反彈時"
+      },
+      {
+        "ticker": "AMZN",
+        "direction": "CALL",
+        "strategy": "直接買Call",
+        "strike": "260",
+        "expiry": "2026-11-13",
+        "expiry_reason": "覆蓋10月29日財報日前夕的預期",
+        "entry_zone": "247.73 - 250.37",
+        "entry_timing": "回測支撐帶確認不破時分批買入",
+        "delta_range": "0.40-0.50",
+        "est_premium": "7.20 - 9.00",
+        "signal_strength": 4,
+        "signals": [
+          "強勁自由現金流增長預期支撐基本面",
+          "分析師維持正面評級與買入建議",
+          "技術面處於整理區間上沿附近"
+        ],
+        "max_loss": "所付期權金",
+        "target_gain": "120%",
+        "stop_loss_price": "245.00",
+        "stop_loss_option": "期權金跌幅達50%",
+        "squeeze_risk": "低",
+        "risk": "大盤整體回調可能拖累股價表現",
+        "political_factor": "無",
+        "best_day_to_enter": "早盤回調時"
+      }
+    ]
+  },
+  {
     "date": "2026-10-14",
     "headline": "CPI通脹升溫燃起升息預期，VIX溫和回升市場觀望",
     "mood": "震盪",
@@ -2040,11 +2117,5 @@
     "headline": "通脹頑固升溫加息疑慮，能源期權異動爆量",
     "mood": "震盪",
     "mode": "friday"
-  },
-  {
-    "date": "2026-09-10",
-    "headline": "CPI觀望與地緣牽動，大盤高位震盪整理",
-    "mood": "震盪",
-    "mode": "weekday"
   }
 ]
