@@ -1,5 +1,56 @@
 [
   {
+    "date": "2026-10-16",
+    "headline": "標普微升科技股承壓，資金由AI轉向醫療與軟件",
+    "mood": "震盪",
+    "mood_score": 50,
+    "mode": "friday",
+    "summary": "市場情緒中性，VIX維持16.36正常區間。資金明顯由AI半導體輪動至醫療與軟件板塊。操作上建議逢高佈局弱勢股Put或觀望，嚴控週末持倉風險。",
+    "fg_score": 50,
+    "fg_label": "中性",
+    "vix": 16.36,
+    "vix_level": "正常",
+    "pol_sent": "中性",
+    "pol_summary": "白宮政策與聯儲局獨立性辯論持續，國防與科技委員會持續主導相應板塊資金流向。",
+    "top_ticker": "AMD",
+    "top_dir": "PUT",
+    "top_strike": "540/520",
+    "top_entry": "540 - 545",
+    "top_risk": "短線技術性超跌反彈風險",
+    "top_reason": "半導體板塊資金持續流出，技術面破位向下",
+    "risk_warning": "下週即將迎來Tesla、Meta、Netflix等重量級財報，IV可能隨之攀升，注意期權時間值損耗。",
+    "sector": "資金由AI與半導體流出，轉向軟件、醫療保健及防禦性板塊。",
+    "trade_plans": [
+      {
+        "rank": 1,
+        "ticker": "AMD",
+        "direction": "PUT",
+        "strategy": "Bear Put Spread",
+        "strike": "540/520",
+        "expiry": "2026-11-06",
+        "expiry_reason": "涵蓋財報前夕下跌空間",
+        "entry_zone": "540 - 545",
+        "entry_timing": "反彈至阻力位確認遇壓時進場",
+        "delta_range": "0.35-0.45",
+        "est_premium": "3.50 - 4.50",
+        "signal_strength": 4,
+        "signals": [
+          "過去兩日連續下跌動能強勁",
+          "半導體板塊資金流出新聞利空",
+          "RSI處於31.5偏弱區間"
+        ],
+        "max_loss": "所付期權金",
+        "target_gain": "100%",
+        "stop_loss_price": "555.00",
+        "stop_loss_option": "期權金縮水50%",
+        "squeeze_risk": "低",
+        "risk": "半導體板塊突然反彈回補",
+        "political_factor": "無",
+        "best_day_to_enter": "週一開盤"
+      }
+    ]
+  },
+  {
     "date": "2026-10-15",
     "headline": "通脹擔憂與AI拋售夾擊，納指重挫，市場尋求支撐",
     "mood": "震盪",
@@ -2111,11 +2162,5 @@
     "top_reason": "兩日爆升且成交量放大1.9倍，AI伺服器浪潮推動資金強勢流入。",
     "risk_warning": "下週通脹數據後續發酵，Fed 9月會議前利率期貨波動加劇。",
     "sector": "資金從傳統醫療與公用事業流出，重新回流至AI硬體與伺服器板塊。"
-  },
-  {
-    "date": "2026-09-11",
-    "headline": "通脹頑固升溫加息疑慮，能源期權異動爆量",
-    "mood": "震盪",
-    "mode": "friday"
   }
 ]
