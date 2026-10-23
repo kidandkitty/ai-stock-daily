@@ -1,5 +1,110 @@
 [
   {
+    "date": "2026-10-23",
+    "headline": "中東地緣升溫道指挫500點，科技超賣醞釀分化",
+    "mood": "震盪",
+    "mood_score": 45,
+    "mode": "friday",
+    "summary": "中東衝突升溫重創市場信心，道指挫500點引發跨板塊避險拋售。科技股普遍重挫超賣，半導體與META極度超跌醞釀技術修復；同時能源板塊期權買盤爆發。週五交易建議嚴控裸買風險，以Spread價差保護過週末。",
+    "fg_score": 50,
+    "fg_label": "中性",
+    "vix": 19.29,
+    "vix_level": "正常",
+    "pol_sent": "利空",
+    "pol_summary": "中東地緣局勢突發惡化推動國防與能源板塊受追捧，白宮與聯準會利率分歧加劇宏觀不確定性。",
+    "top_ticker": "XOM",
+    "top_dir": "CALL",
+    "top_strike": "190.0",
+    "top_entry": "181.50 - 183.00",
+    "top_risk": "若地緣局勢週末降溫油價迅速回落",
+    "top_reason": "中東衝突升溫原油暴漲，IV激增251%且P/C低至0.29主力搶籌",
+    "risk_warning": "週末中東戰事突發擴大及聯準會鷹派預期發酵引發週一跳空缺口",
+    "sector": "資金自高估值科技與可選消費撤離，加速流入能源、公用事業及美債防禦資產。",
+    "trade_plans": [
+      {
+        "rank": 1,
+        "ticker": "PANW",
+        "direction": "PUT",
+        "strategy": "Bear Put Spread",
+        "strike": "375/360",
+        "expiry": "2026-11-06",
+        "expiry_reason": "避開週末時間損耗提供兩週回調窗口",
+        "entry_zone": "378.00 - 382.00",
+        "entry_timing": "開盤衝高遇阻380整數關口無力時入場",
+        "delta_range": "0.30-0.45",
+        "est_premium": "4.20 - 5.10",
+        "signal_strength": 4,
+        "signals": [
+          "momentum_stocks兩日爆升8.87%乖離過大",
+          "成交量比僅0.5呈現縮量拉升量價背離",
+          "大盤環境轉弱道指重挫抑制追高買盤"
+        ],
+        "max_loss": "已付權利金淨額",
+        "target_gain": "100% - 150%權利金收益",
+        "stop_loss_price": 386.5,
+        "stop_loss_option": "期權價值回撤達40%立即止損",
+        "squeeze_risk": "低",
+        "risk": "地緣網絡安全催化持續推升股價",
+        "political_factor": "無",
+        "best_day_to_enter": "週五盤中衝高回落時"
+      },
+      {
+        "rank": 2,
+        "ticker": "AMD",
+        "direction": "CALL",
+        "strategy": "Bull Call Spread",
+        "strike": "520/550",
+        "expiry": "2026-11-06",
+        "expiry_reason": "跨越11月3日財報日博取業績與超賣修復",
+        "entry_zone": "515.23 - 522.00",
+        "entry_timing": "回測支撐位507.93企穩且RSI未再破底時",
+        "delta_range": "0.35-0.48",
+        "est_premium": "9.50 - 11.20",
+        "signal_strength": 4,
+        "signals": [
+          "RSI達27.7進入嚴重超賣區間",
+          "今日逆市反彈2.46%展現抗跌買盤支撐",
+          "股價逼近技術關鍵支撐507.93具備高盈虧比"
+        ],
+        "max_loss": "價差淨支出成本",
+        "target_gain": "價差達到最大價值約150%回報",
+        "stop_loss_price": 504.0,
+        "stop_loss_option": "期權合約虧損達45%時嚴格平倉",
+        "squeeze_risk": "低",
+        "risk": "半導體板塊受NVDA拋售情緒拖累下行",
+        "political_factor": "科技委員會利多AI晶片政策支持",
+        "best_day_to_enter": "週五尾盤回踩支撐確認時"
+      },
+      {
+        "rank": 3,
+        "ticker": "META",
+        "direction": "PUT",
+        "strategy": "Bear Put Spread",
+        "strike": "645/620",
+        "expiry": "2026-11-06",
+        "expiry_reason": "給予股價破位後進一步下探的尋底時間",
+        "entry_zone": "648.00 - 655.00",
+        "entry_timing": "盤中弱勢反彈受阻於653阻力帶時分批建立",
+        "delta_range": "0.30-0.42",
+        "est_premium": "7.80 - 9.20",
+        "signal_strength": 4,
+        "signals": [
+          "新聞面極度偏空前日暴跌7%後動能疲軟",
+          "兩日累跌7.34%技術面已跌破前低支撐",
+          "成交量萎縮反映市場承接力道嚴重不足"
+        ],
+        "max_loss": "淨權利金成本",
+        "target_gain": "120%權利金收益",
+        "stop_loss_price": 665.0,
+        "stop_loss_option": "期權虧損達50%主動止損",
+        "squeeze_risk": "低",
+        "risk": "RSI處於24.8極端超賣或引發技術性急抽",
+        "political_factor": "無",
+        "best_day_to_enter": "週五盤中反彈無力時"
+      }
+    ]
+  },
+  {
     "date": "2026-10-21",
     "headline": "市場聚焦財報與聯準會動向，VIX持穩於16.64中性區間",
     "mood": "震盪",
@@ -2527,27 +2632,5 @@
         "best_day_to_enter": "週一或週二開盤"
       }
     ]
-  },
-  {
-    "date": "2026-09-18",
-    "headline": "美聯儲升息引發債市波動，美股震盪收復失地",
-    "mood": "震盪",
-    "mood_score": 50,
-    "mode": "friday",
-    "summary": "今日市場在美聯儲升息決議後逐步企穩，黃仁勳看好明年晶片出貨翻倍，帶動NVDA與AMD等AI硬體股強勢反彈。操作上建議利用價差期權，逢低佈局強勢龍頭，並適度對沖高利率帶來的債市波動風險。",
-    "fg_score": 50,
-    "fg_label": "中性",
-    "vix": 15.38,
-    "vix_level": "正常",
-    "pol_sent": "中性",
-    "pol_summary": "白宮軟化對美聯儲升息立場，國會推動法案限制議員交易；特朗普售以軍火計畫利多國防板塊。",
-    "top_ticker": "PEP",
-    "top_dir": "CALL",
-    "top_strike": "135.0",
-    "top_entry": "129.50 - 131.00",
-    "top_risk": "消費板塊受高利率壓制",
-    "top_reason": "18日IV飆升195%，P/C為0.32顯示買Call資金高度集中，股價超跌有望迎來技術性反彈。",
-    "risk_warning": "十年期美債收益率逼近5%壓制科技股估值",
-    "sector": "資金由高估值科技股向業績確定性高的AI硬體龍頭集中"
   }
 ]
