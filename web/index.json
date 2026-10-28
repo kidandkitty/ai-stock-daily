@@ -1,5 +1,83 @@
 [
   {
+    "date": "2026-10-28",
+    "headline": "聯準會決議與財報周夾擊，市場觀望氣氛濃厚",
+    "mood": "震盪",
+    "mood_score": 50,
+    "mode": "weekday",
+    "summary": "今日市場聚焦聯準會決議與科技巨頭財報，VIX維持在17.37的正常區間。美股整體呈震盪整理格局，AI與半導體族群如AMD、MU展現強勁動能。策略上建議採用價差交易（Bull Call Spread）來應對財報與總經事件帶來的波動風險，嚴控部位規模。",
+    "fg_score": 50,
+    "fg_label": "中性",
+    "vix": 17.37,
+    "vix_level": "正常",
+    "pol_sent": "中性",
+    "pol_summary": "國會與白宮政策聚焦貿易關稅及AI監管，相關軍工與科技板塊受政策面消息擾動，但短線市場焦點仍在聯準會貨幣政策。",
+    "top_ticker": "AMD",
+    "top_dir": "CALL",
+    "top_strike": "560",
+    "top_entry": "560.00 - 568.00",
+    "top_risk": "大盤若受聯準會談話影響短線可能震盪",
+    "top_reason": "兩日強彈近7%，動能強勁且AI資金流入明顯",
+    "risk_warning": "今日面臨聯準會利率決議與重量級科技財報雙重考驗，市場隱含波動率可能劇烈變化，切勿過度重倉單一方向。",
+    "sector": "資金在半導體AI股與傳統公用事業、能源股之間輪動，科技股仍是交投重心。",
+    "trade_plans": [
+      {
+        "rank": 1,
+        "ticker": "AMD",
+        "direction": "CALL",
+        "strategy": "Bull Call Spread",
+        "strike": "560/600",
+        "expiry": "2026-11-20",
+        "expiry_reason": "涵蓋財報與後續動能期",
+        "entry_zone": "560.00 - 568.00",
+        "entry_timing": "拉回支撐區間分批承接",
+        "delta_range": "0.35-0.45",
+        "est_premium": "15.00 - 22.00",
+        "signal_strength": 4,
+        "signals": [
+          "兩日累計強勢上升超過6%",
+          "AI板塊資金持續流入",
+          "技術面多頭整理突破"
+        ],
+        "max_loss": "所付期權權利金",
+        "target_gain": "50% - 80%",
+        "stop_loss_price": 540.0,
+        "stop_loss_option": "權利金腰斬時平倉",
+        "squeeze_risk": "中",
+        "risk": "大盤若遇聯準會鷹派發言可能回檔",
+        "political_factor": "無",
+        "best_day_to_enter": "盤中回測時段"
+      },
+      {
+        "rank": 2,
+        "ticker": "MU",
+        "direction": "CALL",
+        "strategy": "Bull Call Spread",
+        "strike": "960/1000",
+        "expiry": "2026-11-20",
+        "expiry_reason": "給予動能延續足夠時間",
+        "entry_zone": "955.00 - 967.00",
+        "entry_timing": "開盤後視動能穩定切入",
+        "delta_range": "0.30-0.40",
+        "est_premium": "20.00 - 30.00",
+        "signal_strength": 4,
+        "signals": [
+          "今日爆升4.15%表現強勁",
+          "兩日升幅超7%",
+          "記憶體與AI需求雙引擎"
+        ],
+        "max_loss": "所付期權權利金",
+        "target_gain": "40% - 70%",
+        "stop_loss_price": 935.0,
+        "stop_loss_option": "權利金跌幅達50%",
+        "squeeze_risk": "中",
+        "risk": "高價股波動較大，需嚴控部位",
+        "political_factor": "無",
+        "best_day_to_enter": "早盤量縮整理時"
+      }
+    ]
+  },
+  {
     "date": "2026-10-27",
     "headline": "科技巨頭財報前夕 AI合作案與政治政策雙重激勵市場",
     "mood": "多頭",
@@ -2714,57 +2792,6 @@
         "risk": "債市殖利率飆升拖累大盤",
         "political_factor": "科技委員會利多關注",
         "best_day_to_enter": "下週一開盤"
-      }
-    ]
-  },
-  {
-    "date": "2026-09-24",
-    "headline": "債息飆升美股受壓，聯儲局釋放加息信號",
-    "mood": "震盪",
-    "mood_score": 50,
-    "mode": "weekday",
-    "summary": "今日市場受美債收益率飆升與聯儲局加息言論夾擊，納指與道指顯著受壓。情緒指數中性，操作上以順勢做空弱勢股（如ARM）為主，科技股高檔震盪需嚴控風險。",
-    "fg_score": 50,
-    "fg_label": "中性",
-    "vix": 16.05,
-    "vix_level": "正常",
-    "pol_sent": "中性",
-    "pol_summary": "特朗普July股票交易披露引起關注，國會及政策面無突發重大立法，市場焦點集中於聯儲局貨幣政策與利率走向。",
-    "top_ticker": "ARM",
-    "top_dir": "PUT",
-    "top_strike": "300.0",
-    "top_entry": "302.0 - 305.0",
-    "top_risk": "短線超賣後可能出現急彈",
-    "top_reason": "兩日暴跌8%且動能向下，順勢做空勝率高",
-    "risk_warning": "美債收益率持續飆升可能進一步壓抑股市估值，注意控制倉位。",
-    "sector": "資金由高估值科技股流出，防守型板塊相對抗跌。",
-    "trade_plans": [
-      {
-        "rank": 1,
-        "ticker": "ARM",
-        "direction": "PUT",
-        "strategy": "直接買Put",
-        "strike": "300.0",
-        "expiry": "2026-10-02",
-        "expiry_reason": "短線動能轉弱，順勢佈局",
-        "entry_zone": "302.0 - 305.0",
-        "entry_timing": "反彈至阻力位不破時入場",
-        "delta_range": "0.35-0.45",
-        "est_premium": "$8.50 - $11.00",
-        "signal_strength": 4,
-        "signals": [
-          "過去兩日爆跌逾8%",
-          "成交量配合下跌",
-          "大盤整體氣氛偏弱"
-        ],
-        "max_loss": "權利金全額",
-        "target_gain": "+50% 至 +100%",
-        "stop_loss_price": 312.0,
-        "stop_loss_option": "期權價值跌幅達40%",
-        "squeeze_risk": "低",
-        "risk": "短線跌幅過大可能面臨技術性反彈",
-        "political_factor": "無",
-        "best_day_to_enter": "早盤開盤後"
       }
     ]
   }
